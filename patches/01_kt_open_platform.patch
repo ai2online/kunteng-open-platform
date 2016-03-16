@@ -1,0 +1,2907 @@
+diff -uNr target_orig/linux/ar71xx/config-3.18 target/linux/ar71xx/config-3.18
+--- target_orig/linux/ar71xx/config-3.18	2016-03-15 14:49:02.322265000 +0800
++++ target/linux/ar71xx/config-3.18	2016-03-15 15:05:44.383260000 +0800
+@@ -95,6 +95,7 @@
+ CONFIG_ATH79_MACH_PB92=y
+ CONFIG_ATH79_MACH_QIHOO_C301=y
+ CONFIG_ATH79_MACH_R6100=y
++CONFIG_ATH79_MACH_KF2010=y
+ # CONFIG_ATH79_MACH_RB2011 is not set
+ # CONFIG_ATH79_MACH_RB4XX is not set
+ # CONFIG_ATH79_MACH_RB750 is not set
+diff -uNr target_orig/linux/ar71xx/files/arch/mips/ath79/mach-kf2010.c target/linux/ar71xx/files/arch/mips/ath79/mach-kf2010.c
+--- target_orig/linux/ar71xx/files/arch/mips/ath79/mach-kf2010.c	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/files/arch/mips/ath79/mach-kf2010.c	2016-03-15 15:05:44.383260000 +0800
+@@ -0,0 +1,217 @@
++/*
++ *
++ *
++ */
++
++#include <linux/gpio.h>
++#include <linux/platform_device.h>
++#include <linux/mtd/mtd.h>
++#include <linux/mtd/nand.h>
++#include <linux/mtd/partitions.h>
++
++#include <asm/mach-ath79/ath79.h>
++#include <asm/mach-ath79/ar71xx_regs.h>
++
++#include "common.h"
++#include "dev-eth.h"
++#include "dev-gpio-buttons.h"
++#include "dev-leds-gpio.h"
++#include "dev-m25p80.h"
++#include "dev-wmac.h"
++#include "machtypes.h"
++
++#define KF2010_GPIO_LED_SYSTEM 11
++#define KF2010_GPIO_LED_WLAN   12
++#define KF2010_GPIO_LED_WAN    13
++#define KF2010_GPIO_LED_LAN    4
++
++#define KF2010_GPIO_BTN_RESET  3
++
++#define KF2010_KEYS_POLL_INTERVAL  		20  /* msecs */
++#define KF2010_KEYS_DEBOUNCE_INTERVAL 	(3 * KF2010_KEYS_POLL_INTERVAL)
++
++/* jack tseng 01/07/2016 add */
++/* use the mac from the command: "./mfg-info --set --mac-addr-main 00:01:6C:10:00:A3 2"  */
++#define MFC_BASE_ADDR 			0x9F060000
++#define MAC_OFFSET    			0xD0
++#define RADIO_0_OFFSET    		0x110
++#define MAC_ADDR      			MFC_BASE_ADDR + MAC_OFFSET
++#define RADIO_0_MAC_ADDR      	MFC_BASE_ADDR + RADIO_0_OFFSET
++/* end of jack tseng 01/07/2016 */
++
++
++static struct mtd_partition kf2010_generic_partitions[] = {
++	{
++       	.name       = "redboot",
++       	.offset     = 0,
++       	.size       = 0x040000,
++       	.mask_flags = MTD_WRITEABLE,
++   	}, {
++       	.name       = "env",
++       	.offset     = 0x040000,
++       	.size       = 0x020000,
++   	}, {
++       	.name       = "mib0",
++       	.offset     = 0x060000,
++       	.size       = 0x010000,
++   	}, {    
++       	.name       = "ART",
++       	.offset     = 0x070000,
++       	.size       = 0x010000,
++   	}, {    
++       	.name       = "kernel",
++       	.offset     = 0x080000,
++       	.size       = 0x200000,
++   	}, {    
++    	.name       = "rootfs",
++       	.offset     = 0x280000,
++       	.size       = 0x1d80000,
++   	} 
++};
++
++static struct flash_platform_data kf2010_flash_data = {
++   .parts      = kf2010_generic_partitions,
++   .nr_parts   = ARRAY_SIZE(kf2010_generic_partitions),
++};
++
++static struct gpio_led kf2010_leds_gpio[] __initdata = {
++	{
++       .name       = "kf2010:green:wan",
++       .gpio       = KF2010_GPIO_LED_WAN,
++       .active_low = 1,
++   	},{
++       .name       = "kf2010:green:system",
++       .gpio       = KF2010_GPIO_LED_SYSTEM,
++       .active_low = 1,
++   	}, {
++       .name       = "kf2010:green:wlan",
++       .gpio       = KF2010_GPIO_LED_WLAN,
++       .active_low = 1,
++   	}, {
++       .name       = "kf2010:green:lan",
++       .gpio       = KF2010_GPIO_LED_LAN,
++       .active_low = 1,
++   	}
++};
++
++static struct gpio_keys_button kf2010_gpio_keys[] __initdata = {
++   {
++       .desc       = "Reset button",
++       .type       = EV_KEY,
++       .code       = KEY_RESTART,
++       .debounce_interval = KF2010_KEYS_DEBOUNCE_INTERVAL,
++       .gpio       = KF2010_GPIO_BTN_RESET,
++       .active_low = 1,
++   }
++};
++
++
++void ath79_get_mac(char* smac, u8* umac)
++{
++	int i = 0, char_cnt = 0;
++	char *pos_ptr = smac;
++	u8 mac_char[2];
++
++	do {
++		if ((*pos_ptr == 0x3A) || (*pos_ptr == 0x0)) {
++			if (char_cnt==2) {
++				if (mac_char[0] > 0x60) {
++					mac_char[0] = (mac_char[0] - 0x57)<<4;
++				} else if (mac_char[0] > 0x40) {
++					mac_char[0] = (mac_char[0] - 0x37)<<4;
++				} else {
++					mac_char[0] = (mac_char[0] - 0x30)<<4;
++				}
++
++				if (mac_char[1] > 0x60) {
++					mac_char[1] = mac_char[1] - 0x57;
++				} else if (mac_char[1] > 0x40) {
++					mac_char[1] = mac_char[1] - 0x37;
++				} else {
++					mac_char[1] = mac_char[1] - 0x30;
++				}       
++
++				umac[i] = mac_char[0] + mac_char[1];
++			} else if (char_cnt == 1) {
++				if (mac_char[0] > 0x60) {
++					mac_char[0] = mac_char[0] - 0x57;
++				} else if (mac_char[0] > 0x40) {
++					mac_char[0] = mac_char[0] - 0x37;
++				} else {
++					mac_char[0] = mac_char[0] - 0x30;
++				}
++
++				umac[i] = mac_char[0];
++			} else {
++				umac[i] = 0xFF;
++			}
++
++			i++;
++			char_cnt = 0;
++		} else {
++			mac_char[char_cnt] = *pos_ptr;
++			char_cnt += 1;
++		}
++	} while (*pos_ptr != 0x0 && pos_ptr++);
++}  
++
++
++static void __init kf_ap143_setup(void)
++{
++	u8 *ee = (u8 *) KSEG1ADDR(0x1f071000);
++	u8 tmpmac[ETH_ALEN] = {-1};
++	char mac_string[32] = {0};
++	u8 ethmac[6] = {-1};
++	u8 radio_0_mac[6] = {-1};
++
++	ath79_register_m25p80(&kf2010_flash_data);
++
++
++	ath79_setup_ar933x_phy4_switch(false, false);
++
++	ath79_register_mdio(0, 0x0);
++
++	/* jack tseng 01/07/2016 add */
++	/* use the mac from the command "./mfg-info --set --mac-addr-main 00:01:6C:10:00:A3 2"  */
++	memcpy(mac_string, (const void *)MAC_ADDR, 32);
++	ath79_get_mac(mac_string, ethmac);
++	pr_err("eth mac address: %02x:%02x:%02x:%02x:%02x:%02x \n",
++		ethmac[0], ethmac[1], ethmac[2], ethmac[3], ethmac[4], ethmac[5]);
++
++	memset(mac_string, 0, 32);
++	memcpy(mac_string, (const void *)RADIO_0_MAC_ADDR, 32);
++	ath79_get_mac(mac_string, radio_0_mac);
++
++	/* LAN */
++	ath79_init_mac(ath79_eth1_data.mac_addr, ethmac, 0);
++
++	ath79_register_eth(1);
++
++	/* WAN */
++	ath79_switch_data.phy4_mii_en = 1;
++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
++
++	ath79_init_mac(ath79_eth0_data.mac_addr, ethmac, 1);
++
++	ath79_register_eth(0);
++
++	/* set wlan mac */
++	ath79_init_mac(tmpmac, radio_0_mac, 0);
++
++	ath79_register_wmac(ee, tmpmac);
++}
++
++static void __init kf2010_setup(void)
++{
++	kf_ap143_setup();
++
++	ath79_register_leds_gpio(-1, ARRAY_SIZE(kf2010_leds_gpio),
++				 kf2010_leds_gpio);
++
++	ath79_register_gpio_keys_polled(1, KF2010_KEYS_POLL_INTERVAL,
++					ARRAY_SIZE(kf2010_gpio_keys),
++					kf2010_gpio_keys);
++}
++
++MIPS_MACHINE(ATH79_MACH_KF2010, "KF2010", "KUNTENG FOXCONN KF2010",
++	     kf2010_setup);
+diff -uNr target_orig/linux/ar71xx/generic/profiles/kf20x0.mk target/linux/ar71xx/generic/profiles/kf20x0.mk
+--- target_orig/linux/ar71xx/generic/profiles/kf20x0.mk	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/generic/profiles/kf20x0.mk	2016-03-15 15:05:44.399260000 +0800
+@@ -0,0 +1,16 @@
++#
++# Copyright (C) 2013 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++define Profile/KF2010
++	NAME:=KunTeng Foxconn KF2010
++	PACKAGES:=kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev kmod-ath10k
++endef
++
++define Profile/KF2010/Description
++  Package set optimized for the KunTeng Foxconn KF2010 device.
++endef
++$(eval $(call Profile,KF2010))
+diff -uNr target_orig/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KF2010-support.patch target/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KF2010-support.patch
+--- target_orig/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KF2010-support.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KF2010-support.patch	2016-03-15 15:05:44.403260000 +0800
+@@ -0,0 +1,41 @@
++Index: linux-3.18.23/arch/mips/ath79/Kconfig
++===================================================================
++--- linux-3.18.23.orig/arch/mips/ath79/Kconfig	2016-03-14 14:30:25.093985607 +0900
+++++ linux-3.18.23/arch/mips/ath79/Kconfig	2016-03-14 14:30:25.205985605 +0900
++@@ -1318,6 +1318,15 @@
++ 	select ATH79_DEV_USB
++ 	select ATH79_NVRAM
++ 
+++config ATH79_MACH_KF2010
+++	bool "KunTeng Foxconn KF2010 support"
+++	select SOC_QCA953X
+++	select ATH79_DEV_ETH
+++	select ATH79_DEV_GPIO_BUTTONS
+++	select ATH79_DEV_LEDS_GPIO
+++	select ATH79_DEV_M25P80
+++	select ATH79_DEV_WMAC
+++
++ endmenu
++ 
++ config SOC_AR71XX
++Index: linux-3.18.23/arch/mips/ath79/Makefile
++===================================================================
++--- linux-3.18.23.orig/arch/mips/ath79/Makefile	2016-03-14 14:30:25.093985607 +0900
+++++ linux-3.18.23/arch/mips/ath79/Makefile	2016-03-14 14:30:25.205985605 +0900
++@@ -170,3 +170,4 @@
++ obj-$(CONFIG_ATH79_MACH_ZCN_1523H)	+= mach-zcn-1523h.o
++ obj-$(CONFIG_ATH79_MACH_CARAMBOLA2)	+= mach-carambola2.o
++ obj-$(CONFIG_ATH79_MACH_NBG6716)	+= mach-nbg6716.o
+++obj-$(CONFIG_ATH79_MACH_KF2010)		+= mach-kf2010.o
++Index: linux-3.18.23/arch/mips/ath79/machtypes.h
++===================================================================
++--- linux-3.18.23.orig/arch/mips/ath79/machtypes.h	2016-03-14 14:30:25.093985607 +0900
+++++ linux-3.18.23/arch/mips/ath79/machtypes.h	2016-03-14 14:35:37.913980005 +0900
++@@ -218,6 +218,7 @@
++ 	ATH79_MACH_WZR_450HP2,		/* Buffalo WZR-450HP2 */
++ 	ATH79_MACH_ZCN_1523H_2,		/* Zcomax ZCN-1523H-2-xx */
++ 	ATH79_MACH_ZCN_1523H_5,		/* Zcomax ZCN-1523H-5-xx */
+++	ATH79_MACH_KF2010,	/* KunTeng Foxconn KF2010 */
++ };
++ 
++ #endif /* _ATH79_MACHTYPE_H */
+diff -uNr target_orig/linux/generic/patches-3.18/010-KEYS-Fix-keyring-ref-leak-in-join_session_keyring.patch target/linux/generic/patches-3.18/010-KEYS-Fix-keyring-ref-leak-in-join_session_keyring.patch
+--- target_orig/linux/generic/patches-3.18/010-KEYS-Fix-keyring-ref-leak-in-join_session_keyring.patch	2016-03-15 14:49:02.422265000 +0800
++++ target/linux/generic/patches-3.18/010-KEYS-Fix-keyring-ref-leak-in-join_session_keyring.patch	2016-03-15 15:05:44.487258000 +0800
+@@ -58,11 +58,9 @@
+  security/keys/process_keys.c | 1 +
+  1 file changed, 1 insertion(+)
+ 
+-diff --git a/security/keys/process_keys.c b/security/keys/process_keys.c
+-index a3f85d2..e6d50172 100644
+ --- a/security/keys/process_keys.c
+ +++ b/security/keys/process_keys.c
+-@@ -794,6 +794,7 @@ long join_session_keyring(const char *name)
++@@ -794,6 +794,7 @@ long join_session_keyring(const char *na
+  		ret = PTR_ERR(keyring);
+  		goto error2;
+  	} else if (keyring == new->session_keyring) {
+@@ -70,6 +68,3 @@
+  		ret = 0;
+  		goto error2;
+  	}
+--- 
+-2.7.0.rc3
+-
+diff -uNr target_orig/linux/generic/patches-3.18/141-mtd-bcm47xxpart-limit-scanned-flash-area-on-BCM47XX-.patch target/linux/generic/patches-3.18/141-mtd-bcm47xxpart-limit-scanned-flash-area-on-BCM47XX-.patch
+--- target_orig/linux/generic/patches-3.18/141-mtd-bcm47xxpart-limit-scanned-flash-area-on-BCM47XX-.patch	2016-03-15 14:49:02.426265000 +0800
++++ target/linux/generic/patches-3.18/141-mtd-bcm47xxpart-limit-scanned-flash-area-on-BCM47XX-.patch	2016-03-15 15:05:44.487258000 +0800
+@@ -20,7 +20,7 @@
+ 
+ --- a/drivers/mtd/bcm47xxpart.c
+ +++ b/drivers/mtd/bcm47xxpart.c
+-@@ -118,8 +118,8 @@ static int bcm47xxpart_parse(struct mtd_info *master,
++@@ -118,8 +118,8 @@ static int bcm47xxpart_parse(struct mtd_
+  	/* Parse block by block looking for magics */
+  	for (offset = 0; offset <= master->size - blocksize;
+  	     offset += blocksize) {
+diff -uNr target_orig/linux/generic/patches-3.18/142-mtd-bcm47xxpart-don-t-fail-because-of-bit-flips.patch target/linux/generic/patches-3.18/142-mtd-bcm47xxpart-don-t-fail-because-of-bit-flips.patch
+--- target_orig/linux/generic/patches-3.18/142-mtd-bcm47xxpart-don-t-fail-because-of-bit-flips.patch	2016-03-15 14:49:02.426265000 +0800
++++ target/linux/generic/patches-3.18/142-mtd-bcm47xxpart-don-t-fail-because-of-bit-flips.patch	2016-03-15 15:05:44.487258000 +0800
+@@ -14,11 +14,9 @@
+  drivers/mtd/bcm47xxpart.c | 38 ++++++++++++++++++++++----------------
+  1 file changed, 22 insertions(+), 16 deletions(-)
+ 
+-diff --git a/drivers/mtd/bcm47xxpart.c b/drivers/mtd/bcm47xxpart.c
+-index 4450e74..1ab3451 100644
+ --- a/drivers/mtd/bcm47xxpart.c
+ +++ b/drivers/mtd/bcm47xxpart.c
+-@@ -66,11 +66,13 @@ static const char *bcm47xxpart_trx_data_part_name(struct mtd_info *master,
++@@ -66,11 +66,13 @@ static const char *bcm47xxpart_trx_data_
+  {
+  	uint32_t buf;
+  	size_t bytes_read;
+@@ -36,7 +34,7 @@
+  		goto out_default;
+  	}
+  
+-@@ -95,6 +97,7 @@ static int bcm47xxpart_parse(struct mtd_info *master,
++@@ -95,6 +97,7 @@ static int bcm47xxpart_parse(struct mtd_
+  	int trx_part = -1;
+  	int last_trx_part = -1;
+  	int possible_nvram_sizes[] = { 0x8000, 0xF000, 0x10000, };
+@@ -44,7 +42,7 @@
+  
+  	/*
+  	 * Some really old flashes (like AT45DB*) had smaller erasesize-s, but
+-@@ -128,10 +131,11 @@ static int bcm47xxpart_parse(struct mtd_info *master,
++@@ -128,10 +131,11 @@ static int bcm47xxpart_parse(struct mtd_
+  		}
+  
+  		/* Read beginning of the block */
+@@ -60,7 +58,7 @@
+  			continue;
+  		}
+  
+-@@ -254,10 +258,11 @@ static int bcm47xxpart_parse(struct mtd_info *master,
++@@ -254,10 +258,11 @@ static int bcm47xxpart_parse(struct mtd_
+  		}
+  
+  		/* Read middle of the block */
+@@ -76,7 +74,7 @@
+  			continue;
+  		}
+  
+-@@ -277,10 +282,11 @@ static int bcm47xxpart_parse(struct mtd_info *master,
++@@ -277,10 +282,11 @@ static int bcm47xxpart_parse(struct mtd_
+  		}
+  
+  		offset = master->size - possible_nvram_sizes[i];
+@@ -92,6 +90,3 @@
+  			continue;
+  		}
+  
+--- 
+-1.8.4.5
+-
+diff -uNr target_orig/linux/generic/patches-3.18/431-mtd-bcm47xxpart-check-for-bad-blocks-when-calculatin.patch target/linux/generic/patches-3.18/431-mtd-bcm47xxpart-check-for-bad-blocks-when-calculatin.patch
+--- target_orig/linux/generic/patches-3.18/431-mtd-bcm47xxpart-check-for-bad-blocks-when-calculatin.patch	2016-03-15 14:49:02.426265000 +0800
++++ target/linux/generic/patches-3.18/431-mtd-bcm47xxpart-check-for-bad-blocks-when-calculatin.patch	2016-03-15 15:05:44.491258000 +0800
+@@ -13,7 +13,7 @@
+ 
+ --- a/drivers/mtd/bcm47xxpart.c
+ +++ b/drivers/mtd/bcm47xxpart.c
+-@@ -61,6 +61,34 @@ static void bcm47xxpart_add_part(struct mtd_partition *part, const char *name,
++@@ -61,6 +61,34 @@ static void bcm47xxpart_add_part(struct
+  	part->mask_flags = mask_flags;
+  }
+  
+@@ -48,7 +48,7 @@
+  static const char *bcm47xxpart_trx_data_part_name(struct mtd_info *master,
+  						  size_t offset)
+  {
+-@@ -182,6 +210,8 @@ static int bcm47xxpart_parse(struct mtd_info *master,
++@@ -182,6 +210,8 @@ static int bcm47xxpart_parse(struct mtd_
+  
+  		/* TRX */
+  		if (buf[0x000 / 4] == TRX_MAGIC) {
+@@ -57,7 +57,7 @@
+  			if (BCM47XXPART_MAX_PARTS - curr_part < 4) {
+  				pr_warn("Not enough partitions left to register trx, scanning stopped!\n");
+  				break;
+-@@ -196,18 +226,18 @@ static int bcm47xxpart_parse(struct mtd_info *master,
++@@ -196,18 +226,18 @@ static int bcm47xxpart_parse(struct mtd_
+  			i = 0;
+  			/* We have LZMA loader if offset[2] points to sth */
+  			if (trx->offset[2]) {
+@@ -82,7 +82,7 @@
+  				i++;
+  			}
+  
+-@@ -219,11 +249,11 @@ static int bcm47xxpart_parse(struct mtd_info *master,
++@@ -219,11 +249,11 @@ static int bcm47xxpart_parse(struct mtd_
+  			if (trx->offset[i]) {
+  				const char *name;
+  
+diff -uNr target_orig/linux/ramips/base-files/etc/board.d/01_leds target/linux/ramips/base-files/etc/board.d/01_leds
+--- target_orig/linux/ramips/base-files/etc/board.d/01_leds	2016-03-15 14:49:02.454264000 +0800
++++ target/linux/ramips/base-files/etc/board.d/01_leds	2016-03-15 15:05:44.515257000 +0800
+@@ -266,6 +266,33 @@
+ 	zte-q7)
+ 		set_wifi_led "zte:blue:status"
+ 		;;
++	hc5661a |\
++	zc9525a)
++		ucidef_set_led_default "system" "system" "hc5661a:blue:system" "1"
++		ucidef_set_led_netdev "internet" "internet" "hc5661a:blue:internet" "eth0.2"
++		set_wifi_led "hc5661a:blue:wlan2g"
++		;;	
++	hc5661 |\
++	zc9525)
++		ucidef_set_led_default "system" "system" "hc5661:blue:system" "1"
++		ucidef_set_led_netdev "internet" "internet" "hc5661:blue:internet" "eth0.2"
++		set_wifi_led "hc5661:blue:wlan2g"
++		;;	
++	hc5761 |\
++	zc9526)
++		ucidef_set_led_default "system" "system" "hc5761:blue:system" "1"
++		ucidef_set_led_netdev "internet" "internet" "hc5761:blue:internet" "eth0.2"
++		set_wifi_led "hc5761:blue:wlan2g"
++		ucidef_set_led_netdev "wifi5g" "wifi5g" "hc5761:blue:wlan5g" "rai0"
++		;;
++	hc5861 |\
++	zc9527)
++		ucidef_set_led_default "system" "system" "hc5861:blue:system" "1"
++		ucidef_set_led_netdev "internet" "internet" "hc5861:blue:internet" "eth0.2"
++		set_wifi_led "hc5861:blue:wlan2g"
++		ucidef_set_led_netdev "wifi5g" "wifi5g" "hc5861:blue:wlan5g" "rai0"
++		ucidef_set_led_default "turbo" "turbo" "hc5861:blue:turbo" "0"
++		;;	
+ esac
+ 
+ board_config_flush
+diff -uNr target_orig/linux/ramips/base-files/etc/board.d/02_network target/linux/ramips/base-files/etc/board.d/02_network
+--- target_orig/linux/ramips/base-files/etc/board.d/02_network	2016-03-15 14:49:02.454264000 +0800
++++ target/linux/ramips/base-files/etc/board.d/02_network	2016-03-15 15:05:44.515257000 +0800
+@@ -152,7 +152,7 @@
+ 		ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 6t"
+ 		ucidef_add_switch_vlan "switch0" "2" "4 6t"
+ 		;;
+-
++	
+ 	whr-1166d)
+ 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+ 		ucidef_add_switch "switch0" "1" "1"
+@@ -177,6 +177,8 @@
+ 	wrtnode | \
+ 	wt3020 | \
+ 	ur-326n4g | \
++	hc5?61 |\
++	zc952? |\
+ 	zbt-wa05)
+ 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+ 		ucidef_add_switch "switch0" "1" "1"
+@@ -184,6 +186,14 @@
+ 		ucidef_add_switch_vlan "switch0" "2" "0 6t"
+ 		;;
+ 
++	hc5661a |\
++	zc9525a)
++		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
++		ucidef_add_switch "switch0" "1" "1"
++		ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 6t"
++		ucidef_add_switch_vlan "switch0" "2" "4 6t"
++		;;
++
+ 	ur-336un)
+ 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+ 		;;
+@@ -385,6 +395,17 @@
+ 		wan_mac=$(mtd_get_mac_binary factory 4)
+ 		lan_mac=$(mtd_get_mac_binary factory 46)
+ 		;;
++	zc952? |\
++	zc9525a |\
++	hc5661a |\
++	hc5661 |\
++	hc5761 |\
++	hc5861)
++		lan_mac=`mtd_get_mac_ascii bdinfo "Vfac_mac "`
++		[ -n "$lan_mac" ] || lan_mac=$(cat /sys/class/net/eth0/address)
++		wan_mac=$(macaddr_add "$lan_mac" 1)
++		;;
++
+ 	*)
+ 		lan_mac=$(cat /sys/class/net/eth0/address)
+ 		wan_mac=$(macaddr_add "$lan_mac" 1)
+diff -uNr target_orig/linux/ramips/base-files/etc/diag.sh target/linux/ramips/base-files/etc/diag.sh
+--- target_orig/linux/ramips/base-files/etc/diag.sh	2016-03-15 14:49:02.454264000 +0800
++++ target/linux/ramips/base-files/etc/diag.sh	2016-03-15 15:05:44.515257000 +0800
+@@ -248,11 +248,35 @@
+ 		status_led="lenovo:blue:power"
+ 		;;
+ 	zbt-wg2626)
+-		status_led="zbt-wg2626:green:status"
++		status_led="zbt-wg2626:green:power"
+ 		;;
+ 	zte-q7)
+ 		status_led="zte:red:status"
+ 		;;
++	zc9525)
++		status_led="zc9525:blue:system"
++		;;
++	zc9525a)
++		status_led="zc9525a:blue:system"
++		;;
++	zc9526)
++		status_led="zc9526:blue:system"
++		;;
++	zc9527)
++		status_led="zc9527:blue:system"
++		;;
++	hc5661)
++		status_led="hc5661:blue:system"
++		;;
++	hc5661a)
++		status_led="hc5661a:blue:system"
++		;;
++	hc5761)
++		status_led="hc5761:blue:system"
++		;;
++	hc5861)
++		status_led="hc5861:blue:system"
++		;;
+ 	esac
+ }
+ 
+diff -uNr target_orig/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211-file target/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211-file
+--- target_orig/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211-file	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211-file	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,9 @@
++#!/bin/sh
++
++IS_MT7620_LOAD=`ls /sys/module|grep mt7620`
++[ -z $IS_MT7620_LOAD ] && exit 0
++
++
++[ -f /lib/wifi/mac80211.sh ] && echo "" > /lib/wifi/mac80211.sh
++[ -f /lib/netifd/wireless/mac80211.sh ] && echo "" > /lib/netifd/wireless/mac80211.sh
++
+diff -uNr target_orig/linux/ramips/base-files/lib/ramips.sh target/linux/ramips/base-files/lib/ramips.sh
+--- target_orig/linux/ramips/base-files/lib/ramips.sh	2016-03-15 14:49:02.454264000 +0800
++++ target/linux/ramips/base-files/lib/ramips.sh	2016-03-15 15:05:44.515257000 +0800
+@@ -3,6 +3,8 @@
+ # Copyright (C) 2010-2013 OpenWrt.org
+ #
+ 
++# LIUDF 20160210 added RAMIPS_BOARD_TYPE
++RAMIPS_BOARD_TYPE=
+ RAMIPS_BOARD_NAME=
+ RAMIPS_MODEL=
+ 
+@@ -433,16 +435,48 @@
+ 			name="linkits7688"
+ 		fi
+ 		;;
++	*"KunTeng ZC9525")
++		RAMIPS_BOARD_TYPE="9525"	
++		name="zc9525"
++		;;
++	*"KunTeng ZC9525A")
++		RAMIPS_BOARD_TYPE="9525a"
++		name="zc9525a"
++		;;
++	*"KunTeng ZC9526")
++		RAMIPS_BOARD_TYPE="9526"
++		name="zc9526"
++		;;
++	*"KunTeng ZC9527")
++		RAMIPS_BOARD_TYPE="9527"
++		name="zc9527"
++		;;
++	*"HiWiFi HC5661")
++		name="hc5661"
++		;;
++	*"HiWiFi HC5661A")
++		name="hc5661a"
++		;;
++	*"HiWiFi HC5761")
++		name="hc5761"
++		;;
++	*"HiWiFi HC5861")
++		name="hc5861"
++		;;
+ 	*)
+ 		name="generic"
+ 		;;
+ 	esac
+-
++	
++	#liudf 20160210 added	
++	[ -z "$RAMIPS_BOARD_TYPE" ] && RAMIPS_BOARD_TYPE="$name"
+ 	[ -z "$RAMIPS_BOARD_NAME" ] && RAMIPS_BOARD_NAME="$name"
+ 	[ -z "$RAMIPS_MODEL" ] && RAMIPS_MODEL="$machine"
+ 
+ 	[ -e "/tmp/sysinfo/" ] || mkdir -p "/tmp/sysinfo/"
+-
++	
++	#liudf 20160210 added
++	echo "$RAMIPS_BOARD_TYPE" > /tmp/sysinfo/board_type
+ 	echo "$RAMIPS_BOARD_NAME" > /tmp/sysinfo/board_name
+ 	echo "$RAMIPS_MODEL" > /tmp/sysinfo/model
+ }
+@@ -454,4 +488,14 @@
+ 	[ -z "$name" ] && name="unknown"
+ 
+ 	echo "$name"
++}
++
++#liudf 20160210 added
++ramips_board_type() {
++	local name
++
++	[ -f /tmp/sysinfo/board_type ] && name=$(cat /tmp/sysinfo/board_type)
++	[ -z "$name" ] && name="unknown"
++
++	echo "$name"
+ }
+diff -uNr target_orig/linux/ramips/base-files/lib/upgrade/platform.sh target/linux/ramips/base-files/lib/upgrade/platform.sh
+--- target_orig/linux/ramips/base-files/lib/upgrade/platform.sh	2016-03-15 14:49:02.454264000 +0800
++++ target/linux/ramips/base-files/lib/upgrade/platform.sh	2016-03-15 15:05:44.515257000 +0800
+@@ -124,6 +124,14 @@
+ 	x5 |\
+ 	x8 |\
+ 	xiaomi-miwifi-mini |\
++	hc5661 |\
++	hc5661a |\
++	hc5761 |\
++	hc5861 |\
++	zc9525 |\
++	zc9525a |\
++	zc9526 |\
++	zc9527 |\
+ 	y1 |\
+ 	y1s |\
+ 	zbt-wa05 |\
+diff -uNr target_orig/linux/ramips/base-files/lib/wifi/ralink_common.sh target/linux/ramips/base-files/lib/wifi/ralink_common.sh
+--- target_orig/linux/ramips/base-files/lib/wifi/ralink_common.sh	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/base-files/lib/wifi/ralink_common.sh	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,319 @@
++# this file will be included in 
++#     /lib/wifi/mt{chipname}.sh
++
++repair_wireless_uci() {
++    echo "repair_wireless_uci" >>/tmp/wifi.log
++    vifs=`uci show wireless | grep "=wifi-iface" | sed -n "s/=wifi-iface//gp"`
++    echo $vifs >>/tmp/wifi.log
++
++    ifn5g=0
++    ifn2g=0
++    for vif in $vifs; do
++        local netif nettype device netif_new 
++        echo  "<<<<<<<<<<<<<<<<<" >>/tmp/wifi.log
++        netif=`uci -q get ${vif}.ifname`
++        nettype=`uci -q get ${vif}.network`
++        device=`uci -q get ${vif}.device`
++        if [ "$device" == "" ]; then
++            echo "device cannot be empty!!" >>/tmp/wifi.log
++            return
++        fi
++
++        echo "device name $device!!" >>/tmp/wifi.log
++        echo "netif $netif" >>/tmp/wifi.log
++        echo "nettype $nettype" >>/tmp/wifi.log
++  	echo "mode $mode" >>/tmp/wifi.log
++
++        case "$device" in
++            mt7620 | mt7602e | mt7603e | mt7628 | mt7688 | rt2860v2)
++		netif_new="ra"${ifn2g}
++               	ifn2g=$(( $ifn2g + 1 ))
++                ;;
++            mt7610e | mt7612e )
++                netif_new="rai"${ifn5g}
++                ifn5g=$(( $ifn5g + 1 ))
++                ;;
++            * )
++                echo "device $device not recognized!! " >>/tmp/wifi.log
++                ;;
++        esac                    
++    
++        echo "ifn5g=${ifn5g}, ifn5g_cli=${ifn5g_cli}, ifn2g=${ifn2g} ifn2g_cli={$ifn2g_cli}" >>/tmp/wifi.log
++        echo "netif_new = ${netif_new}" >>/tmp/wifi.log
++            
++        if [ "$netif" == "" ]; then
++            echo "ifname empty, we'll fix it with ${netif_new}" >>/tmp/wifi.log
++            uci -q set ${vif}.ifname=${netif_new}
++        fi
++        if [ "$nettype" == "" ]; then
++            nettype="lan"
++            echo "nettype empty, we'll fix it with ${nettype}" >>/tmp/wifi.log
++            uci -q set ${vif}.network=${nettype}
++        fi
++        echo  ">>>>>>>>>>>>>>>>>" >>/tmp/wifi.log
++    done
++    uci changes >>/tmp/wifi.log
++    uci commit
++}
++
++
++sync_uci_with_dat() {
++    #victor@20151223 fix wireless mac address.
++    . /lib/functions/system.sh
++    . /lib/functions.sh
++    local wifi_mac=`mtd_get_mac_ascii bdinfo "Vfac_mac "`      
++    #end victor
++    echo "sync_uci_with_dat($1,$2,$3,$4)" >>/tmp/wifi.log
++    local device="$1"
++    local datpath="$2"
++    #uci2dat -d $device -f $datpath > /tmp/uci2dat.log
++    uci2dat -d $device -f $datpath $wifi_mac > /tmp/uci2dat.log
++}
++
++
++
++chk8021x() {
++        local x8021x="0" encryption device="$1" prefix
++        #vifs=`uci show wireless | grep "=wifi-iface" | sed -n "s/=wifi-iface//gp"`
++        echo "u8021x dev $device" > /tmp/802.$device.log
++        config_get vifs "$device" vifs
++        for vif in $vifs; do
++                config_get ifname $vif ifname
++                echo "ifname = $ifname" >> /tmp/802.$device.log
++                config_get encryption $vif encryption
++                echo "enc = $encryption" >> /tmp/802.$device.log
++                case "$encryption" in
++                        wpa+*)
++                                [ "$x8021x" == "0" ] && x8021x=1
++                                echo 111 >> /tmp/802.$device.log
++                                ;;
++                        wpa2+*)
++                                [ "$x8021x" == "0" ] && x8021x=1
++                                echo 1l2 >> /tmp/802.$device.log
++                                ;;
++                        wpa-mixed*)
++                                [ "$x8021x" == "0" ] && x8021x=1
++                                echo 1l3 >> /tmp/802.$device.log
++                                ;;
++                esac
++                ifpre=$(echo $ifname | cut -c1-3)
++                echo "prefix = $ifpre" >> /tmp/802.$device.log
++                if [ "$ifpre" == "rai" ]; then
++                    prefix="rai"
++                else
++                    prefix="ra"
++                fi
++                if [ "1" == "$x8021x" ]; then
++                    break
++                fi
++        done
++        echo "x8021x $x8021x, pre $prefix" >>/tmp/802.$device.log
++        if [ "1" == $x8021x ]; then
++            if [ "$prefix" == "ra" ]; then
++                echo "killall 8021xd" >>/tmp/802.$device.log
++                killall 8021xd
++                echo "/bin/8021xd -d 9" >>/tmp/802.$device.log
++                /bin/8021xd -d 9 >> /tmp/802.$device.log 2>&1
++            else # $prefixa == rai
++                echo "killall 8021xdi" >>/tmp/802.$device.log
++                killall 8021xdi
++                echo "/bin/8021xdi -d 9" >>/tmp/802.$device.log
++                /bin/8021xdi -d 9 >> /tmp/802.$device.log 2>&1
++            fi
++        else
++            if [ "$prefix" == "ra" ]; then
++                echo "killall 8021xd" >>/tmp/802.$device.log
++                killall 8021xd
++            else # $prefixa == rai
++                echo "killall 8021xdi" >>/tmp/802.$device.log
++                killall 8021xdi
++            fi
++        fi
++}
++
++
++# $1=device, $2=module
++reinit_wifi() {
++    echo "reinit_wifi($1,$2,$3,$4)" >>/tmp/wifi.log
++    local device="$1"
++    local module="$2"
++    config_get vifs "$device" vifs
++
++    # shut down all vifs first
++    for vif in $vifs; do
++        config_get ifname $vif ifname
++        ifconfig $ifname down
++    done
++
++    # in some case we have to reload drivers. (mbssid eg)
++    #ref=`cat /sys/module/$module/refcnt`
++    #if [ $ref != "0" ]; then
++    #    # but for single driver, we only need to reload once.
++    #    echo "$module ref=$ref, skip reload module" >>/tmp/wifi.log
++    #else
++    #    echo "rmmod $module" >>/tmp/wifi.log
++    #    rmmod $module
++    #    echo "insmod $module" >>/tmp/wifi.log
++    #    insmod $module
++    #fi
++
++    # bring up vifs
++    for vif in $vifs; do
++        config_get ifname $vif ifname
++        config_get disabled $vif disabled
++        echo "ifconfig $ifname down" >>/tmp/wifi.log
++        if [ "$disabled" == "1" ]; then
++            echo "$ifname marked disabled, skip" >>/tmp/wifi.log
++            continue
++        else
++            echo "ifconfig $ifname up" >>/tmp/wifi.log
++            ifconfig $ifname up
++        fi
++    done
++
++    chk8021x $device
++}
++
++prepare_ralink_wifi() {
++    echo "prepare_ralink_wifi($1,$2,$3,$4)" >>/tmp/wifi.log
++    local device=$1
++    config_get channel $device channel
++    config_get ssid $2 ssid
++    config_get mode $device mode
++    config_get ht $device ht
++    config_get country $device country
++    config_get regdom $device regdom
++
++    # HT40 mode can be enabled only in bgn (mode = 9), gn (mode = 7)
++    # or n (mode = 6).
++    HT=0
++    [ "$mode" = 6 -o "$mode" = 7 -o "$mode" = 9 ] && [ "$ht" != "20" ] && HT=1
++
++    # In HT40 mode, a second channel is used. If EXTCHA=0, the extra
++    # channel is $channel + 4. If EXTCHA=1, the extra channel is
++    # $channel - 4. If the channel is fixed to 1-4, we'll have to
++    # use + 4, otherwise we can just use - 4.
++    EXTCHA=0
++    [ "$channel" != auto ] && [ "$channel" -lt "5" ] && EXTCHA=1
++    
++}
++
++scan_ralink_wifi() {
++    local device="$1"
++    local module="$2"
++    echo "scan_ralink_wifi($1,$2,$3,$4)" >>/tmp/wifi.log
++    repair_wireless_uci
++    sync_uci_with_dat $device /etc/wireless/$device/$device.dat
++}
++
++disable_ralink_wifi() {
++    echo "disable_ralink_wifi($1,$2,$3,$4)" >>/tmp/wifi.log
++    local device="$1"
++    config_get vifs "$device" vifs
++    for vif in $vifs; do
++        config_get ifname $vif ifname
++        ifconfig $ifname down
++		# liudf added 20150325
++		# only support 2.4g apcli now
++		[ "$ifname" = "ra0" ] && {
++			ifconfig apcli0 down
++		}
++    done
++
++    # kill any running ap_clients
++    killall ap_client || true
++}
++
++enable_ralink_wifi() {
++    echo "enable_ralink_wifi($1,$2,$3,$4)" >>/tmp/wifi.log
++    local device="$1"
++    config_get vifs "$device" vifs
++
++    # bring up vifs
++    for vif in $vifs; do
++        config_get ifname $vif ifname
++        config_get disabled $vif disabled
++		config_get radio $device radio
++		config_get apcli_enable $vif apcli_enable
++        ifconfig $ifname down
++		
++        echo "ifconfig $ifname down" >>/dev/null
++        if [ "$disabled" == "1" ]; then
++            echo "$ifname marked disabled, skip" >>/dev/null
++            continue
++        else
++            echo "ifconfig $ifname up" >>/dev/null
++            ifconfig $ifname up
++        fi
++		# liudf added 20150325
++		[ "$apcli_enable" = "1" -a "$ifname" = "ra0" ] && {
++			config_get apcli_ssid $vif apcli_ssid
++			[ ! -z "$apcli_ssid" ] && {
++				echo "ifconfig apcli0 up" >> /tmp/wifi.log
++				ifconfig apcli0 up
++			} || {
++				echo "need apcli_ssid parameter"
++				ifconfig apcli0 down
++			}
++		}
++		#Radio On/Off only support iwpriv command but dat file
++        [ "$radio" == "0" ] && iwpriv $ifname set RadioOn=0
++        local net_cfg bridge
++        net_cfg="$(find_net_config "$vif")"
++        [ -z "$net_cfg" ] || {
++            bridge="$(bridge_interface "$net_cfg")"
++            config_set "$vif" bridge "$bridge"
++            start_net "$ifname" "$net_cfg"
++        }
++
++		chk8021x $device
++        set_wifi_up "$vif" "$ifname"
++    done
++}
++
++detect_ralink_wifi() {
++    echo "detect_ralink_wifi($1,$2,$3,$4)" >>/tmp/wifi.log
++    local channel
++    local device="$1"
++    local module="$2"
++    local band
++    local ifname
++    cd /sys/module/
++    [ -d $module ] || return
++    config_get channel $device channel
++    [ -z "$channel" ] || return
++    case "$device" in
++        mt7620 | mt7602e | mt7603e | mt7628 | rt2860v2 )
++            ifname="ra0"
++            band="2.4G"
++            ;;
++        mt7610e | mt7612e )
++            ifname="rai0"
++            band="5G"
++            ;;
++        * )
++            echo "device $device not recognized!! " >>/tmp/wifi.log
++            ;;
++    esac                    
++    cat <<EOF
++config wifi-device    $device
++    option type     $device
++    option vendor   ralink
++    option band     $band
++    option channel  0
++    option autoch   2
++
++config wifi-iface
++    option device   $device
++    option ifname    $ifname
++    option network  lan
++    option mode     ap
++    option ssid ApFree-$device
++    option encryption psk2
++    option key      12345678
++
++EOF
++}
++
++
++
+diff -uNr target_orig/linux/ramips/dts/HC5661A.dts target/linux/ramips/dts/HC5661A.dts
+--- target_orig/linux/ramips/dts/HC5661A.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/HC5661A.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,186 @@
++/dts-v1/;
++
++/include/ "mt7628an.dtsi"
++
++/ {
++	compatible = "HC5661A", "mediatek,mt7628an-soc";
++	model = "HiWiFi HC5661A";
++
++	chosen {
++		bootargs = "console=ttyS0,115200";
++	};
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x8000000>;
++	};
++
++	pinctrl {
++		state_default: pinctrl0 {
++			gpio {
++				ralink,group = "gpio";
++				ralink,function = "gpio";
++			};
++			perst {
++				ralink,group = "perst";
++				ralink,function = "gpio";
++			};
++			refclk {
++				ralink,group = "refclk";
++				ralink,function = "gpio";
++			};
++			i2s {
++				ralink,group = "i2s";
++				ralink,function = "gpio";
++			};
++			spis {
++				ralink,group = "spis";
++				ralink,function = "gpio";
++			};
++			wled_kn {
++				ralink,group = "wled_kn";
++				ralink,function = "gpio";
++			};
++			wled_an {
++				ralink,group = "wled_an";
++				ralink,function = "wled_an";
++			};
++			wdt {
++				ralink,group = "wdt";
++				ralink,function = "gpio";
++			};
++		};
++	};
++
++	palmbus@10000000 {
++		spi@b00 {
++			status = "okay";
++
++			pinctrl-names = "default";
++			pinctrl-0 = <&spi_pins>, <&spi_cs1_pins>;
++
++			m25p80@0 {
++				#address-cells = <1>;
++				#size-cells = <1>;
++				compatible = "w25q128";
++				reg = <0 0>;
++				linux,modalias = "m25p80", "w25q128";
++				spi-max-frequency = <10000000>;
++				m25p,chunked-io = <31>;
++
++				partition@0 {
++					label = "u-boot";
++					reg = <0x0 0x30000>;
++					read-only;
++				};
++
++				partition@30000 {
++					label = "u-boot-env";
++					reg = <0x30000 0x10000>;
++				};
++
++				factory: partition@40000 {
++					label = "factory";
++					reg = <0x40000 0x10000>;
++					read-only;
++				};
++
++				partition@50000 {
++					label = "firmware";
++					reg = <0x50000 0xf80000>;
++				};
++				
++				partition@fd0000 {
++					label = "hwf_config";
++					reg = <0xfd0000 0x10000>;
++				};
++
++				bdinfo: partition@fe0000 {
++					label = "bdinfo";
++					reg = <0xfe0000 0x10000>;
++				};
++
++				partition@ff0000 {
++					label = "backup";
++					reg = <0xff0000 0x10000>;
++				};
++			};
++
++			spidev@1 {
++				#address-cells = <1>;
++				#size-cells = <1>;
++				compatible = "spidev";
++				reg = <1 0>;
++				spi-max-frequency = <40000000>;
++			};
++		};
++
++		i2c@900 {
++			status = "okay";
++		};
++
++		uart1@d00 {
++			status = "okay";
++		};
++
++		uart2@e00 {
++			status = "okay";
++		};
++
++		pwm@5000 {
++			status = "okay";
++		};
++	};
++
++	ethernet@10100000 {
++		mtd-mac-address = <&factory 0x4>;
++		ralink,port-map = "llllw";
++	};
++	
++	pcie@10140000 {
++		status = "okay";
++	};
++
++	sdhci@10130000 {
++		status = "okay";
++		mediatek,cd-high;
++//		mediatek,cd-poll;
++	};
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5661a:blue:system";
++			gpios = <&gpio0 5 1>;
++		};
++		
++		internet {
++			label = "hc5661a:blue:internet";
++			gpios = <&gpio0 1 1>;
++		};
++		
++		wlan2g {
++			label = "hc5661a:blue:wlan2g";
++			gpios = <&gpio1 9 1>;
++		};
++		
++		wlan5g {
++			label = "hc5661a:blue:wlan5g";
++			gpios = <&gpio1 8 1>;
++		};
++	};
++
++	gpio-keys-polled {
++		compatible = "gpio-keys-polled";
++		#address-cells = <1>;
++		#size-cells = <0>;
++		poll-interval = <20>;
++	
++		reset {
++			label = "reset";
++			gpios = <&gpio1 6 1>;
++			linux,code = <0x198>;
++		};
++	};
++};
+diff -uNr target_orig/linux/ramips/dts/HC5661.dts target/linux/ramips/dts/HC5661.dts
+--- target_orig/linux/ramips/dts/HC5661.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/HC5661.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,32 @@
++/dts-v1/;
++
++/include/ "HC5XXX.dtsi"
++
++/ {
++	compatible = "HC5661", "ralink,mt7620a-soc";
++	model = "HiWiFi HC5661";
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5661:blue:system";
++			gpios = <&gpio0 9 1>;
++		};
++
++		internet {
++			label = "hc5661:blue:internet";
++			gpios = <&gpio0 11 1>;
++		};
++
++		wlan2g {
++			label = "hc5661:blue:wlan2g";
++			gpios = <&gpio3 0 1>;
++		};
++
++		wlan5g {
++			label = "hc5661:blue:wlan5g";
++			gpios = <&gpio0 7 1>;
++		};
++	};
++};
+diff -uNr target_orig/linux/ramips/dts/HC5761.dts target/linux/ramips/dts/HC5761.dts
+--- target_orig/linux/ramips/dts/HC5761.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/HC5761.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,32 @@
++/dts-v1/;
++
++/include/ "HC5XXX.dtsi"
++
++/ {
++	compatible = "HC5761", "ralink,mt7620a-soc";
++	model = "HiWiFi HC5761";
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5761:blue:system";
++			gpios = <&gpio0 9 1>;
++		};
++
++		internet {
++			label = "hc5761:blue:internet";
++			gpios = <&gpio0 11 1>;
++		};
++
++		wlan2g {
++			label = "hc5761:blue:wlan2g";
++			gpios = <&gpio3 0 1>;
++		};
++
++		wlan5g {
++			label = "hc5761:blue:wlan5g";
++			gpios = <&gpio0 7 1>;
++		};
++	};
++};
+diff -uNr target_orig/linux/ramips/dts/HC5861.dts target/linux/ramips/dts/HC5861.dts
+--- target_orig/linux/ramips/dts/HC5861.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/HC5861.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,92 @@
++/dts-v1/;
++
++/include/ "HC5XXX.dtsi"
++
++/ {
++	compatible = "HC5861", "ralink,mt7620a-soc";
++	model = "HiWiFi HC5861";
++
++	ethernet@10100000 {
++		status = "okay";
++		mtd-mac-address = <&factory 0x4>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&rgmii1_pins &rgmii2_pins &mdio_pins>;
++		ralink,port-map = "wllll";
++
++		port@4 {
++			status = "okay";
++			phy-handle = <&phy4>;
++			phy-mode = "rgmii";
++		};
++
++		port@5 {
++			status = "okay";
++			phy-handle = <&phy5>;
++			phy-mode = "rgmii";
++		};
++
++		mdio-bus {
++			status = "okay";
++
++			phy4: ethernet-phy@4 {
++				reg = <4>;
++				phy-mode = "rgmii";
++			};
++
++			phy5: ethernet-phy@5 {
++				reg = <5>;
++				phy-mode = "rgmii";
++			};
++		};
++	};
++
++	gsw@10110000 {
++		ralink,port4 = "gmac";
++	};
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5861:blue:system";
++			gpios = <&gpio0 9 1>;
++		};
++
++		wlan2g {
++			label = "hc5861:blue:wlan2g";
++			gpios = <&gpio0 11 1>;
++		};
++
++		internet {
++			label = "hc5861:blue:internet";
++			gpios = <&gpio3 0 1>;
++		};
++
++		wlan5g {
++			label = "hc5861:blue:wlan5g";
++			gpios = <&gpio0 7 1>;
++		};
++
++		turbo {
++			label = "hc5861:blue:turbo";
++			gpios = <&gpio0 10 1>;
++		};
++	};
++
++	gpio_export {
++		compatible = "gpio-export";
++		#size-cells = <0>;
++
++		usbpower {
++			gpio-export,name = "usbpower";
++			gpio-export,output = <0>;
++			gpios = <&gpio0 13 0>;
++		};
++
++		sdpower {
++			gpio-export,name = "sdpower";
++			gpio-export,output = <0>;
++			gpios = <&gpio0 8 0>;
++		};
++	};
++};
+diff -uNr target_orig/linux/ramips/dts/HC5XXX.dtsi target/linux/ramips/dts/HC5XXX.dtsi
+--- target_orig/linux/ramips/dts/HC5XXX.dtsi	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/HC5XXX.dtsi	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,141 @@
++/include/ "mt7620a.dtsi"
++
++/ {
++	chosen {
++		bootargs = "console=ttyS0,115200";
++	};
++
++	palmbus@10000000 {
++		sysc@0 {
++			ralink,gpiomux = "i2c", "jtag";
++			ralink,uartmux = "gpio";
++			ralink,wdtmux = <1>;
++		};
++
++		gpio0: gpio@600 {
++			status = "okay";
++		};
++
++		gpio2: gpio@660 {
++			status = "okay";
++		};
++
++		gpio3: gpio@688 {
++			status = "okay";
++		};
++
++		spi@b00 {
++			status = "okay";
++
++			m25p80@0 {
++				#address-cells = <1>;
++				#size-cells = <1>;
++				compatible = "w25q128";
++				reg = <0 0>;
++				linux,modalias = "m25p80", "w25q128";
++				spi-max-frequency = <10000000>;
++
++				partition@0 {
++					label = "u-boot";
++					reg = <0x0 0x30000>;
++				};
++
++				partition@30000 {
++					label = "u-boot-env";
++					reg = <0x30000 0x10000>;
++					read-only;
++				};
++
++				factory: partition@40000 {
++					label = "factory";
++					reg = <0x40000 0x10000>;
++				};
++
++				partition@50000 {
++					label = "firmware";
++					reg = <0x50000 0xf80000>;
++				};
++
++				partition@fd0000 {
++					label = "hwf_config";
++					reg = <0xfd0000 0x10000>;
++				};
++
++				bdinfo: partition@fe0000 {
++					label = "bdinfo";
++					reg = <0xfe0000 0x10000>;
++				};
++
++				partition@ff0000 {
++					label = "backup";
++					reg = <0xff0000 0x10000>;
++				};
++			};
++		};
++	};
++
++	ehci@101c0000 {
++		status = "okay";
++	};
++
++	ohci@101c1000 {
++		status = "okay";
++	};
++
++	ethernet@10100000 {
++		pinctrl-names = "default";
++		pinctrl-0 = <&ephy_pins>;
++		mtd-mac-address = <&factory 0x4>;
++		ralink,port-map = "wllll";
++	};
++
++	sdhci@10130000 {
++		status = "okay";
++	};
++
++	wmac@10180000 {
++		ralink,mtd-eeprom = <&factory 0>;
++	};
++
++	pcie@10140000 {
++		status = "okay";
++	};
++
++	pinctrl {
++		state_default: pinctrl0 {
++			gpio {
++				ralink,group = "uartf", "wled", "nd_sd";
++				ralink,function = "gpio";
++			};
++
++			pa {
++				ralink,group = "pa";
++				ralink,function = "pa";
++			};
++		};
++	};
++
++	gpio-keys-polled {
++		compatible = "gpio-keys-polled";
++		#address-cells = <1>;
++		#size-cells = <0>;
++		poll-interval = <20>;
++
++		reset {
++			label = "reset";
++			gpios = <&gpio0 12 1>;
++			linux,code = <0x198>;
++		};
++	};
++
++	gpio_export {
++		compatible = "gpio-export";
++		#size-cells = <0>;
++
++		usbpower {
++			gpio-export,name = "usbpower";
++			gpio-export,output = <1>;
++			gpios = <&gpio0 13 0>;
++		};
++	};
++};
+diff -uNr target_orig/linux/ramips/dts/HT-TM02.dts target/linux/ramips/dts/HT-TM02.dts
+--- target_orig/linux/ramips/dts/HT-TM02.dts	2016-03-15 14:49:02.454264000 +0800
++++ target/linux/ramips/dts/HT-TM02.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -57,7 +57,6 @@
+ 
+ 	esw@10110000 {
+ 		ralink,portmap = <0x10>;
+-		ralink,portdisable = <0x2f>;
+ 	};
+ 
+ 	wmac@10180000 {
+diff -uNr target_orig/linux/ramips/dts/LINKIT7688.dts target/linux/ramips/dts/LINKIT7688.dts
+--- target_orig/linux/ramips/dts/LINKIT7688.dts	2016-03-15 14:49:02.454264000 +0800
++++ target/linux/ramips/dts/LINKIT7688.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -163,4 +163,7 @@
+ 		#gpio-cells = <2>;
+ 	};
+ 
++	pcie@10140000 {
++		status = "okey";
++	};
+ };
+diff -uNr target_orig/linux/ramips/dts/mt7628an.dtsi target/linux/ramips/dts/mt7628an.dtsi
+--- target_orig/linux/ramips/dts/mt7628an.dtsi	2016-03-15 14:49:02.454264000 +0800
++++ target/linux/ramips/dts/mt7628an.dtsi	2016-03-15 15:05:44.515257000 +0800
+@@ -337,13 +337,12 @@
+ 		#reset-cells = <1>;
+ 	};
+ 
+-	usbphy: usbphy@10120000 {
++	usbphy: usbphy {
+ 		compatible = "ralink,mt7628an-usbphy", "ralink,mt7620a-usbphy";
+-		reg = <0x10120000 1000>;
+ 		#phy-cells = <1>;
+ 
+-		resets = <&rstctrl 22 &rstctrl 25>;
+-		reset-names = "host", "device";
++		resets = <&rstctrl 22>;
++		reset-names = "host";
+ 	};
+ 
+ 	sdhci@10130000 {
+diff -uNr target_orig/linux/ramips/dts/ZBT-WG2626.dts target/linux/ramips/dts/ZBT-WG2626.dts
+--- target_orig/linux/ramips/dts/ZBT-WG2626.dts	2016-03-15 14:49:02.454264000 +0800
++++ target/linux/ramips/dts/ZBT-WG2626.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -119,7 +119,7 @@
+ 	pinctrl {
+ 		state_default: pinctrl0 {
+ 			gpio {
+-				ralink,group = "wdt", "rgmii2", "i2c", "mdio";
++				ralink,group = "wdt", "rgmii2", "wdt rst", "jtag", "mdio";
+ 				ralink,function = "gpio";
+ 			};
+ 		};
+diff -uNr target_orig/linux/ramips/dts/ZC9525A.dts target/linux/ramips/dts/ZC9525A.dts
+--- target_orig/linux/ramips/dts/ZC9525A.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/ZC9525A.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,186 @@
++/dts-v1/;
++
++/include/ "mt7628an.dtsi"
++
++/ {
++	compatible = "ZC9525A", "mediatek,mt7628an-soc";
++	model = "KunTeng ZC9525A";
++
++	chosen {
++		bootargs = "console=ttyS0,115200";
++	};
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x8000000>;
++	};
++
++	pinctrl {
++		state_default: pinctrl0 {
++			gpio {
++				ralink,group = "gpio";
++				ralink,function = "gpio";
++			};
++			perst {
++				ralink,group = "perst";
++				ralink,function = "gpio";
++			};
++			refclk {
++				ralink,group = "refclk";
++				ralink,function = "gpio";
++			};
++			i2s {
++				ralink,group = "i2s";
++				ralink,function = "gpio";
++			};
++			spis {
++				ralink,group = "spis";
++				ralink,function = "gpio";
++			};
++			wled_kn {
++				ralink,group = "wled_kn";
++				ralink,function = "gpio";
++			};
++			wled_an {
++				ralink,group = "wled_an";
++				ralink,function = "wled_an";
++			};
++			wdt {
++				ralink,group = "wdt";
++				ralink,function = "gpio";
++			};
++		};
++	};
++
++	palmbus@10000000 {
++		spi@b00 {
++			status = "okay";
++
++			pinctrl-names = "default";
++			pinctrl-0 = <&spi_pins>, <&spi_cs1_pins>;
++
++			m25p80@0 {
++				#address-cells = <1>;
++				#size-cells = <1>;
++				compatible = "w25q128";
++				reg = <0 0>;
++				linux,modalias = "m25p80", "w25q128";
++				spi-max-frequency = <10000000>;
++				m25p,chunked-io = <31>;
++
++				partition@0 {
++					label = "u-boot";
++					reg = <0x0 0x30000>;
++					read-only;
++				};
++
++				partition@30000 {
++					label = "u-boot-env";
++					reg = <0x30000 0x10000>;
++				};
++
++				factory: partition@40000 {
++					label = "factory";
++					reg = <0x40000 0x10000>;
++					read-only;
++				};
++
++				partition@50000 {
++					label = "firmware";
++					reg = <0x50000 0xf80000>;
++				};
++				
++				partition@fd0000 {
++					label = "hwf_config";
++					reg = <0xfd0000 0x10000>;
++				};
++
++				bdinfo: partition@fe0000 {
++					label = "bdinfo";
++					reg = <0xfe0000 0x10000>;
++				};
++
++				partition@ff0000 {
++					label = "backup";
++					reg = <0xff0000 0x10000>;
++				};
++			};
++
++			spidev@1 {
++				#address-cells = <1>;
++				#size-cells = <1>;
++				compatible = "spidev";
++				reg = <1 0>;
++				spi-max-frequency = <40000000>;
++			};
++		};
++
++		i2c@900 {
++			status = "okay";
++		};
++
++		uart1@d00 {
++			status = "okay";
++		};
++
++		uart2@e00 {
++			status = "okay";
++		};
++
++		pwm@5000 {
++			status = "okay";
++		};
++	};
++
++	ethernet@10100000 {
++		mtd-mac-address = <&factory 0x4>;
++		ralink,port-map = "llllw";
++	};
++	
++	pcie@10140000 {
++		status = "okay";
++	};
++
++	sdhci@10130000 {
++		status = "okay";
++		mediatek,cd-high;
++//		mediatek,cd-poll;
++	};
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5661a:blue:system";
++			gpios = <&gpio1 5 0>;
++		};
++		
++		internet {
++			label = "hc5661a:blue:internet";
++			gpios = <&gpio0 1 0>;
++		};
++		
++		wlan2g {
++			label = "hc5661a:blue:wlan2g";
++			gpios = <&gpio1 12 0>;
++		};
++		
++		wlan5g {
++			label = "hc5661a:blue:wlan5g";
++			gpios = <&gpio1 8 0>;
++		};
++	};
++
++	gpio-keys-polled {
++		compatible = "gpio-keys-polled";
++		#address-cells = <1>;
++		#size-cells = <0>;
++		poll-interval = <20>;
++	
++		reset {
++			label = "reset";
++			gpios = <&gpio1 6 1>;
++			linux,code = <0x198>;
++		};
++	};
++};
+diff -uNr target_orig/linux/ramips/dts/ZC9525.dts target/linux/ramips/dts/ZC9525.dts
+--- target_orig/linux/ramips/dts/ZC9525.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/ZC9525.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,32 @@
++/dts-v1/;
++
++/include/ "HC5XXX.dtsi"
++
++/ {
++	compatible = "ZC9525", "ralink,mt7620a-soc";
++	model = "KunTeng ZC9525";
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5661:blue:system";
++			gpios = <&gpio0 9 1>;
++		};
++
++		internet {
++			label = "hc5661:blue:internet";
++			gpios = <&gpio0 11 1>;
++		};
++
++		wlan2g {
++			label = "hc5661:blue:wlan2g";
++			gpios = <&gpio3 0 1>;
++		};
++
++		wlan5g {
++			label = "hc5661:blue:wlan5g";
++			gpios = <&gpio0 7 1>;
++		};
++	};
++};
+diff -uNr target_orig/linux/ramips/dts/ZC9526.dts target/linux/ramips/dts/ZC9526.dts
+--- target_orig/linux/ramips/dts/ZC9526.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/ZC9526.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,32 @@
++/dts-v1/;
++
++/include/ "HC5XXX.dtsi"
++
++/ {
++	compatible = "ZC9526", "ralink,mt7620a-soc";
++	model = "KunTeng ZC9526";
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5761:blue:system";
++			gpios = <&gpio0 9 1>;
++		};
++
++		internet {
++			label = "hc5761:blue:internet";
++			gpios = <&gpio0 11 1>;
++		};
++
++		wlan2g {
++			label = "hc5761:blue:wlan2g";
++			gpios = <&gpio3 0 1>;
++		};
++
++		wlan5g {
++			label = "hc5761:blue:wlan5g";
++			gpios = <&gpio0 7 1>;
++		};
++	};
++};
+diff -uNr target_orig/linux/ramips/dts/ZC9527.dts target/linux/ramips/dts/ZC9527.dts
+--- target_orig/linux/ramips/dts/ZC9527.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/ZC9527.dts	2016-03-15 15:05:44.515257000 +0800
+@@ -0,0 +1,92 @@
++/dts-v1/;
++
++/include/ "HC5XXX.dtsi"
++
++/ {
++	compatible = "ZC9527", "ralink,mt7620a-soc";
++	model = "KunTeng ZC9527";
++
++	ethernet@10100000 {
++		status = "okay";
++		mtd-mac-address = <&factory 0x4>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&rgmii1_pins &rgmii2_pins &mdio_pins>;
++		ralink,port-map = "wllll";
++
++		port@4 {
++			status = "okay";
++			phy-handle = <&phy4>;
++			phy-mode = "rgmii";
++		};
++
++		port@5 {
++			status = "okay";
++			phy-handle = <&phy5>;
++			phy-mode = "rgmii";
++		};
++
++		mdio-bus {
++			status = "okay";
++
++			phy4: ethernet-phy@4 {
++				reg = <4>;
++				phy-mode = "rgmii";
++			};
++
++			phy5: ethernet-phy@5 {
++				reg = <5>;
++				phy-mode = "rgmii";
++			};
++		};
++	};
++
++	gsw@10110000 {
++		ralink,port4 = "gmac";
++	};
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5861:blue:system";
++			gpios = <&gpio0 9 1>;
++		};
++
++		wlan2g {
++			label = "hc5861:blue:wlan2g";
++			gpios = <&gpio0 11 1>;
++		};
++
++		internet {
++			label = "hc5861:blue:internet";
++			gpios = <&gpio3 0 1>;
++		};
++
++		wlan5g {
++			label = "hc5861:blue:wlan5g";
++			gpios = <&gpio0 7 1>;
++		};
++
++		turbo {
++			label = "hc5861:blue:turbo";
++			gpios = <&gpio0 10 1>;
++		};
++	};
++
++	gpio_export {
++		compatible = "gpio-export";
++		#size-cells = <0>;
++
++		usbpower {
++			gpio-export,name = "usbpower";
++			gpio-export,output = <0>;
++			gpios = <&gpio0 13 0>;
++		};
++
++		sdpower {
++			gpio-export,name = "sdpower";
++			gpio-export,output = <0>;
++			gpios = <&gpio0 8 0>;
++		};
++	};
++};
+diff -uNr target_orig/linux/ramips/files/drivers/net/ethernet/ralink/esw_rt3052.c target/linux/ramips/files/drivers/net/ethernet/ralink/esw_rt3052.c
+--- target_orig/linux/ramips/files/drivers/net/ethernet/ralink/esw_rt3052.c	2016-03-15 14:49:02.458264000 +0800
++++ target/linux/ramips/files/drivers/net/ethernet/ralink/esw_rt3052.c	2016-03-15 15:05:44.519257000 +0800
+@@ -233,7 +233,6 @@
+ 	spinlock_t		reg_rw_lock;
+ 
+ 	unsigned char		port_map;
+-	unsigned char		port_disable;
+ 	unsigned int		reg_initval_fct2;
+ 	unsigned int		reg_initval_fpa2;
+ 	unsigned int		reg_led_polarity;
+@@ -458,7 +457,7 @@
+ 		      (RT305X_ESW_PORTS_ALL << RT305X_ESW_PFC1_EN_VLAN_S),
+ 		      RT305X_ESW_REG_PFC1);
+ 
+-	/* Enable all ports, Back Pressure and Flow Control */
++	/* Enable Back Pressure, and Flow Control */
+ 	esw_w32(esw,
+ 		      ((RT305X_ESW_PORTS_ALL << RT305X_ESW_POC0_EN_BP_S) |
+ 		       (RT305X_ESW_PORTS_ALL << RT305X_ESW_POC0_EN_FC_S)),
+@@ -505,14 +504,8 @@
+ 	esw_w32(esw, 0x00000005, RT305X_ESW_REG_P3LED);
+ 	esw_w32(esw, 0x00000005, RT305X_ESW_REG_P4LED);
+ 
+-	/* Copy disabled port configuration from device tree setup */
+-	port_disable = esw->port_disable;
+-
+-	/* Disable nonexistent ports by reading the switch config
+-	 * after having enabled all possible ports above
+-	 */
+-	port_disable |= esw_get_port_disable(esw);
+-
++	/* Copy disabled port configuration from bootloader setup */
++	port_disable = esw_get_port_disable(esw);
+ 	for (i = 0; i < 6; i++)
+ 		esw->ports[i].disable = (port_disable & (1 << i)) != 0;
+ 
+@@ -1380,7 +1373,7 @@
+ {
+ 	struct device_node *np = pdev->dev.of_node;
+ 	const struct rt305x_esw_platform_data *pdata;
+-	const __be32 *port_map, *port_disable, *reg_init;
++	const __be32 *port_map, *reg_init;
+ 	struct rt305x_esw *esw;
+ 	struct switch_dev *swdev;
+ 	struct resource *res, *irq;
+@@ -1424,23 +1417,19 @@
+ 	}
+ 
+ 	port_map = of_get_property(np, "ralink,portmap", NULL);
+-	if (port_map)
++        if (port_map)
+ 		esw->port_map = be32_to_cpu(*port_map);
+ 
+-	port_disable = of_get_property(np, "ralink,portdisable", NULL);
+-	if (port_disable)
+-		esw->port_disable = be32_to_cpu(*port_disable);
+-
+ 	reg_init = of_get_property(np, "ralink,fct2", NULL);
+-	if (reg_init)
++        if (reg_init)
+ 		esw->reg_initval_fct2 = be32_to_cpu(*reg_init);
+ 
+ 	reg_init = of_get_property(np, "ralink,fpa2", NULL);
+-	if (reg_init)
++        if (reg_init)
+ 		esw->reg_initval_fpa2 = be32_to_cpu(*reg_init);
+ 
+ 	reg_init = of_get_property(np, "ralink,led_polarity", NULL);
+-	if (reg_init)
++        if (reg_init)
+ 		esw->reg_led_polarity = be32_to_cpu(*reg_init);
+ 
+ 	swdev = &esw->swdev;
+diff -uNr target_orig/linux/ramips/image/Makefile target/linux/ramips/image/Makefile
+--- target_orig/linux/ramips/image/Makefile	2016-03-15 14:49:02.458264000 +0800
++++ target/linux/ramips/image/Makefile	2016-03-15 15:05:44.519257000 +0800
+@@ -546,7 +546,7 @@
+ 	$(call BuildFirmware/OF/initramfs,$(1),$(2),$(3),$(4))
+ 	mkhilinkfw -e -i$(call imgname,$(1),$(2))-uImage.bin -o $(call imgname,$(1),$(2))-factory.bin;
+ endef
+-Image/Build/Profile/HLKRM04=$(call BuildFirmware/HLKRM04/$(1),$(1),hlk-rm04,HLKRM04,HLK-RM04)
++Image/Build/Profile/HLKRM04=$(call BuildFirmware/HLKRM04/$(1),$(1),hlk-rm04,HLKRM04,HLK-RM02)
+ 
+ Image/Build/Profile/HT-TM02=$(call BuildFirmware/Default8M/$(1),$(1),ht-tm02,HT-TM02)
+ 
+@@ -888,6 +888,13 @@
+ Image/Build/Profile/ArcherC20i=$(call BuildFirmware/Tplink/$(1),$(1),ArcherC20i,ArcherC20i)
+ microwrt_mtd_size=16515072
+ Image/Build/Profile/MicroWRT=$(call BuildFirmware/CustomFlash/$(1),$(1),microwrt,MicroWRT,$(microwrt_mtd_size))
++Image/Build/Profile/HC5661=$(call BuildFirmware/Default16M/$(1),$(1),hc5661,HC5661)
++Image/Build/Profile/HC5761=$(call BuildFirmware/Default16M/$(1),$(1),hc5761,HC5761)
++Image/Build/Profile/HC5861=$(call BuildFirmware/Default16M/$(1),$(1),hc5861,HC5861)
++Image/Build/Profile/ZC9525=$(call BuildFirmware/Default16M/$(1),$(1),zc9525,ZC9525)
++Image/Build/Profile/ZC9526=$(call BuildFirmware/Default16M/$(1),$(1),zc9526,ZC9526)
++Image/Build/Profile/ZC9527=$(call BuildFirmware/Default16M/$(1),$(1),zc9527,ZC9527)
++
+ 
+ 
+ ifeq ($(SUBTARGET),mt7620)
+@@ -920,6 +927,12 @@
+ 	$(call Image/Build/Profile/ZBT-WA05,$(1))
+ 	$(call Image/Build/Profile/ArcherC20i,$(1))
+ 	$(call Image/Build/Profile/MicroWRT,$(1))
++	$(call Image/Build/Profile/HC5661,$(1))
++	$(call Image/Build/Profile/HC5761,$(1))
++	$(call Image/Build/Profile/HC5861,$(1))
++	$(call Image/Build/Profile/ZC9525,$(1))
++	$(call Image/Build/Profile/ZC9526,$(1))
++	$(call Image/Build/Profile/ZC9527,$(1))
+ endef
+ endif
+ 
+@@ -984,10 +997,14 @@
+ #
+ 
+ Image/Build/Profile/MT7628=$(call BuildFirmware/Default4M/$(1),$(1),mt7628,MT7628)
++Image/Build/Profile/HC5661A=$(call BuildFirmware/Default16M/$(1),$(1),hc5661a,HC5661A)
++Image/Build/Profile/ZC9525A=$(call BuildFirmware/Default16M/$(1),$(1),zc9525a,ZC9525A)
+ 
+ ifeq ($(SUBTARGET),mt7628)
+ define Image/Build/Profile/Default
+ 	$(call Image/Build/Profile/MT7628,$(1))
++	$(call Image/Build/Profile/HC5661A,$(1))
++	$(call Image/Build/Profile/ZC9525A,$(1))
+ endef
+ endif
+ 
+diff -uNr target_orig/linux/ramips/mt7620/config-3.18 target/linux/ramips/mt7620/config-3.18
+--- target_orig/linux/ramips/mt7620/config-3.18	2016-03-15 14:49:02.458264000 +0800
++++ target/linux/ramips/mt7620/config-3.18	2016-03-15 15:05:44.519257000 +0800
+@@ -13,6 +13,7 @@
+ CONFIG_AT803X_PHY=y
+ CONFIG_CC_OPTIMIZE_FOR_SIZE=y
+ CONFIG_CEVT_R4K=y
++CONFIG_CEVT_SYSTICK_QUIRK=y
+ CONFIG_CLKDEV_LOOKUP=y
+ CONFIG_CLKEVT_RT3352=y
+ CONFIG_CLKSRC_MMIO=y
+@@ -39,7 +40,6 @@
+ CONFIG_DEBUG_PINCTRL=y
+ CONFIG_DMA_NONCOHERENT=y
+ # CONFIG_DTB_MT7620A_EVAL is not set
+-# CONFIG_DTB_MT7628AN_EVAL is not set
+ CONFIG_DTB_RT_NONE=y
+ CONFIG_DTC=y
+ CONFIG_EARLY_PRINTK=y
+@@ -151,8 +151,6 @@
+ # CONFIG_PINCTRL_SINGLE is not set
+ # CONFIG_PREEMPT_RCU is not set
+ CONFIG_RALINK=y
+-# CONFIG_RALINK_ILL_ACC is not set
+-CONFIG_RALINK_USBPHY=y
+ CONFIG_RALINK_WDT=y
+ # CONFIG_RCU_STALL_COMMON is not set
+ CONFIG_RESET_CONTROLLER=y
+@@ -167,8 +165,6 @@
+ # CONFIG_SOC_RT288X is not set
+ # CONFIG_SOC_RT305X is not set
+ # CONFIG_SOC_RT3883 is not set
+-CONFIG_SND_MT76XX_SOC_MT7620=y
+-# CONFIG_SND_MT76XX_SOC_MT7628 is not set
+ CONFIG_SPI=y
+ CONFIG_SPI_MASTER=y
+ # CONFIG_SPI_MT7621 is not set
+@@ -182,8 +178,8 @@
+ CONFIG_SYS_SUPPORTS_LITTLE_ENDIAN=y
+ CONFIG_SYS_SUPPORTS_MIPS16=y
+ CONFIG_TICK_CPU_ACCOUNTING=y
+-CONFIG_USB_PHY=y
+ CONFIG_USB_SUPPORT=y
+ CONFIG_USE_OF=y
+ CONFIG_WATCHDOG_CORE=y
+ CONFIG_ZONE_DMA_FLAG=0
++
+diff -uNr target_orig/linux/ramips/mt7620/profiles/hiwifi.mk target/linux/ramips/mt7620/profiles/hiwifi.mk
+--- target_orig/linux/ramips/mt7620/profiles/hiwifi.mk	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/mt7620/profiles/hiwifi.mk	2016-03-15 15:05:44.519257000 +0800
+@@ -0,0 +1,47 @@
++#
++# Copyright (C) 2015 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++define Profile/HC5661
++	NAME:=HiWiFi HC5661
++	PACKAGES:=\
++		kmod-usb-core kmod-usb-dwc2 kmod-usb2 \
++		kmod-mmc-spi kmod-sdhci kmod-sdhci-mt7620 \
++   		kmod-ledtrig-usbdev kmod-mt7620 apfree-wireless
++endef
++
++define Profile/HC5661/Description
++	Support HiWiFi HC5661 model(J1S)
++endef
++$(eval $(call Profile,HC5661))
++
++
++define Profile/HC5761
++	NAME:=HiWiFi HC5761
++	PACKAGES:=\
++		kmod-usb-core kmod-usb-dwc2 kmod-usb2 \
++		kmod-mmc-spi kmod-sdhci kmod-sdhci-mt7620 \
++		kmod-ledtrig-usbdev kmod-mt7620 kmod-mt7610e
++endef
++
++define Profile/HC5761/Description
++	Support HiWiFi HC5761 model(J2)
++endef
++$(eval $(call Profile,HC5761))
++
++	
++define Profile/HC5861
++	NAME:=HiWiFi HC5861
++	PACKAGES:=\
++		kmod-usb-core kmod-usb-dwc2 kmod-usb2 \
++		kmod-mmc-spi kmod-sdhci kmod-sdhci-mt7620 \
++		kmod-ledtrig-usbdev kmod-mt7620 kmod-mt7610e
++endef
++
++define Profile/HC5861/Description
++	Support HiWiFi HC5861 model(J3)
++endef
++$(eval $(call Profile,HC5861))
+diff -uNr target_orig/linux/ramips/mt7620/profiles/kunteng.mk target/linux/ramips/mt7620/profiles/kunteng.mk
+--- target_orig/linux/ramips/mt7620/profiles/kunteng.mk	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/mt7620/profiles/kunteng.mk	2016-03-15 15:05:44.519257000 +0800
+@@ -0,0 +1,47 @@
++#
++# Copyright (C) 2015 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++define Profile/ZC9525
++	NAME:=KunTeng ZC9525
++	PACKAGES:=\
++		kmod-usb-core kmod-usb-dwc2 kmod-usb2 \
++		kmod-mmc-spi kmod-sdhci kmod-sdhci-mt7620 \
++   		kmod-ledtrig-usbdev kmod-mt7620 apfree-wireless
++endef
++
++define Profile/ZC9525/Description
++	Support KunTeng ZC9525 model(J1S)
++endef
++$(eval $(call Profile,ZC9525))
++
++
++define Profile/ZC9526
++	NAME:=KunTeng ZC9526
++	PACKAGES:=\
++		kmod-usb-core kmod-usb-dwc2 kmod-usb2 \
++		kmod-mmc-spi kmod-sdhci kmod-sdhci-mt7620 \
++		kmod-ledtrig-usbdev kmod-mt7620 kmod-mt7610e
++endef
++
++define Profile/ZC9526/Description
++	Support KunTeng ZC9526 model(J2)
++endef
++$(eval $(call Profile,ZC9526))
++
++	
++define Profile/ZC9527
++	NAME:=KunTeng ZC9527
++	PACKAGES:=\
++		kmod-usb-core kmod-usb-dwc2 kmod-usb2 \
++		kmod-mmc-spi kmod-sdhci kmod-sdhci-mt7620 \
++		kmod-ledtrig-usbdev kmod-mt7620 kmod-mt7610e
++endef
++
++define Profile/ZC9527/Description
++	Support KunTeng ZC9527 model(J3)
++endef
++$(eval $(call Profile,ZC9527))
+diff -uNr target_orig/linux/ramips/mt7620/target.mk target/linux/ramips/mt7620/target.mk
+--- target_orig/linux/ramips/mt7620/target.mk	2016-03-15 14:49:02.458264000 +0800
++++ target/linux/ramips/mt7620/target.mk	2016-03-15 15:05:44.519257000 +0800
+@@ -9,7 +9,7 @@
+ CPU_TYPE:=24kec
+ CPU_SUBTYPE:=dsp
+ 
+-DEFAULT_PACKAGES += kmod-rt2800-pci kmod-rt2800-soc
++#DEFAULT_PACKAGES += kmod-rt2800-pci kmod-rt2800-soc
+ 
+ define Target/Description
+ 	Build firmware images for Ralink MT7620 based boards.
+diff -uNr target_orig/linux/ramips/mt7628/profiles/hiwifi.mk target/linux/ramips/mt7628/profiles/hiwifi.mk
+--- target_orig/linux/ramips/mt7628/profiles/hiwifi.mk	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/mt7628/profiles/hiwifi.mk	2016-03-15 15:05:44.519257000 +0800
+@@ -0,0 +1,19 @@
++#
++# Copyright (C) 2015 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++define Profile/HC5661A
++	NAME:=HiWiFi HC5661A
++	PACKAGES:=\
++		kmod-usb-core kmod-usb-dwc2 kmod-usb2 \
++		kmod-mmc-spi kmod-sdhci \
++   		kmod-ledtrig-usbdev kmod-mt7628 apfree-wireless apfree_wifidog
++endef
++
++define Profile/HC5661A/Description
++	Support HiWiFi HC5661A model
++endef
++$(eval $(call Profile,HC5661A))
+diff -uNr target_orig/linux/ramips/mt7628/profiles/kunteng.mk target/linux/ramips/mt7628/profiles/kunteng.mk
+--- target_orig/linux/ramips/mt7628/profiles/kunteng.mk	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/mt7628/profiles/kunteng.mk	2016-03-15 15:05:44.519257000 +0800
+@@ -0,0 +1,19 @@
++#
++# Copyright (C) 2015 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++define Profile/ZC9525A
++	NAME:=KunTeng ZC9525A
++	PACKAGES:=\
++		kmod-usb-core kmod-usb-dwc2 kmod-usb2 \
++		kmod-mmc-spi kmod-sdhci \
++   		kmod-ledtrig-usbdev kmod-mt7628 apfree-wireless apfree_wifidog
++endef
++
++define Profile/ZC9525A/Description
++	Support KunTeng ZC9525A model
++endef
++$(eval $(call Profile,ZC9525A))
+diff -uNr target_orig/linux/ramips/patches-3.18/0037-USB-phy-add-ralink-SoC-driver.patch target/linux/ramips/patches-3.18/0037-USB-phy-add-ralink-SoC-driver.patch
+--- target_orig/linux/ramips/patches-3.18/0037-USB-phy-add-ralink-SoC-driver.patch	2016-03-15 14:49:02.458264000 +0800
++++ target/linux/ramips/patches-3.18/0037-USB-phy-add-ralink-SoC-driver.patch	2016-03-15 15:05:44.519257000 +0800
+@@ -1,6 +1,6 @@
+ --- a/drivers/phy/Kconfig
+ +++ b/drivers/phy/Kconfig
+-@@ -239,6 +239,11 @@
++@@ -239,6 +239,11 @@ config PHY_XGENE
+  	help
+  	  This option enables support for APM X-Gene SoC multi-purpose PHY.
+  
+@@ -14,18 +14,18 @@
+  	depends on RESET_CONTROLLER
+ --- a/drivers/phy/Makefile
+ +++ b/drivers/phy/Makefile
+-@@ -31,3 +31,4 @@
++@@ -31,3 +31,4 @@ obj-$(CONFIG_PHY_ST_SPEAR1340_MIPHY)	+=
+  obj-$(CONFIG_PHY_XGENE)			+= phy-xgene.o
+  obj-$(CONFIG_PHY_STIH407_USB)		+= phy-stih407-usb.o
+  obj-$(CONFIG_PHY_STIH41X_USB)		+= phy-stih41x-usb.o
+ +obj-$(CONFIG_PHY_RALINK_USB)		+= phy-ralink-usb.o
+ --- /dev/null
+ +++ b/drivers/phy/phy-ralink-usb.c
+-@@ -0,0 +1,228 @@
++@@ -0,0 +1,175 @@
+ +/*
+ + * Allwinner ralink USB phy driver
+ + *
+-+ * Copyright (C) 2016 John Crispin <blogic@openwrt.org>
+++ * Copyright (C) 2014 John Crispin <blogic@openwrt.org>
+ + *
+ + * Based on code from
+ + * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
+@@ -58,20 +58,6 @@
+ +#define RT_SYSC_REG_CLKCFG1		0x030
+ +#define RT_SYSC_REG_USB_PHY_CFG		0x05c
+ +
+-+#define OFS_U2_PHY_AC0                  0x00
+-+#define OFS_U2_PHY_AC1                  0x04
+-+#define OFS_U2_PHY_AC2                  0x08
+-+#define OFS_U2_PHY_ACR0                 0x10
+-+#define OFS_U2_PHY_ACR1                 0x14
+-+#define OFS_U2_PHY_ACR2                 0x18
+-+#define OFS_U2_PHY_ACR3                 0x1C
+-+#define OFS_U2_PHY_ACR4                 0x20
+-+#define OFS_U2_PHY_AMON0                0x24
+-+#define OFS_U2_PHY_DCR0                 0x60
+-+#define OFS_U2_PHY_DCR1                 0x64
+-+#define OFS_U2_PHY_DTM0                 0x68
+-+#define OFS_U2_PHY_DTM1                 0x6C
+-+
+ +#define RT_RSTCTRL_UDEV			BIT(25)
+ +#define RT_RSTCTRL_UHST			BIT(22)
+ +#define RT_SYSCFG1_USB0_HOST_MODE	BIT(10)
+@@ -84,156 +70,117 @@
+ +#define USB_PHY_UTMI_8B60M		BIT(1)
+ +#define UDEV_WAKEUP			BIT(0)
+ +
+-+struct ralink_usb_phy {
+-+	struct reset_control	*rstdev;
+-+	struct reset_control	*rsthost;
+-+	u32			clk;
+-+	struct phy		*phy;
+-+	void __iomem		*base;
+-+};
+++static atomic_t usb_pwr_ref = ATOMIC_INIT(0);
+++static struct reset_control *rstdev;
+++static struct reset_control *rsthost;
+++static u32 phy_clk;
+++static struct phy *rt_phy;
+ +
+-+static void u2_phy_w32(struct ralink_usb_phy *phy, u32 val, u32 reg)
+++static void usb_phy_enable(int state)
+ +{
+-+	iowrite32(val, phy->base + reg);
+++	if (state)
+++		rt_sysc_m32(0, phy_clk, RT_SYSC_REG_CLKCFG1);
+++	else
+++		rt_sysc_m32(phy_clk, 0, RT_SYSC_REG_CLKCFG1);
+++	mdelay(100);
+ +}
+ +
+-+static u32 u2_phy_r32(struct ralink_usb_phy *phy, u32 reg)
+++static int ralink_usb_phy_init(struct phy *_phy)
+ +{
+-+	return ioread32(phy->base + reg);
+++	return 0;
+ +}
+ +
+-+static void
+-+u2_phy_init(struct ralink_usb_phy *phy)
+++static int ralink_usb_phy_exit(struct phy *_phy)
+ +{
+-+	u2_phy_r32(phy, OFS_U2_PHY_AC2);
+-+	u2_phy_r32(phy, OFS_U2_PHY_ACR0);
+-+	u2_phy_r32(phy, OFS_U2_PHY_DCR0);
+-+
+-+	u2_phy_w32(phy, 0x00ffff02, OFS_U2_PHY_DCR0);
+-+	u2_phy_r32(phy, OFS_U2_PHY_DCR0);
+-+	u2_phy_w32(phy, 0x00555502, OFS_U2_PHY_DCR0);
+-+	u2_phy_r32(phy, OFS_U2_PHY_DCR0);
+-+	u2_phy_w32(phy, 0x00aaaa02, OFS_U2_PHY_DCR0);
+-+	u2_phy_r32(phy, OFS_U2_PHY_DCR0);
+-+	u2_phy_w32(phy, 0x00000402, OFS_U2_PHY_DCR0);
+-+	u2_phy_r32(phy, OFS_U2_PHY_DCR0);
+-+	u2_phy_w32(phy, 0x0048086a, OFS_U2_PHY_AC0);
+-+	u2_phy_w32(phy, 0x4400001c, OFS_U2_PHY_AC1);
+-+	u2_phy_w32(phy, 0xc0200000, OFS_U2_PHY_ACR3);
+-+	u2_phy_w32(phy, 0x02000000, OFS_U2_PHY_DTM0);
+++	return 0;
+ +}
+ +
+ +static int ralink_usb_phy_power_on(struct phy *_phy)
+ +{
+-+	struct ralink_usb_phy *phy = phy_get_drvdata(_phy);
+-+	u32 t;
+-+
+-+	/* enable the phy */
+-+	rt_sysc_m32(0, phy->clk, RT_SYSC_REG_CLKCFG1);
+-+
+-+	/* setup host mode */
+-+	rt_sysc_m32(0, RT_SYSCFG1_USB0_HOST_MODE, RT_SYSC_REG_SYSCFG1);
+-+
+-+	/* deassert the reset lines */
+-+	reset_control_deassert(phy->rsthost);
+-+	reset_control_deassert(phy->rstdev);
+-+
+-+	/*
+-+	 * The SDK kernel had a delay of 100ms. however on device
+-+	 * testing showed that 10ms is enough
+-+	 */
+-+	mdelay(10);
+-+
+-+	if (!IS_ERR(phy->base))
+-+		u2_phy_init(phy);
+-+
+-+	/* print some status info */
+-+	t = rt_sysc_r32(RT_SYSC_REG_USB_PHY_CFG);
+-+	dev_info(&phy->phy->dev, "remote usb device wakeup %s\n",
+-+		(t & UDEV_WAKEUP) ? ("enabled") : ("disabled"));
+-+	if (t & USB_PHY_UTMI_8B60M)
+-+		dev_info(&phy->phy->dev, "UTMI 8bit 60MHz\n");
+-+	else
+-+		dev_info(&phy->phy->dev, "UTMI 16bit 30MHz\n");
+++	if (atomic_inc_return(&usb_pwr_ref) == 1) {
+++		int host = 1;
+++		u32 t;
+++
+++		usb_phy_enable(1);
+++
+++		if (host) {
+++			rt_sysc_m32(0, RT_SYSCFG1_USB0_HOST_MODE, RT_SYSC_REG_SYSCFG1);
+++			if (!IS_ERR(rsthost))
+++				reset_control_deassert(rsthost);
+++			if (!IS_ERR(rstdev))
+++				reset_control_deassert(rstdev);
+++		} else {
+++			rt_sysc_m32(RT_SYSCFG1_USB0_HOST_MODE, 0, RT_SYSC_REG_SYSCFG1);
+++			if (!IS_ERR(rstdev))
+++				reset_control_deassert(rstdev);
+++		}
+++		mdelay(100);
+++
+++		t = rt_sysc_r32(RT_SYSC_REG_USB_PHY_CFG);
+++		dev_info(&_phy->dev, "remote usb device wakeup %s\n",
+++			(t & UDEV_WAKEUP) ? ("enabbled") : ("disabled"));
+++		if (t & USB_PHY_UTMI_8B60M)
+++			dev_info(&_phy->dev, "UTMI 8bit 60MHz\n");
+++		else
+++			dev_info(&_phy->dev, "UTMI 16bit 30MHz\n");
+++	}
+ +
+ +	return 0;
+ +}
+ +
+ +static int ralink_usb_phy_power_off(struct phy *_phy)
+ +{
+-+	struct ralink_usb_phy *phy = phy_get_drvdata(_phy);
+-+
+-+	/* assert the reset lines */
+-+	reset_control_assert(phy->rstdev);
+-+	reset_control_assert(phy->rsthost);
+-+
+-+	/* disable the phy */
+-+	rt_sysc_m32(phy->clk, 0, RT_SYSC_REG_CLKCFG1);
+++	if (atomic_dec_return(&usb_pwr_ref) == 0) {
+++		usb_phy_enable(0);
+++		if (!IS_ERR(rstdev))
+++			reset_control_assert(rstdev);
+++		if (!IS_ERR(rsthost))
+++			reset_control_assert(rsthost);
+++	}
+ +
+ +	return 0;
+ +}
+ +
+ +static struct phy_ops ralink_usb_phy_ops = {
+++	.init		= ralink_usb_phy_init,
+++	.exit		= ralink_usb_phy_exit,
+ +	.power_on	= ralink_usb_phy_power_on,
+ +	.power_off	= ralink_usb_phy_power_off,
+ +	.owner		= THIS_MODULE,
+ +};
+ +
+++static struct phy *ralink_usb_phy_xlate(struct device *dev,
+++					struct of_phandle_args *args)
+++{
+++	return rt_phy;
+++}
+++
+ +static const struct of_device_id ralink_usb_phy_of_match[] = {
+-+	{
+-+		.compatible = "ralink,rt3xxx-usbphy",
+-+		.data = (void *) (RT_CLKCFG1_UPHY1_CLK_EN |
+-+				  RT_CLKCFG1_UPHY0_CLK_EN)
+-+	},
+-+	{
+-+		.compatible = "ralink,mt7620a-usbphy",
+-+		.data = (void *) (MT7620_CLKCFG1_UPHY1_CLK_EN |
+-+				  MT7620_CLKCFG1_UPHY0_CLK_EN) },
+++	{ .compatible = "ralink,rt3xxx-usbphy", .data = (void *) (RT_CLKCFG1_UPHY1_CLK_EN | RT_CLKCFG1_UPHY0_CLK_EN) },
+++	{ .compatible = "ralink,mt7620a-usbphy", .data = (void *) (MT7620_CLKCFG1_UPHY1_CLK_EN | MT7620_CLKCFG1_UPHY0_CLK_EN) },
+ +	{ },
+ +};
+ +MODULE_DEVICE_TABLE(of, ralink_usb_phy_of_match);
+ +
+ +static int ralink_usb_phy_probe(struct platform_device *pdev)
+ +{
+-+	struct resource *res;
+ +	struct device *dev = &pdev->dev;
+ +	struct phy_provider *phy_provider;
+ +	const struct of_device_id *match;
+-+	struct ralink_usb_phy *phy;
+-+
+-+	phy = devm_kzalloc(dev, sizeof(*phy), GFP_KERNEL);
+-+	if (!phy)
+-+		return -ENOMEM;
+ +
+ +	match = of_match_device(ralink_usb_phy_of_match, &pdev->dev);
+-+	if (!match)
+-+		return -ENODEV;
+++	phy_clk = (int) match->data;
+ +
+-+	phy->clk = (int) match->data;
+-+
+-+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+-+	phy->base = devm_ioremap_resource(&pdev->dev, res);
+-+
+-+	phy->rsthost = devm_reset_control_get(&pdev->dev, "host");
+-+	if (IS_ERR(phy->rsthost)) {
+-+		dev_err(dev, "host reset is missing\n");
+-+		return PTR_ERR(phy->rsthost);
+-+	}
+-+
+-+	phy->rstdev = devm_reset_control_get(&pdev->dev, "device");
+-+	if (IS_ERR(phy->rstdev)) {
+-+		dev_err(dev, "device reset is missing\n");
+-+		return PTR_ERR(phy->rstdev);
+-+	}
+++	rsthost = devm_reset_control_get(&pdev->dev, "host");
+++	rstdev = devm_reset_control_get(&pdev->dev, "device");
+ +
+-+	phy->phy = devm_phy_create(dev, NULL, &ralink_usb_phy_ops, NULL);
+-+	if (IS_ERR(phy->phy)) {
+++	rt_phy = devm_phy_create(dev, NULL, &ralink_usb_phy_ops, NULL);
+++	if (IS_ERR(rt_phy)) {
+ +		dev_err(dev, "failed to create PHY\n");
+-+		return PTR_ERR(phy->phy);
+++		return PTR_ERR(rt_phy);
+ +	}
+-+	phy_set_drvdata(phy->phy, phy);
+ +
+-+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+++	phy_provider = devm_of_phy_provider_register(dev, ralink_usb_phy_xlate);
+ +
+ +	return PTR_ERR_OR_ZERO(phy_provider);
+ +}
+diff -uNr target_orig/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.patch target/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.patch
+--- target_orig/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.patch	2016-03-15 15:05:44.523257000 +0800
+@@ -0,0 +1,13 @@
++Index: linux-3.18.23/Kconfig
++===================================================================
++--- linux-3.18.23.orig/Kconfig	2015-10-29 11:49:46.000000000 +0900
+++++ linux-3.18.23/Kconfig	2015-12-08 17:06:57.779506887 +0900
++@@ -8,4 +8,8 @@
++ 	string
++ 	option env="SRCARCH"
++ 
+++config SUPPORT_OPENWRT
+++	bool
+++	default y
+++
++ source "arch/$SRCARCH/Kconfig"
+diff -uNr target_orig/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch target/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch
+--- target_orig/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch	2016-03-15 15:05:44.523257000 +0800
+@@ -0,0 +1,13 @@
++Index: linux-3.18.23/net/bridge/br_fdb.c
++===================================================================
++--- linux-3.18.23.orig/net/bridge/br_fdb.c	2015-10-29 11:49:46.000000000 +0900
+++++ linux-3.18.23/net/bridge/br_fdb.c	2015-12-08 21:29:59.523224266 +0900
++@@ -361,6 +361,8 @@
++ 
++ 	return NULL;
++ }
+++EXPORT_SYMBOL(__br_fdb_get);
+++
++ 
++ #if IS_ENABLED(CONFIG_ATM_LANE)
++ /* Interface used by ATM LANE hook to test
+diff -uNr target_orig/linux/ramips/patches-3.18/500-alsa.patch target/linux/ramips/patches-3.18/500-alsa.patch
+--- target_orig/linux/ramips/patches-3.18/500-alsa.patch	2016-03-15 14:49:02.462264000 +0800
++++ target/linux/ramips/patches-3.18/500-alsa.patch	2016-03-15 15:05:44.523257000 +0800
+@@ -1,6 +1,6 @@
+ --- a/sound/soc/Kconfig
+ +++ b/sound/soc/Kconfig
+-@@ -56,6 +56,7 @@
++@@ -56,6 +56,7 @@ source "sound/soc/spear/Kconfig"
+  source "sound/soc/tegra/Kconfig"
+  source "sound/soc/txx9/Kconfig"
+  source "sound/soc/ux500/Kconfig"
+@@ -10,14 +10,14 @@
+  source "sound/soc/codecs/Kconfig"
+ --- a/sound/soc/Makefile
+ +++ b/sound/soc/Makefile
+-@@ -33,3 +33,4 @@
++@@ -33,3 +33,4 @@ obj-$(CONFIG_SND_SOC)	+= spear/
+  obj-$(CONFIG_SND_SOC)	+= tegra/
+  obj-$(CONFIG_SND_SOC)	+= txx9/
+  obj-$(CONFIG_SND_SOC)	+= ux500/
+ +obj-$(CONFIG_SND_SOC)   += mtk/
+ --- a/sound/soc/codecs/Kconfig
+ +++ b/sound/soc/codecs/Kconfig
+-@@ -725,7 +725,7 @@
++@@ -725,7 +725,7 @@ config SND_SOC_WM8955
+  	tristate
+  
+  config SND_SOC_WM8960
+@@ -66,7 +66,7 @@
+ +
+ --- /dev/null
+ +++ b/sound/soc/mtk/Makefile
+-@@ -0,0 +1,40 @@
++@@ -0,0 +1,39 @@
+ +KBUILD_CFLAGS += -I$(srctree)
+ +
+ +ifeq ($(CONFIG_SND_MT76XX_SOC_MT7620),y)
+@@ -84,8 +84,7 @@
+ +KBUILD_CFLAGS += -DCONFIG_GDMA_EVERYBODY
+ +KBUILD_CFLAGS += -DCONFIG_SND_MT76XX_SOC
+ +KBUILD_CFLAGS += -DCONFIG_I2S_WM8960
+-+#KBUILD_CFLAGS += -DCONFIG_I2S_MCLK_12P288MHZ
+-+KBUILD_CFLAGS += -DCONFIG_I2S_MCLK_12MHZ
+++KBUILD_CFLAGS += -DCONFIG_I2S_MCLK_12P288MHZ
+ +KBUILD_CFLAGS += -DCONFIG_GDMA_EVERYBODY
+ +KBUILD_CFLAGS += -DSURFBOARDINT_DMA=15
+ +KBUILD_CFLAGS += -DRALINK_INTCTL_DMA=128
+@@ -5939,7 +5938,7 @@
+ +		if(rtd->dmaStat[SNDRV_PCM_STREAM_CAPTURE]){
+ +
+ +			gdma_En_Switch(rtd,STREAM_CAPTURE,GDMA_I2S_DIS);
+-+			i2s_rx_end_sleep_on(rtd);
+++			i2s_tx_end_sleep_on(rtd);
+ +			tasklet_kill(&i2s_rx_tasklet);
+ +			i2s_rx_disable(rtd);
+ +			//mt76xx_pcm_free_dma_buffer(substream,substream->stream);
+@@ -7372,7 +7371,7 @@
+ +#endif
+ --- a/sound/soc/soc-core.c
+ +++ b/sound/soc/soc-core.c
+-@@ -1851,7 +1851,8 @@
++@@ -1851,7 +1851,8 @@ static int soc_probe(struct platform_dev
+  	/* Bodge while we unpick instantiation */
+  	card->dev = &pdev->dev;
+  
+@@ -8085,7 +8084,15 @@
+ +}
+ --- a/sound/soc/codecs/wm8960.c
+ +++ b/sound/soc/codecs/wm8960.c
+-@@ -53,10 +53,10 @@
++@@ -26,6 +26,7 @@
++ #include <sound/wm8960.h>
++ 
++ #include "wm8960.h"
+++#include "../mtk/i2c_wm8960.h"
++ 
++ /* R25 - Power 1 */
++ #define WM8960_VMID_MASK 0x180
++@@ -53,10 +54,10 @@
+   * using 2 wire for device control, so we cache them instead.
+   */
+  static const struct reg_default wm8960_reg_defaults[] = {
+@@ -8100,7 +8107,7 @@
+  	{  0x4, 0x0000 },
+  	{  0x5, 0x0008 },
+  	{  0x6, 0x0000 },
+-@@ -88,8 +88,8 @@
++@@ -88,8 +89,8 @@ static const struct reg_default wm8960_r
+  	{ 0x25, 0x0050 },
+  	{ 0x26, 0x0000 },
+  	{ 0x27, 0x0000 },
+@@ -8111,17 +8118,24 @@
+  	{ 0x2a, 0x0040 },
+  	{ 0x2b, 0x0000 },
+  	{ 0x2c, 0x0000 },
+-@@ -126,8 +126,7 @@
+- 	bool deemph;
++@@ -127,8 +128,15 @@ struct wm8960_priv {
+  	int playback_fs;
+  };
+--
+--#define wm8960_reset(c)	snd_soc_write(c, WM8960_RESET, 0)
+-+static char init_mtk;
+  
+++#if 1
+++#define wm8960_reset(c)        do{ \
+++       int i = 0;\
+++       snd_soc_write(c, WM8960_RESET, 0);\
+++       for(i = 0; i < 1000*HZ; i++);\
+++       }while(0)
+++#else
++ #define wm8960_reset(c)	snd_soc_write(c, WM8960_RESET, 0)
++-
+++#endif
+  /* enumerated controls */
+  static const char *wm8960_polarity[] = {"No Inversion", "Left Inverted",
+-@@ -181,8 +180,8 @@
++ 	"Right Inverted", "Stereo Inversion"};
++@@ -181,8 +189,8 @@ static int wm8960_get_deemph(struct snd_
+  	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+  	struct wm8960_priv *wm8960 = snd_soc_codec_get_drvdata(codec);
+  
+@@ -8132,29 +8146,33 @@
+  }
+  
+  static int wm8960_put_deemph(struct snd_kcontrol *kcontrol,
+-@@ -200,6 +199,65 @@
++@@ -200,6 +208,70 @@ static int wm8960_put_deemph(struct snd_
+  	return wm8960_set_deemph(codec);
+  }
+  
+-+static void wm8960_reset(struct snd_soc_codec *codec)
+++static int wm8960_preinit(struct snd_soc_codec *codec)
+ +{
+++	//printk("****** %s ******\n", __func__);
+ +	snd_soc_write(codec, WM8960_RESET, 0);
+-+	init_mtk = false;
+++	mdelay(500);
+++
+++	return 0;
+ +}
+ +
+-+static int wm8960_init(struct snd_soc_codec *codec)
+++static int wm8960_postinit(struct snd_soc_codec *codec)
+ +{
+ +	u32 data;
+++	//printk("****** %s ******\n", __func__);
+ +	// In
+ +	data = snd_soc_read(codec, WM8960_POWER1);
+-+	snd_soc_write(codec, WM8960_POWER1, data|WM8960_PWR1_ADCL|WM8960_PWR1_ADCR|WM8960_PWR1_AINL |WM8960_PWR1_AINR|WM8960_PWR1_MICB|WM8960_PWR1_VMIDSEL_5K|WM8960_PWR1_VREF);//0x19
+++	snd_soc_write(codec, WM8960_POWER1, data|WM8960_PWR1_ADCL|WM8960_PWR1_ADCR|WM8960_PWR1_AINL |WM8960_PWR1_AINR|WM8960_PWR1_MICB);//0x19
+ +	data = snd_soc_read(codec, WM8960_ADDCTL1);
+ +	snd_soc_write(codec, WM8960_ADDCTL1, data|ADDITIONAL1_DATSEL(0x01));//0x17
+-+	snd_soc_write(codec, WM8960_LADC, LEFTGAIN_LDVU|LEFTGAIN_LDACVOL(0xce));//0x15
+-+	snd_soc_write(codec, WM8960_RADC, LEFTGAIN_LDVU|LEFTGAIN_LDACVOL(0xce));//0x16
+-+	snd_soc_write(codec, WM8960_LINPATH, 0x168);//0x20
+-+	snd_soc_write(codec, WM8960_RINPATH, 0x168);//0x21
+-+	snd_soc_write(codec, WM8960_POWER3, WM8960_PWR3_LMIC|WM8960_PWR3_RMIC|WM8960_PWR3_ROMIX|WM8960_PWR3_LOMIX);//0x2f
+++	snd_soc_write(codec, WM8960_LADC, LEFTGAIN_LDVU|LEFTGAIN_LDACVOL(0xc3));//0x15
+++	snd_soc_write(codec, WM8960_RADC, LEFTGAIN_LDVU|LEFTGAIN_LDACVOL(0xc3));//0x16
+++	snd_soc_write(codec, WM8960_LINPATH, 0x148);//0x20
+++	snd_soc_write(codec, WM8960_RINPATH, 0x148);//0x21
+++	snd_soc_write(codec, WM8960_POWER3, WM8960_PWR3_LMIC|WM8960_PWR3_RMIC);//0x2f
+ +
+ +	// Out
+ +	data = snd_soc_read(codec, WM8960_POWER2);
+@@ -8166,22 +8184,23 @@
+ +	snd_soc_write(codec, WM8960_LOUTMIX, 0x100);//0x22
+ +	snd_soc_write(codec, WM8960_ROUTMIX, 0x100);//0x25
+ +
+++	data = snd_soc_read(codec, WM8960_POWER3);
+++	snd_soc_write(codec, WM8960_POWER3, data|WM8960_PWR3_ROMIX|WM8960_PWR3_LOMIX);//0x2f
+++
+ +	snd_soc_write(codec, WM8960_CLASSD1, 0xf7);//0x31
+ +	snd_soc_write(codec, WM8960_CLASSD3, 0xad);//0x33
+ +	snd_soc_write(codec, WM8960_DACCTL1,  0x000);//0x05
+ +
+-+	snd_soc_write(codec, WM8960_LOUT1, LOUT1_LO1VU|LOUT1_LO1ZC|LOUT1_LOUT1VOL(120));//0x02
+-+	snd_soc_write(codec, WM8960_ROUT1, ROUT1_RO1VU|ROUT1_RO1ZC|ROUT1_ROUT1VOL(120));//0x03
+-+	
+-+	data = snd_soc_read(codec, WM8960_LINVOL);
+-+	data &= ~LINV_LINMUTE;
+-+	snd_soc_write(codec, WM8960_LINVOL, data|LINV_IPVU|LINV_LINVOL(96));//LINV(0x00)
+-+	
+-+	data = snd_soc_read(codec, WM8960_RINVOL);
+-+	data &= ~RINV_RINMUTE;
+-+	snd_soc_write(codec, WM8960_RINVOL, data|RINV_IPVU|RINV_RINVOL(96)); //LINV(0x01)
+++	data = snd_soc_read(codec, WM8960_POWER1);
+++	snd_soc_write(codec, WM8960_POWER1,  data|0x1c0);//0x19
+++
+++
+++	snd_soc_write(codec, WM8960_LOUT1, LOUT1_LO1VU|LOUT1_LO1ZC|LOUT1_LOUT1VOL(115));//0x02
+++	snd_soc_write(codec, WM8960_ROUT1, ROUT1_RO1VU|ROUT1_RO1ZC|ROUT1_ROUT1VOL(115));//0x03
+++
+++	snd_soc_write(codec, WM8960_LINVOL, LINV_IPVU|LINV_LINVOL(110)); //LINV(0x00)=>0x12b
+++	snd_soc_write(codec, WM8960_RINVOL, RINV_IPVU|RINV_RINVOL(110)); //LINV(0x01)=>0x12b
+ +
+-+	init_mtk = true;
+ +	return 0;
+ +}
+ +
+@@ -8198,17 +8217,15 @@
+  static const DECLARE_TLV_DB_SCALE(adc_tlv, -9700, 50, 0);
+  static const DECLARE_TLV_DB_SCALE(dac_tlv, -12700, 50, 1);
+  static const DECLARE_TLV_DB_SCALE(bypass_tlv, -2100, 300, 0);
+-@@ -542,6 +600,9 @@
++@@ -542,6 +614,7 @@ static int wm8960_set_dai_fmt(struct snd
+  
+  	/* set iface */
+  	snd_soc_write(codec, WM8960_IFACE1, iface);
+-+	if (!init_mtk)
+-+		wm8960_init(codec);
+-+
+++	wm8960_postinit(codec);
+  	return 0;
+  }
+  
+-@@ -623,11 +684,15 @@
++@@ -623,11 +696,16 @@ static int wm8960_set_bias_level_out3(st
+  		break;
+  
+  	case SND_SOC_BIAS_PREPARE:
+@@ -8219,12 +8236,13 @@
+  		break;
+  
+  	case SND_SOC_BIAS_STANDBY:
+-+#if 0
+-+
+++#if 1
+++		wm8960_preinit(codec);
+++#else
+  		if (codec->dapm.bias_level == SND_SOC_BIAS_OFF) {
+  			regcache_sync(wm8960->regmap);
+  
+-@@ -650,9 +715,13 @@
++@@ -650,9 +728,13 @@ static int wm8960_set_bias_level_out3(st
+  
+  		/* Set VMID to 2x250k */
+  		snd_soc_update_bits(codec, WM8960_POWER1, 0x180, 0x100);
+@@ -8232,13 +8250,13 @@
+  		break;
+  
+  	case SND_SOC_BIAS_OFF:
+-+#if 0
+++#if 1
+ +		wm8960_close(codec);
+-+
+++#else
+  		/* Enable anti-pop features */
+  		snd_soc_write(codec, WM8960_APOP1,
+  			     WM8960_POBCTRL | WM8960_SOFT_ST |
+-@@ -661,6 +730,7 @@
++@@ -661,6 +743,7 @@ static int wm8960_set_bias_level_out3(st
+  		/* Disable VMID and VREF, let them discharge */
+  		snd_soc_write(codec, WM8960_POWER1, 0);
+  		msleep(600);
+@@ -8246,15 +8264,36 @@
+  		break;
+  	}
+  
+-@@ -853,7 +923,6 @@
++@@ -853,10 +936,15 @@ static int wm8960_set_dai_pll(struct snd
+  
+  	if (pll_div.k) {
+  		reg |= 0x20;
+ -
+++#if 1
+  		snd_soc_write(codec, WM8960_PLL2, (pll_div.k >> 16) & 0xff);
+  		snd_soc_write(codec, WM8960_PLL3, (pll_div.k >> 8) & 0xff);
+  		snd_soc_write(codec, WM8960_PLL4, pll_div.k & 0xff);
+-@@ -962,7 +1031,7 @@
+++#else
+++		snd_soc_write(codec, WM8960_PLL2, (pll_div.k >> 16) & 0xff);
+++		snd_soc_write(codec, WM8960_PLL3, (pll_div.k >> 8) & 0xff);
+++		snd_soc_write(codec, WM8960_PLL4, pll_div.k & 0xff);
+++#endif
++ 	}
++ 	snd_soc_write(codec, WM8960_PLL1, reg);
++ 
++@@ -888,7 +976,11 @@ static int wm8960_set_dai_clkdiv(struct
++ 		snd_soc_write(codec, WM8960_PLL1, reg | div);
++ 		break;
++ 	case WM8960_DCLKDIV:
+++#if 1
++ 		reg = snd_soc_read(codec, WM8960_CLOCK2) & 0x03f;
+++#else
+++		reg = snd_soc_read(codec, WM8960_CLOCK2) & 0x03f;
+++#endif
++ 		snd_soc_write(codec, WM8960_CLOCK2, reg | div);
++ 		break;
++ 	case WM8960_TOCLKSEL:
++@@ -962,7 +1054,7 @@ static int wm8960_probe(struct snd_soc_c
+  {
+  	struct wm8960_priv *wm8960 = snd_soc_codec_get_drvdata(codec);
+  	struct wm8960_data *pdata = dev_get_platdata(codec->dev);
+@@ -8263,7 +8302,7 @@
+  
+  	wm8960->set_bias_level = wm8960_set_bias_level_out3;
+  
+-@@ -973,26 +1042,9 @@
++@@ -973,11 +1065,7 @@ static int wm8960_probe(struct snd_soc_c
+  			wm8960->set_bias_level = wm8960_set_bias_level_capless;
+  	}
+  
+@@ -8272,27 +8311,10 @@
+ -		dev_err(codec->dev, "Failed to issue reset\n");
+ -		return ret;
+ -	}
+--
+--	wm8960->set_bias_level(codec, SND_SOC_BIAS_STANDBY);
+--
+--	/* Latch the update bits */
+--	snd_soc_update_bits(codec, WM8960_LINVOL, 0x100, 0x100);
+--	snd_soc_update_bits(codec, WM8960_RINVOL, 0x100, 0x100);
+--	snd_soc_update_bits(codec, WM8960_LADC, 0x100, 0x100);
+--	snd_soc_update_bits(codec, WM8960_RADC, 0x100, 0x100);
+--	snd_soc_update_bits(codec, WM8960_LDAC, 0x100, 0x100);
+--	snd_soc_update_bits(codec, WM8960_RDAC, 0x100, 0x100);
+--	snd_soc_update_bits(codec, WM8960_LOUT1, 0x100, 0x100);
+--	snd_soc_update_bits(codec, WM8960_ROUT1, 0x100, 0x100);
+--	snd_soc_update_bits(codec, WM8960_LOUT2, 0x100, 0x100);
+--	snd_soc_update_bits(codec, WM8960_ROUT2, 0x100, 0x100);
+--
+ +	wm8960_reset(codec);
+-+	//mdelay(400);
+-+	
+- 	snd_soc_add_codec_controls(codec, wm8960_snd_controls,
+- 				     ARRAY_SIZE(wm8960_snd_controls));
+- 	wm8960_add_widgets(codec);
++ 
++ 	wm8960->set_bias_level(codec, SND_SOC_BIAS_STANDBY);
++ 
+ --- a/sound/soc/codecs/wm8960.h
+ +++ b/sound/soc/codecs/wm8960.h
+ @@ -110,4 +110,68 @@
+@@ -8362,5 +8384,5 @@
+ +#define RINV_RINMUTE                    (1 << 7)
+ +#define RINV_RIZC                       (1 << 6)
+ +#define RINV_RINVOL(x)                  ((x) & 0x3f)
+-+#define MBSEL                       	(1 << 0)
+++
+  #endif
+diff -uNr target_orig/linux/ramips/rt288x/target.mk target/linux/ramips/rt288x/target.mk
+--- target_orig/linux/ramips/rt288x/target.mk	2016-03-15 14:49:02.462264000 +0800
++++ target/linux/ramips/rt288x/target.mk	2016-03-15 15:05:44.523257000 +0800
+@@ -5,7 +5,6 @@
+ SUBTARGET:=rt288x
+ BOARDNAME:=RT288x based boards
+ CPU_TYPE:=mips32r2
+-FEATURES:=squashfs gpio
+ 
+ DEFAULT_PACKAGES += kmod-rt2800-soc
+ 
