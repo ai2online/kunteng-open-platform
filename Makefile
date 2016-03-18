@@ -33,7 +33,7 @@ endef
 define do_patching
 # patch kunteng routers on openwrt
 	cd $(OPENWRT); \
-	patch -f -p0 < ../patches/01_kt_open_platform.patch
+	cat ../patches/*.patch | patch -p0
 endef
 
 
