@@ -1,0 +1,16 @@
+diff -urN target_orig/linux/ar71xx/base-files/etc/uci-defaults/01_leds target/linux/ar71xx/base-files/etc/uci-defaults/01_leds
+--- target_orig/linux/ar71xx/base-files/etc/uci-defaults/01_leds	2016-03-22 10:54:30.444234658 +0800
++++ target/linux/ar71xx/base-files/etc/uci-defaults/01_leds	2016-03-22 10:54:55.716160553 +0800
+@@ -31,6 +31,12 @@
+ 	ucidef_set_led_rssi "rssihigh" "RSSIHIGH" "all0315n:green:rssihigh" "wlan0" "70" "100" "-69" "8"
+ 	;;
+ 
++kf2010)
++	ucidef_set_led_netdev "wlan" "WLAN" "kf2010:green:wlan" "wlan0" "link tx rx"
++	ucidef_set_led_switch "sysfs" "SYS" "kf2010:green:system" "default-on"
++	ucidef_set_led_netdev "wan" "WAN" "kf2010:green:wan" "eth1" "link tx rx"
++	;;
++
+ antminer-s1)
+ 	ucidef_set_led_default "sys" "SYS" "antminer-s1:green:sys" "0"
+ 	ucidef_set_led_wlan "wlan" "WLAN" "antminer-s1:green:wlan" "phy0tpt"
