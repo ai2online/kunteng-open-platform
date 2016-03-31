@@ -12,7 +12,9 @@ RUNNING_THREADS := $(shell cat /proc/cpuinfo | grep -i '^processor\s\+:' | wc -l
 define rely_check
 # check openwrt-chaos_calmer source from github 
 	@[ -d $(OPENWRT) ] && : || \
-	git clone -b chaos_calmer https://github.com/openwrt/openwrt.git $(OPENWRT)
+	git clone https://github.com/openwrt/openwrt.git $(OPENWRT)
+	cd $(OPENWRT); \
+	git checkout -b kt_platform d4b09841a9865bc46888014407ba920fa3fc2cd3
 	
 endef
 
