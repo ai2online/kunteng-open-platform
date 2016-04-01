@@ -7,12 +7,29 @@ OPENWRT := openwrt_src
 KTOP_ROOT := $(shell pwd)
 CONFIG_FILENAME := config_kt
 
+INSTALL_BIN:=install -m0755
+INSTALL_DIR:=install -d -m0755
+INSTALL_DATA:=install -m0644
+INSTALL_CONF:=install -m0600
+
+LOCAL_PACKAGE_PATH := $(KTOP_ROOT)/package
+OPENWRT_PACKAGE_PATH := $(OPENWRT)/package
+PACKAGES := $(shell ls $(LOCAL_PACKAGE_PATH))
+
 RUNNING_THREADS := $(shell cat /proc/cpuinfo | grep -i '^processor\s\+:' | wc -l)
+
+define package_install
+	echo $(PACKAGES)
+	for p in $(PACKAGES) ;do \
+	echo $p ;\
+	cp -vr $(LOCAL_PACKAGE_PATH)/$$p $(OPENWRT_PACKAGE_PATH)/; \
+	done
+endef
 
 define rely_check
 # check openwrt-chaos_calmer source from github 
 	@[ -d $(OPENWRT) ] && : || \
-	git clone https://github.com/openwrt/openwrt.git $(OPENWRT)
+	git clone https://github.com/openwrt/openwrt.git $(OPENWRT); \
 	cd $(OPENWRT); \
 	git checkout -b kt_platform d4b09841a9865bc46888014407ba920fa3fc2cd3
 	
@@ -59,6 +76,7 @@ kt_router: .kt_config_check
 	touch .kt_config_check
 
 .kt_patched: .kt_check_openwrt_source
+	$(call package_install)
 	$(call do_patching)
 	@touch .kt_patched
 
@@ -75,5 +93,8 @@ menuconfig: .kt_config_check
 	@make -C $(OPENWRT) menuconfig
 	
 clean:
-	make clean -C recovery.bin
 	make clean -C $(OPENWRT) V=s
+	
+distclean:
+	rm .kt_*
+	rm -rf $(OPENWRT)
