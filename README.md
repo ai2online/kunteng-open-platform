@@ -20,7 +20,7 @@
 
 #### 获取源码
 
-    git clone http://121.194.169.198:8888/gukaiqiang/kunteng-open-platform.git
+    git clone https://github.com/kttec/kunteng-open-platform.git
 
 #### 开始编译
 
