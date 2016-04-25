@@ -2,7 +2,7 @@
 # created @ 2015-03-15
 DEPEND_PKGS := subversion build-essential \
       libncurses5-dev zlib1g-dev gawk git ccache \
-      gettext libssl-dev xsltproc libxml-parser-perl gengetopt
+      gettext libssl-dev xsltproc libxml-parser-perl gengetopt patch
 OPENWRT := openwrt_src
 KTOP_ROOT := $(shell pwd)
 CONFIG_FILENAME := config_kt
