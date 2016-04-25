@@ -3,8 +3,9 @@
 DEPEND_PKGS := subversion build-essential \
       libncurses5-dev zlib1g-dev gawk git ccache \
       gettext libssl-dev xsltproc libxml-parser-perl gengetopt patch
-OPENWRT := openwrt_src
+
 KTOP_ROOT := $(shell pwd)
+OPENWRT := $(KTOP_ROOT)/openwrt_src
 CONFIG_FILENAME := config_kt
 
 INSTALL_BIN:=install -m0755
