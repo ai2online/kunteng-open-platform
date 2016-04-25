@@ -18,7 +18,7 @@
 
 # Install
 
-** 注意，下面的操作指引旨在ubuntu发行版上的自动化SDK编译流程，其他Linux发行版请按对应平台的安装命令，自行安装依赖库，依赖库包括但不限于(由于平台差异)以下lib及工具(以空格分隔) **
+**注意，下面的操作指引旨在ubuntu发行版上的自动化SDK编译流程，其他Linux发行版请按对应平台的安装命令，自行安装依赖库，依赖库包括但不限于(由于平台差异)以下lib及工具(以空格分隔)**
 
 ```
 subversion build-essential libncurses5-dev zlib1g-dev 
