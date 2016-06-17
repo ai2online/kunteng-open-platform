@@ -45,10 +45,13 @@ libxml-parser-perl gengetopt patch
 
 		make menuconfig
 
-4. 执行编译
+4. 配置所需package(可以跳过，在`执行编译`时自动检查配置，但会急耗时间，因此建议手动操作)
+
+		git clone git@121.194.169.198:root/openwrt-cc-dl.git opnewrt/dl
+		
+5. 执行编译(自动检查CPU线程数，自动添加V、-j参数进行并发编译)
 
 		make
-
 
 # Others
 
