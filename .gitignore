@@ -2,3 +2,5 @@
 /config_kt
 /version
 /.kt_*
+/.Makefile.swp
+/.*.swp
