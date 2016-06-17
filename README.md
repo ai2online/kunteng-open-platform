@@ -6,7 +6,7 @@
 #### 关于坤腾开放平台
 
 - 为坤腾路由设备提供插件编译平台；
-- 路由内核基于openwrt官方[github源码chaos-calmer分支](https://github.com/openwrt/openwrt/tree/chaos_calmer)；
+- 路由内核基于openwrt官方[源码chaos-calmer版本](https://git.openwrt.org/15.05/openwrt.git)，svn版本：git-svn-id: svn://svn.openwrt.org/openwrt/branches/chaos_calmer@47727 3c298f89-4303-0410-b956-a3cf2f4a3e73 
 
 
 #### 支持设备型号：
