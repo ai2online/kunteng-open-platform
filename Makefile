@@ -5,7 +5,7 @@ DEPEND_PKGS := subversion build-essential \
       gettext libssl-dev xsltproc libxml-parser-perl gengetopt patch
 
 KTOP_ROOT := $(shell pwd)
-OPENWRT := $(KTOP_ROOT)/openwrt_src
+OPENWRT := $(KTOP_ROOT)/openwrt
 CONFIG_FILENAME := config_kt
 
 INSTALL_BIN:=install -m0755
@@ -30,9 +30,9 @@ endef
 define rely_check
 # check openwrt-chaos_calmer source from github 
 	@[ -d $(OPENWRT) ] && : || \
-	git clone https://github.com/openwrt/openwrt.git $(OPENWRT); \
+	git clone git://git.openwrt.org/15.05/openwrt.git $(OPENWRT); \
 	cd $(OPENWRT); \
-	git checkout -b kt_platform d4b09841a9865bc46888014407ba920fa3fc2cd3
+	git checkout -b r47727 c5287f92027e9709262d2424bb0c121ab2a7597e
 	
 endef
 
