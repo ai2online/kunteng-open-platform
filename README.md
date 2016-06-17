@@ -55,6 +55,11 @@ libxml-parser-perl gengetopt patch
 #### Package创建
 
 [Openwrt简体中文wiki-创建软件包](https://wiki.openwrt.org/zh-cn/doc/devel/packages)
+
+#### Openwrt source
+
+openwrt源码版本：`r47727`
+
 ----
 
 
