@@ -1,6 +1,6 @@
 diff -urpN target_orig/linux/ar71xx/base-files/etc/diag.sh target/linux/ar71xx/base-files/etc/diag.sh
 --- target_orig/linux/ar71xx/base-files/etc/diag.sh	2016-06-17 15:12:18.444786372 +0800
-+++ target/linux/ar71xx/base-files/etc/diag.sh	2016-06-17 15:12:41.728793318 +0800
++++ target/linux/ar71xx/base-files/etc/diag.sh	2016-07-18 09:34:17.009095085 +0800
 @@ -25,6 +25,12 @@ get_status_led() {
  	ap136-020)
  		status_led="ap136:green:status"
@@ -35,7 +35,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/diag.sh target/linux/ar71xx/b
  		;;
 diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/01_leds target/linux/ar71xx/base-files/etc/uci-defaults/01_leds
 --- target_orig/linux/ar71xx/base-files/etc/uci-defaults/01_leds	2016-06-17 15:12:18.444786372 +0800
-+++ target/linux/ar71xx/base-files/etc/uci-defaults/01_leds	2016-06-17 15:12:41.728793318 +0800
++++ target/linux/ar71xx/base-files/etc/uci-defaults/01_leds	2016-07-18 09:34:17.009095085 +0800
 @@ -31,6 +31,12 @@ all0315n)
  	ucidef_set_led_rssi "rssihigh" "RSSIHIGH" "all0315n:green:rssihigh" "wlan0" "70" "100" "-69" "8"
  	;;
@@ -145,7 +145,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/01_leds target/l
 +	ucidef_set_led_wlan "wlan" "WLAN" "comfast:blue:wifi" "phy0tpt"
 +	;;
 +
-+cf-e355ac)
++kt9672)
 +	ucidef_set_led_netdev "wan" "WAN" "comfast:red:wan" "eth1"
 +	ucidef_set_led_netdev "lan" "LAN" "comfast:green:lan" "eth0"
 +	ucidef_set_led_wlan "wlan" "WLAN" "comfast:blue:wlan" "phy0tpt"
@@ -208,7 +208,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/01_leds target/l
  	ucidef_set_led_wlan "wlan" "WLAN" "gl-connect:red:wlan" "phy0tpt"
 diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network target/linux/ar71xx/base-files/etc/uci-defaults/02_network
 --- target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network	2016-06-17 15:12:18.444786372 +0800
-+++ target/linux/ar71xx/base-files/etc/uci-defaults/02_network	2016-06-17 15:12:41.728793318 +0800
++++ target/linux/ar71xx/base-files/etc/uci-defaults/02_network	2016-07-18 09:34:17.013095086 +0800
 @@ -23,6 +23,7 @@ ubnt-unifi-outdoor)
  	;;
  
@@ -217,7 +217,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network targe
  wlr8100)
  	ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
  	ucidef_add_switch "switch0" "1" "1"
-@@ -38,12 +39,182 @@ epg5000)
+@@ -38,12 +39,170 @@ epg5000)
  	ucidef_add_switch_vlan "switch0" "2" "0t 5"
  	;;
  
@@ -275,9 +275,10 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network targe
 +	ucidef_set_interface_relayd
 +	;;
 +
-+kt9671)
++kt9671 |\
++kt9672)
 +        ucidef_set_interface_ap_lan "eth0 eth1"
-+        br_mac=$(cat /sys/class/net/eth1/address)
++        br_mac=$(cat /sys/class/net/eth0/address)
 +        [ -n "$br_mac" ] && ucidef_set_interface_macaddr lan $br_mac
 +        ;;
 +        
@@ -341,19 +342,6 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network targe
 +	ucidef_set_interface_def_macaddr $lan_mac $wan_mac $wlan_mac $sta_mac
 +	;;
 +
-+cf-e355ac)
-+	ucidef_set_interfaces_lan_wan "eth0" "eth1"
-+	lan_mac=$(cat /sys/class/net/eth0/address)
-+	wlan_mac=$(macaddr_add "$lan_mac" 1)
-+	wan_mac=$(macaddr_add "$lan_mac" 2)
-+	sta_mac=$(macaddr_add "$lan_mac" 3)
-+	[ -n "$lan_mac" ] && ucidef_set_interface_macaddr lan $lan_mac
-+	[ -n "$wlan_mac" ] && ucidef_set_wireless_macaddr radio0 $wlan_mac
-+	[ -n "$wan_mac" ] && ucidef_set_interface_macaddr wan $wan_mac
-+	[ -n "$lan_mac" ] && [ -n "$lan_mac" ] && [ -n "$lan_mac" ] && [ -n "$lan_mac" ]&& \
-+	ucidef_set_interface_def_macaddr $lan_mac $wan_mac $wlan_mac $sta_mac
-+	;;
-+
 +cf-e380ac)
 +	ucidef_set_interfaces_lan_wan "eth0" ""
 +	lan_mac=$(cat /sys/class/net/eth0/address)
@@ -401,7 +389,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network targe
  
  ap136-020 |\
  ap135-020 |\
-@@ -126,6 +297,7 @@ nbg6716)
+@@ -126,6 +285,7 @@ nbg6716)
  	ucidef_add_switch_vlan "switch0" "2" "5 6"
  	;;
  
@@ -409,7 +397,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network targe
  rb-433 |\
  rb-433u)
  	ucidef_set_interfaces_lan_wan "eth1" "eth0"
-@@ -441,6 +613,16 @@ wzr-hp-ag300h)
+@@ -441,6 +601,16 @@ wzr-hp-ag300h)
  	ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 4"
  	;;
  
@@ -426,7 +414,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network targe
  wzr-hp-g450h)
  	ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
  	ucidef_add_switch "switch0" "1" "1"
-@@ -474,8 +656,8 @@ wndr3700)
+@@ -474,8 +644,8 @@ wndr3700)
  	# switch port.
  	#
  	# 0=LED off; 1=Collision/FDX; 2=Link/activity; 3=1000 Mb/s;
@@ -437,7 +425,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network targe
  	# 11: Fault; 12: Link/activity(tx); 13: Link/activity(rx);
  	# 14: Link (master); 15: separate register
  	uci set network.@switch_port[-1].led='6'
-@@ -501,6 +683,28 @@ wndr3700)
+@@ -501,6 +671,28 @@ wndr3700)
  	uci set network.@switch_port[-1].led='2'
  	;;
  
@@ -468,7 +456,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network targe
  	;;
 diff -urpN target_orig/linux/ar71xx/base-files/lib/ar71xx.sh target/linux/ar71xx/base-files/lib/ar71xx.sh
 --- target_orig/linux/ar71xx/base-files/lib/ar71xx.sh	2016-06-17 15:12:18.448786373 +0800
-+++ target/linux/ar71xx/base-files/lib/ar71xx.sh	2016-06-17 15:12:41.728793318 +0800
++++ target/linux/ar71xx/base-files/lib/ar71xx.sh	2016-07-18 09:34:17.013095086 +0800
 @@ -5,6 +5,7 @@
  
  AR71XX_BOARD_NAME=
@@ -497,7 +485,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/ar71xx.sh target/linux/ar71xx
  	*AP81)
  		name="ap81"
  		;;
-@@ -392,6 +406,46 @@ ar71xx_board_detect() {
+@@ -392,6 +406,47 @@ ar71xx_board_detect() {
  	*CAP4200AG)
  		name="cap4200ag"
  		;;
@@ -529,8 +517,9 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/ar71xx.sh target/linux/ar71xx
 +	*"CF-WR615N")
 +		name="cf-wr615n"
 +		;;
-+	*"CF-E355AC")
-+		name="cf-e355ac"
++	*"KunTeng KT9672")
++		name="kt9672"
++		board_type="kt9672"
 +		;;
 +	*"CF-E380AC")
 +		name="cf-e380ac"
@@ -544,7 +533,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/ar71xx.sh target/linux/ar71xx
  	*"CPE210/220/510/520")
  		name="cpe510"
  		tplink_pharos_board_detect
-@@ -450,6 +504,19 @@ ar71xx_board_detect() {
+@@ -450,6 +505,19 @@ ar71xx_board_detect() {
  	*EL-MINI)
  		name="el-mini"
  		;;
@@ -564,7 +553,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/ar71xx.sh target/linux/ar71xx
  	*"GL-CONNECT INET v1")
  		name="gl-inet"
  		gl_inet_board_detect
-@@ -954,9 +1021,12 @@ ar71xx_board_detect() {
+@@ -954,9 +1022,12 @@ ar71xx_board_detect() {
  	[ -z "$AR71XX_MODEL" ] && AR71XX_MODEL="$machine"
  
  	[ -e "/tmp/sysinfo/" ] || mkdir -p "/tmp/sysinfo/"
@@ -579,7 +568,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/ar71xx.sh target/linux/ar71xx
  ar71xx_board_name() {
 diff -urpN target_orig/linux/ar71xx/base-files/lib/preinit/81_load_ath10k_board_bin target/linux/ar71xx/base-files/lib/preinit/81_load_ath10k_board_bin
 --- target_orig/linux/ar71xx/base-files/lib/preinit/81_load_ath10k_board_bin	2016-06-17 15:12:18.448786373 +0800
-+++ target/linux/ar71xx/base-files/lib/preinit/81_load_ath10k_board_bin	2016-06-17 15:12:41.728793318 +0800
++++ target/linux/ar71xx/base-files/lib/preinit/81_load_ath10k_board_bin	2016-07-18 09:34:17.013095086 +0800
 @@ -5,12 +5,22 @@
  
  do_load_ath10k_board_bin() {
@@ -592,7 +581,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/preinit/81_load_ath10k_board_
  				bs=1 skip=20480 count=2116 \
  				of=/tmp/ath10k-board.bin
  		;;
-+		cf-e355ac | \
++		kt9672 | \
 +		gb-cgw600 | \
 +		gb-cgw800)
 +			local mtdblock=$(find_mtd_part art)
@@ -605,7 +594,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/preinit/81_load_ath10k_board_
  			local mac
 diff -urpN target_orig/linux/ar71xx/base-files/lib/upgrade/platform.sh target/linux/ar71xx/base-files/lib/upgrade/platform.sh
 --- target_orig/linux/ar71xx/base-files/lib/upgrade/platform.sh	2016-06-17 15:12:18.448786373 +0800
-+++ target/linux/ar71xx/base-files/lib/upgrade/platform.sh	2016-06-17 15:12:41.728793318 +0800
++++ target/linux/ar71xx/base-files/lib/upgrade/platform.sh	2016-07-18 09:34:17.013095086 +0800
 @@ -179,6 +179,8 @@ platform_check_image() {
  	ap136-010 | \
  	ap136-020 | \
@@ -666,7 +655,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/upgrade/platform.sh target/li
 +		return 0
 +		;;
 +		
-+	cf-e355ac | \
++	kt9672 | \
 +	cf-e380ac | \
 +	cf-e520n | \
 +	cf-e530n | \
@@ -712,7 +701,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/upgrade/platform.sh target/li
 +	cf-e316nv2 | \
 +	cf-e325n | \
 +	kt9671 | \
-+	cf-e355ac | \
++	kt9672 | \
 +	cf-e380ac | \
 +	cf-wr600n | \
 +	cf-wr605n | \
@@ -726,7 +715,7 @@ diff -urpN target_orig/linux/ar71xx/base-files/lib/upgrade/platform.sh target/li
  		MTD_CONFIG_ARGS="-s 0x180000"
 diff -urpN target_orig/linux/ar71xx/config-3.18 target/linux/ar71xx/config-3.18
 --- target_orig/linux/ar71xx/config-3.18	2016-06-17 15:12:18.448786373 +0800
-+++ target/linux/ar71xx/config-3.18	2016-06-17 15:12:41.724793316 +0800
++++ target/linux/ar71xx/config-3.18	2016-07-18 09:34:16.985095079 +0800
 @@ -35,6 +35,9 @@ CONFIG_ATH79_MACH_AP113=y
  CONFIG_ATH79_MACH_AP121=y
  CONFIG_ATH79_MACH_AP132=y
@@ -743,7 +732,7 @@ diff -urpN target_orig/linux/ar71xx/config-3.18 target/linux/ar71xx/config-3.18
  CONFIG_ATH79_MACH_CPE510=y
 +CONFIG_ATH79_MACH_COMFAST=y
 +CONFIG_ATH79_MACH_KUNTENG_KT9671=y
-+CONFIG_ATH79_MACH_COMFAST_CF_E355AC=y
++CONFIG_ATH79_MACH_KUNTENG_KT9672=y
 +CONFIG_ATH79_MACH_COMFAST_CF_E380AC=y
 +CONFIG_ATH79_MACH_COMFAST_CF_WR650AC=y
  CONFIG_ATH79_MACH_DB120=y
@@ -776,12 +765,19 @@ diff -urpN target_orig/linux/ar71xx/config-3.18 target/linux/ar71xx/config-3.18
  # CONFIG_ATH79_MACH_RB2011 is not set
  # CONFIG_ATH79_MACH_RB4XX is not set
  # CONFIG_ATH79_MACH_RB750 is not set
+@@ -335,3 +349,4 @@ CONFIG_SYS_SUPPORTS_MIPS16=y
+ CONFIG_TICK_CPU_ACCOUNTING=y
+ CONFIG_USB_SUPPORT=y
+ CONFIG_ZONE_DMA_FLAG=0
++CONFIG_ATH79_MACH_COMFAST_CF_E355AC=y
+\ 文件尾没有 newline 字符
 diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c target/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c
 --- target_orig/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c	2016-06-17 15:12:41.724793316 +0800
-@@ -0,0 +1,1531 @@
++++ target/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c	2016-07-18 09:34:16.985095079 +0800
+@@ -0,0 +1,1532 @@
 +/* 
 + gukq modified @20160527 renamed CF-E350N to KT9671
++ gukq modified @20160627 renamed CF-E355AC to KT9672
 +*/
 +
 +#include <linux/init.h>
@@ -1981,8 +1977,8 @@ diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c target/
 +
 +	ath79_register_mdio(0, 0x0);
 +	
-+	ath79_init_mac(ath79_eth0_data.mac_addr, mac, 0);
-+	ath79_init_mac(ath79_eth1_data.mac_addr, mac, 2);
++	ath79_init_mac(ath79_eth0_data.mac_addr, mac, 2);
++	ath79_init_mac(ath79_eth1_data.mac_addr, mac, 0);
 +	// wan
 +	ath79_register_eth(1);
 +
@@ -2011,39 +2007,39 @@ diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c target/
 +MIPS_MACHINE(ATH79_MACH_KUNTENG_KT9671, "KUNTENG-KT9671", "KunTeng KT9671",
 +	     cf_kt9671_setup);
 +	     
-+#define CF_E355AC_GPIO_BTN_RESET	17
++#define KT9672_GPIO_BTN_RESET	17
 +
-+#define CF_E355AC_KEYS_POLL_INTERVAL	20	/* msecs */
-+#define CF_E355AC_KEYS_DEBOUNCE_INTERVAL (3 * CF_E355AC_KEYS_POLL_INTERVAL)
++#define KT9672_KEYS_POLL_INTERVAL	20	/* msecs */
++#define KT9672_KEYS_DEBOUNCE_INTERVAL (3 * KT9672_KEYS_POLL_INTERVAL)
 +
-+#define	CF_E355AC_GPIO_XWDT_TRIGGER	13
++#define	KT9672_GPIO_XWDT_TRIGGER	13
 +
-+#define CF_E355AC_GPIO_LED_WAN		2
-+#define CF_E355AC_GPIO_LED_LAN		3
-+#define CF_E355AC_GPIO_LED_WLAN		0
++#define KT9672_GPIO_LED_WAN		2
++#define KT9672_GPIO_LED_LAN		3
++#define KT9672_GPIO_LED_WLAN		0
 +
-+#define CF_E355AC_GPIO_LED_WAN1		4
-+#define CF_E355AC_GPIO_LED_LAN1		16
-+#define CF_E355AC_GPIO_LED_LAN2		15
-+#define CF_E355AC_GPIO_LED_LAN3		14
-+#define CF_E355AC_GPIO_LED_LAN4		11
++#define KT9672_GPIO_LED_WAN1		4
++#define KT9672_GPIO_LED_LAN1		16
++#define KT9672_GPIO_LED_LAN2		15
++#define KT9672_GPIO_LED_LAN3		14
++#define KT9672_GPIO_LED_LAN4		11
 +
-+static struct gpio_led cf_e355ac_leds_gpio[] __initdata = {
++static struct gpio_led kt9672_leds_gpio[] __initdata = {
 +	{
 +		.name		= "comfast:red:wan",
-+		.gpio		= CF_E355AC_GPIO_LED_WAN,
++		.gpio		= KT9672_GPIO_LED_WAN,
 +		.active_low	= 0,
 +	}, {
 +		.name		= "comfast:green:lan",
-+		.gpio		= CF_E355AC_GPIO_LED_LAN,
++		.gpio		= KT9672_GPIO_LED_LAN,
 +		.active_low	= 0,
 +	}, {
 +		.name		= "comfast:blue:wlan",
-+		.gpio		= CF_E355AC_GPIO_LED_WLAN,
++		.gpio		= KT9672_GPIO_LED_WLAN,
 +		.active_low	= 0,
 +	}, {
 +		.name		= "comfast:green:wan1",
-+		.gpio		= CF_E355AC_GPIO_LED_WAN1,
++		.gpio		= KT9672_GPIO_LED_WAN1,
 +		.active_low	= 1,
 +	}, {
 +		.name		= "comfast:green:lan1",
@@ -2051,31 +2047,31 @@ diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c target/
 +		.active_low	= 1,
 +	}, {
 +		.name		= "comfast:green:lan2",
-+		.gpio		= CF_E355AC_GPIO_LED_LAN2,
++		.gpio		= KT9672_GPIO_LED_LAN2,
 +		.active_low	= 1,
 +	}, {
 +		.name		= "comfast:green:lan3",
-+		.gpio		= CF_E355AC_GPIO_LED_LAN3,
++		.gpio		= KT9672_GPIO_LED_LAN3,
 +		.active_low	= 1,
 +	}, {
 +		.name		= "comfast:green:lan4",
-+		.gpio		= CF_E355AC_GPIO_LED_LAN4,
++		.gpio		= KT9672_GPIO_LED_LAN4,
 +		.active_low	= 1,
 +	}, 
 +};
 +
-+static struct gpio_keys_button cf_e355ac_gpio_keys[] __initdata = {
++static struct gpio_keys_button kt9672_gpio_keys[] __initdata = {
 +	{
 +		.desc		= "Reset button",
 +		.type		= EV_KEY,
 +		.code		= KEY_RESTART,
-+		.debounce_interval = CF_E355AC_KEYS_DEBOUNCE_INTERVAL,
-+		.gpio		= CF_E355AC_GPIO_BTN_RESET,
++		.debounce_interval = KT9672_KEYS_DEBOUNCE_INTERVAL,
++		.gpio		= KT9672_GPIO_BTN_RESET,
 +		.active_low	= 1,
 +	}
 +};
 +
-+static void __init comfast_cf_e355ac_setup(void)
++static void __init comfast_kt9672_setup(void)
 +{
 +	u8 *mac = (u8 *) KSEG1ADDR(0x1f010000);
 +	u8 *art = (u8 *) KSEG1ADDR(0x1f011000);
@@ -2084,18 +2080,18 @@ diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c target/
 +	/* Configure OBS4 line, for GPIO 4*/	
 +	ath79_gpio_function_setup(AR934X_GPIO_FUNC_JTAG_DISABLE, 0);	
 +	
-+	ath79_gpio_output_select(CF_E355AC_GPIO_XWDT_TRIGGER, 0);	
-+	enable_external_wdt(CF_E355AC_GPIO_XWDT_TRIGGER);
++	ath79_gpio_output_select(KT9672_GPIO_XWDT_TRIGGER, 0);	
++	enable_external_wdt(KT9672_GPIO_XWDT_TRIGGER);
 +	
-+	ath79_gpio_output_select(CF_E355AC_GPIO_LED_WAN, 0);
-+	ath79_gpio_output_select(CF_E355AC_GPIO_LED_LAN, 0);
-+	ath79_gpio_output_select(CF_E355AC_GPIO_LED_WLAN, 0);	
++	ath79_gpio_output_select(KT9672_GPIO_LED_WAN, 0);
++	ath79_gpio_output_select(KT9672_GPIO_LED_LAN, 0);
++	ath79_gpio_output_select(KT9672_GPIO_LED_WLAN, 0);	
 +
-+	ath79_gpio_output_select(CF_E355AC_GPIO_LED_WAN1, 0);
-+	ath79_gpio_output_select(CF_E355AC_GPIO_LED_LAN1, 0);
-+	ath79_gpio_output_select(CF_E355AC_GPIO_LED_LAN2, 0);
-+	ath79_gpio_output_select(CF_E355AC_GPIO_LED_LAN3, 0);
-+	ath79_gpio_output_select(CF_E355AC_GPIO_LED_LAN4, 0);
++	ath79_gpio_output_select(KT9672_GPIO_LED_WAN1, 0);
++	ath79_gpio_output_select(KT9672_GPIO_LED_LAN1, 0);
++	ath79_gpio_output_select(KT9672_GPIO_LED_LAN2, 0);
++	ath79_gpio_output_select(KT9672_GPIO_LED_LAN3, 0);
++	ath79_gpio_output_select(KT9672_GPIO_LED_LAN4, 0);
 +
 +	ath79_register_m25p80(NULL);
 +
@@ -2119,20 +2115,20 @@ diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c target/
 +	ap91_pci_init(art + 0x5000, NULL);
 +}
 +
-+static void __init cf_e355ac_setup(void)
++static void __init kt9672_setup(void)
 +{
-+	comfast_cf_e355ac_setup();
++	comfast_kt9672_setup();
 +
-+	ath79_register_leds_gpio(-1, ARRAY_SIZE(cf_e355ac_leds_gpio),
-+				 cf_e355ac_leds_gpio);
++	ath79_register_leds_gpio(-1, ARRAY_SIZE(kt9672_leds_gpio),
++				 kt9672_leds_gpio);
 +
-+	ath79_register_gpio_keys_polled(1, CF_E355AC_KEYS_POLL_INTERVAL,
-+					ARRAY_SIZE(cf_e355ac_gpio_keys),
-+					cf_e355ac_gpio_keys);
++	ath79_register_gpio_keys_polled(1, KT9672_KEYS_POLL_INTERVAL,
++					ARRAY_SIZE(kt9672_gpio_keys),
++					kt9672_gpio_keys);
 +}
 +
-+MIPS_MACHINE(ATH79_MACH_COMFAST_CF_E355AC, "COMFAST-CF-E355AC", "COMFAST CF-E355AC",
-+	     cf_e355ac_setup);
++MIPS_MACHINE(ATH79_MACH_KUNTENG_KT9672, "KUNTENG-KT9672", "KunTeng KT9672",
++	     kt9672_setup);
 +	     
 +#define CF_E380AC_KEYS_POLL_INTERVAL	20	/* msecs */
 +#define CF_E380AC_KEYS_DEBOUNCE_INTERVAL (3 * CF_E380AC_KEYS_POLL_INTERVAL)
@@ -2313,7 +2309,7 @@ diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-comfast.c target/
 +#endif
 diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-kt9661.c target/linux/ar71xx/files/arch/mips/ath79/mach-kt9661.c
 --- target_orig/linux/ar71xx/files/arch/mips/ath79/mach-kt9661.c	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/files/arch/mips/ath79/mach-kt9661.c	2016-06-17 15:12:41.724793316 +0800
++++ target/linux/ar71xx/files/arch/mips/ath79/mach-kt9661.c	2016-07-18 09:34:17.001095083 +0800
 @@ -0,0 +1,186 @@
 +/*
 + *
@@ -2503,7 +2499,7 @@ diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-kt9661.c target/l
 +	     kt9661_setup);
 diff -urpN target_orig/linux/ar71xx/generic/profiles/atheros.mk target/linux/ar71xx/generic/profiles/atheros.mk
 --- target_orig/linux/ar71xx/generic/profiles/atheros.mk	2016-06-17 15:12:18.452786375 +0800
-+++ target/linux/ar71xx/generic/profiles/atheros.mk	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/generic/profiles/atheros.mk	2016-07-18 09:34:17.029095092 +0800
 @@ -71,6 +71,39 @@ endef
  
  $(eval $(call Profile,AP136))
@@ -2546,7 +2542,7 @@ diff -urpN target_orig/linux/ar71xx/generic/profiles/atheros.mk target/linux/ar7
  	PACKAGES:=kmod-usb-core kmod-usb2
 diff -urpN target_orig/linux/ar71xx/generic/profiles/comfast.mk target/linux/ar71xx/generic/profiles/comfast.mk
 --- target_orig/linux/ar71xx/generic/profiles/comfast.mk	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/generic/profiles/comfast.mk	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/generic/profiles/comfast.mk	2016-07-18 09:34:17.029095092 +0800
 @@ -0,0 +1,137 @@
 +#
 +# Copyright (C) 2009 OpenWrt.org
@@ -2608,14 +2604,14 @@ diff -urpN target_orig/linux/ar71xx/generic/profiles/comfast.mk target/linux/ar7
 +endef
 +$(eval $(call Profile,COMFASTCFWR615N))
 +
-+define Profile/COMFASTCFE355AC
-+	NAME:=COMFAST CF-E355AC
++define Profile/KUNTENGKT9672
++	NAME:=KunTeng KT9672
 +	PACKAGES:=
 +endef
-+define Profile/COMFASTCFE355AC/Description
-+	Package set optimized for the COMFAST CF-E355AC.
++define Profile/KUNTENGKT9672/Description
++	Package set optimized for the COMFAST CF-E355AC which named KT-9672 in KunTeng.
 +endef
-+$(eval $(call Profile,COMFASTCFE355AC))
++$(eval $(call Profile,KUNTENGKT9672))
 +
 +define Profile/COMFASTCFE380AC
 +	NAME:=COMFAST CF-E380AC
@@ -2687,7 +2683,7 @@ diff -urpN target_orig/linux/ar71xx/generic/profiles/comfast.mk target/linux/ar7
 +$(eval $(call Profile,KUNTENGKT9671))
 diff -urpN target_orig/linux/ar71xx/generic/profiles/gbcom.mk target/linux/ar71xx/generic/profiles/gbcom.mk
 --- target_orig/linux/ar71xx/generic/profiles/gbcom.mk	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/generic/profiles/gbcom.mk	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/generic/profiles/gbcom.mk	2016-07-18 09:34:17.053095097 +0800
 @@ -0,0 +1,50 @@
 +#
 +# Copyright (C) 2009-2010 OpenWrt.org
@@ -2741,7 +2737,7 @@ diff -urpN target_orig/linux/ar71xx/generic/profiles/gbcom.mk target/linux/ar71x
 +$(eval $(call Profile,GB_OA5025))
 diff -urpN target_orig/linux/ar71xx/generic/profiles/kf20x0.mk target/linux/ar71xx/generic/profiles/kf20x0.mk
 --- target_orig/linux/ar71xx/generic/profiles/kf20x0.mk	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/generic/profiles/kf20x0.mk	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/generic/profiles/kf20x0.mk	2016-07-18 09:34:17.029095092 +0800
 @@ -0,0 +1,17 @@
 +#
 +# Copyright (C) 2013 OpenWrt.org
@@ -2762,7 +2758,7 @@ diff -urpN target_orig/linux/ar71xx/generic/profiles/kf20x0.mk target/linux/ar71
 +$(eval $(call Profile,KT9661))
 diff -urpN target_orig/linux/ar71xx/image/Makefile target/linux/ar71xx/image/Makefile
 --- target_orig/linux/ar71xx/image/Makefile	2016-06-17 15:12:18.452786375 +0800
-+++ target/linux/ar71xx/image/Makefile	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/image/Makefile	2016-07-18 09:34:17.053095097 +0800
 @@ -955,6 +955,14 @@ ap121_mtdlayout_4M=mtdparts=spi0.0:256k(
  ap132_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,1408k(kernel),6400k(rootfs),64k(art),7808k@0x50000(firmware)
  ap135_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware)
@@ -2799,7 +2795,7 @@ diff -urpN target_orig/linux/ar71xx/image/Makefile target/linux/ar71xx/image/Mak
 +qca9531_cf_e530n_mtdlayout=mtdparts=spi0.0:64k(u-boot)ro,64k(art)ro,1536k(kernel),6464k(rootfs),64k(nvram)ro,16192k@0x20000(firmware)
 +qca9558_cf_wr650ac_mtdlayout=mtdparts=spi0.0:128k(u-boot)ro,64k(art)ro,1536k(kernel),14592k(rootfs),64k(nvram)ro,16128k@0x30000(firmware)
 +qca9531_kt9671_mtdlayout=mtdparts=spi0.0:64k(u-boot)ro,64k(art)ro,1536k(kernel),14656k(rootfs),64k(nvram)ro,16192k@0x20000(firmware)
-+qca9531_cf_e355ac_mtdlayout=mtdparts=spi0.0:64k(u-boot)ro,64k(art)ro,1536k(kernel),14656k(rootfs),64k(nvram)ro,16192k@0x20000(firmware)
++qca9531_kt9672_mtdlayout=mtdparts=spi0.0:64k(u-boot)ro,64k(art)ro,1536k(kernel),14656k(rootfs),64k(nvram)ro,16192k@0x20000(firmware)
 +ar9341_cf_e316nv2_mtdlayout=mtdparts=spi0.0:64k(u-boot)ro,64k(art)ro,1536k(kernel),14656k(rootfs),64k(nvram)ro,16192k@0x20000(firmware)
 +ar9341_cf_e325n_mtdlayout=mtdparts=spi0.0:64k(u-boot)ro,64k(art)ro,1536k(kernel),14656k(rootfs),64k(nvram)ro,16192k@0x20000(firmware) 
  ubdev_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,7488k(firmware),64k(certs),256k(cfg)ro,64k(EEPROM)ro
@@ -2944,7 +2940,7 @@ diff -urpN target_orig/linux/ar71xx/image/Makefile target/linux/ar71xx/image/Mak
 +		> $(call imgname,$(1),$(2))-sysupgrade.bin
 +endef
 +
-+define Image/Build/COMFAST_CF_E355AC
++define Image/Build/KUNTENG_KT9672
 +	$(call MkuImageLzma,$(2),$(3) $(4))
 +	dd if=$(KDIR_TMP)/vmlinux-$(2).uImage \
 +		of=$(call imgname,kernel,$(2)).bin bs=64k conv=sync; \
@@ -3043,7 +3039,7 @@ diff -urpN target_orig/linux/ar71xx/image/Makefile target/linux/ar71xx/image/Mak
 +$(eval $(call SingleProfile,COMFAST,64k,COMFASTCFE325N,comfast-cf-e325n,COMFAST-CF-E325N,ttyS0,115200,CF-E325N,CF-E325N,ar934x))
 +$(eval $(call SingleProfile,COMFAST_CF_WR610N,64k,COMFASTCFWR610N,comfast-cf-wr610n,COMFAST-CF-WR610N,ttyS0,115200,$$(qca9531_cf_wr610n_mtdlayout),CF-WR610N,qca953x))
 +$(eval $(call SingleProfile,KUNTENG_KT9671,64k,KUNTENGKT9671,kt9671,KUNTENG-KT9671,ttyS0,115200,$$(qca9531_kt9671_mtdlayout),KT-9671,qca953x))
-+$(eval $(call SingleProfile,COMFAST_CF_E355AC,64k,COMFASTCFE355AC,comfast-cf-e355ac,COMFAST-CF-E355AC,ttyS0,115200,$$(qca9531_cf_e355ac_mtdlayout),CF-E355AC,qca953x))
++$(eval $(call SingleProfile,KUNTENG_KT9672,64k,KUNTENGKT9672,kt9672,KUNTENG-KT9672,ttyS0,115200,$$(qca9531_kt9672_mtdlayout),KT-9672,qca953x))
 +$(eval $(call SingleProfile,COMFAST_CF_WR615N,64k,COMFASTCFWR615N,comfast-cf-wr615n,COMFAST-CF-WR615N,ttyS0,115200,$$(qca9531_cf_wr615n_mtdlayout),CF-WR615N,qca953x))
 +$(eval $(call SingleProfile,COMFAST_CF_E380AC,64k,COMFASTCFE380AC,comfast-cf-e380ac,COMFAST-CF-E380AC,ttyS0,115200,$$(qca9558_cf_e380ac_mtdlayout),CF-E380AC,qca955x))
 +$(eval $(call SingleProfile,COMFAST_CF_E520N,64k,COMFASTCFE520N,comfast-cf-e520n,COMFAST-CF-E520N,ttyS0,115200,$$(qca9531_cf_e520n_mtdlayout),CF-E520N,qca953x))
@@ -3066,9 +3062,9 @@ diff -urpN target_orig/linux/ar71xx/image/Makefile target/linux/ar71xx/image/Mak
  $(eval $(call MultiProfile,EWDORIN, EWDORINAP EWDORINRT EWDORIN16M))
  $(eval $(call MultiProfile,OPENMESH,OM2P OM5P MR600 MR900))
  $(eval $(call MultiProfile,TEW652BRP,TEW652BRP_FW TEW652BRP_RECOVERY))
-diff -urpN target_orig/linux/ar71xx/patches-3.18/1000-01ar71xx-send-wan-plug-event-for-hotplug.patch target/linux/ar71xx/patches-3.18/1000-01ar71xx-send-wan-plug-event-for-hotplug.patch
---- target_orig/linux/ar71xx/patches-3.18/1000-01ar71xx-send-wan-plug-event-for-hotplug.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/1000-01ar71xx-send-wan-plug-event-for-hotplug.patch	2016-06-17 15:12:41.728793318 +0800
+diff -urpN target_orig/linux/ar71xx/patches-3.18/1000-01-ar71xx-send-wan-plug-event-for-hotplug.patch target/linux/ar71xx/patches-3.18/1000-01-ar71xx-send-wan-plug-event-for-hotplug.patch
+--- target_orig/linux/ar71xx/patches-3.18/1000-01-ar71xx-send-wan-plug-event-for-hotplug.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/patches-3.18/1000-01-ar71xx-send-wan-plug-event-for-hotplug.patch	2016-07-18 09:34:17.013095086 +0800
 @@ -0,0 +1,33 @@
 +--- a/drivers/net/ethernet/atheros/ag71xx/ag71xx_phy.c
 ++++ b/drivers/net/ethernet/atheros/ag71xx/ag71xx_phy.c
@@ -3105,7 +3101,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/1000-01ar71xx-send-wan-plug-eve
 + }
 diff -urpN target_orig/linux/ar71xx/patches-3.18/614-MIPS-ath79-wdt-timeout.patch target/linux/ar71xx/patches-3.18/614-MIPS-ath79-wdt-timeout.patch
 --- target_orig/linux/ar71xx/patches-3.18/614-MIPS-ath79-wdt-timeout.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/614-MIPS-ath79-wdt-timeout.patch	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/patches-3.18/614-MIPS-ath79-wdt-timeout.patch	2016-07-18 09:34:17.025095090 +0800
 @@ -0,0 +1,54 @@
 +--- a/drivers/watchdog/ath79_wdt.c	2014-06-23 23:35:55.747047338 -0400
 ++++ b/drivers/watchdog/ath79_wdt.c	2014-06-23 21:29:47.793775345 -0400
@@ -3163,7 +3159,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/614-MIPS-ath79-wdt-timeout.patc
 + 	return 0;
 diff -urpN target_orig/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-QCA953x-SoC.patch target/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-QCA953x-SoC.patch
 --- target_orig/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-QCA953x-SoC.patch	2016-06-17 15:12:18.452786375 +0800
-+++ target/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-QCA953x-SoC.patch	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-QCA953x-SoC.patch	2016-07-18 09:34:17.017095088 +0800
 @@ -22,7 +22,7 @@ meaning of the bits CPUCLK_FROM_CPUPLL a
  
  --- a/arch/mips/ath79/Kconfig
@@ -3576,7 +3572,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-
  @@ -32,6 +32,7 @@ enum ath79_soc_type {
 diff -urpN target_orig/linux/ar71xx/patches-3.18/739-MIPS-ath79-disable-bug-on.patch target/linux/ar71xx/patches-3.18/739-MIPS-ath79-disable-bug-on.patch
 --- target_orig/linux/ar71xx/patches-3.18/739-MIPS-ath79-disable-bug-on.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/739-MIPS-ath79-disable-bug-on.patch	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/patches-3.18/739-MIPS-ath79-disable-bug-on.patch	2016-07-18 09:34:17.025095090 +0800
 @@ -0,0 +1,11 @@
 +--- a//arch/mips/ath79/gpio.c
 ++++ b//arch/mips/ath79/gpio.c
@@ -3591,7 +3587,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/739-MIPS-ath79-disable-bug-on.p
 + 		return;
 diff -urpN target_orig/linux/ar71xx/patches-3.18/740-MIPS-ath79-fix-gpio-get-function-req.patch target/linux/ar71xx/patches-3.18/740-MIPS-ath79-fix-gpio-get-function-req.patch
 --- target_orig/linux/ar71xx/patches-3.18/740-MIPS-ath79-fix-gpio-get-function-req.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/740-MIPS-ath79-fix-gpio-get-function-req.patch	2016-06-17 15:12:41.728793318 +0800
++++ target/linux/ar71xx/patches-3.18/740-MIPS-ath79-fix-gpio-get-function-req.patch	2016-07-18 09:34:17.025095090 +0800
 @@ -0,0 +1,12 @@
 +--- a/arch/mips/ath79/gpio.c
 ++++ b/arch/mips/ath79/gpio.c
@@ -3607,7 +3603,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/740-MIPS-ath79-fix-gpio-get-fun
 + 		BUG();
 diff -urpN target_orig/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KT9661-support.patch target/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KT9661-support.patch
 --- target_orig/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KT9661-support.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KT9661-support.patch	2016-06-17 15:12:41.728793318 +0800
++++ target/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KT9661-support.patch	2016-07-18 09:34:17.025095090 +0800
 @@ -0,0 +1,41 @@
 +Index: linux-3.18.23/arch/mips/ath79/Kconfig
 +===================================================================
@@ -3652,7 +3648,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/908-MIPS-ath79-add-KT9661-suppo
 + #endif /* _ATH79_MACHTYPE_H */
 diff -urpN target_orig/linux/ar71xx/patches-3.18/909-MIPS-arth79-add-dev-m25p80-QCA-32M-support.patch target/linux/ar71xx/patches-3.18/909-MIPS-arth79-add-dev-m25p80-QCA-32M-support.patch
 --- target_orig/linux/ar71xx/patches-3.18/909-MIPS-arth79-add-dev-m25p80-QCA-32M-support.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/909-MIPS-arth79-add-dev-m25p80-QCA-32M-support.patch	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/patches-3.18/909-MIPS-arth79-add-dev-m25p80-QCA-32M-support.patch	2016-07-18 09:34:17.025095090 +0800
 @@ -0,0 +1,33 @@
 +diff -urN linux-3.18.23.orig/arch/mips/ath79/dev-m25p80.c linux-3.18.23/arch/mips/ath79/dev-m25p80.c
 +--- linux-3.18.23.orig/arch/mips/ath79/dev-m25p80.c	2016-05-11 16:35:01.876778446 +0800
@@ -3689,7 +3685,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/909-MIPS-arth79-add-dev-m25p80-
 + #endif /* _ATH79_DEV_M25P80_H */
 diff -urpN target_orig/linux/ar71xx/patches-3.18/920-mtd-m25p80-32M-support.patch target/linux/ar71xx/patches-3.18/920-mtd-m25p80-32M-support.patch
 --- target_orig/linux/ar71xx/patches-3.18/920-mtd-m25p80-32M-support.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/920-mtd-m25p80-32M-support.patch	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/patches-3.18/920-mtd-m25p80-32M-support.patch	2016-07-18 09:34:17.025095090 +0800
 @@ -0,0 +1,28 @@
 +Index: linux-3.18.23/drivers/mtd/devices/m25p80.c
 +===================================================================
@@ -3721,7 +3717,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/920-mtd-m25p80-32M-support.patc
 + 	 * should clearly be entered on suspend() to minimize power use.
 diff -urpN target_orig/linux/ar71xx/patches-3.18/931-linux-netlink-h-support-qca-driver.patch target/linux/ar71xx/patches-3.18/931-linux-netlink-h-support-qca-driver.patch
 --- target_orig/linux/ar71xx/patches-3.18/931-linux-netlink-h-support-qca-driver.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/931-linux-netlink-h-support-qca-driver.patch	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/patches-3.18/931-linux-netlink-h-support-qca-driver.patch	2016-07-18 09:34:17.025095090 +0800
 @@ -0,0 +1,21 @@
 +--- a/include/net/netlink.h
 ++++ b/include/net/netlink.h
@@ -3746,7 +3742,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/931-linux-netlink-h-support-qca
 ++	NLA_PUT(skb, attrtype, strlen(value) + 1, value)
 diff -urpN target_orig/linux/ar71xx/patches-3.18/940-MIPS-ath79-add-comfast-support.patch target/linux/ar71xx/patches-3.18/940-MIPS-ath79-add-comfast-support.patch
 --- target_orig/linux/ar71xx/patches-3.18/940-MIPS-ath79-add-comfast-support.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/940-MIPS-ath79-add-comfast-support.patch	2016-06-17 15:12:41.728793318 +0800
++++ target/linux/ar71xx/patches-3.18/940-MIPS-ath79-add-comfast-support.patch	2016-07-18 09:34:17.013095086 +0800
 @@ -0,0 +1,105 @@
 +diff -urN a/arch/mips/ath79/machtypes.h b/arch/mips/ath79/machtypes.h
 +--- a/arch/mips/ath79/machtypes.h	2016-05-11 18:14:53.869056973 +0800
@@ -3759,7 +3755,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/940-MIPS-ath79-add-comfast-supp
 ++	ATH79_MACH_COMFAST_CF_E316NV2,	/* COMFAST CF-E316NV2 */
 ++	ATH79_MACH_COMFAST_CF_E325N,	/* COMFAST CF-E325N */
 ++	ATH79_MACH_KUNTENG_KT9671,	/* COMFAST CF-E350N gukq renamed it KT9671 20160527*/
-++	ATH79_MACH_COMFAST_CF_E355AC,	/* COMFAST CF-E355AC */
+++	ATH79_MACH_KUNTENG_KT9672,	/* COMFAST CF-E355AC gukq renamed it KT9672 20160627*/
 ++	ATH79_MACH_COMFAST_CF_E380AC,	/* COMFAST CF-E380AC */
 ++	ATH79_MACH_COMFAST_CF_E520N,	/* COMFAST CF-E520N */
 ++	ATH79_MACH_COMFAST_CF_E530N,	/* COMFAST CF-E530N */
@@ -3805,8 +3801,8 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/940-MIPS-ath79-add-comfast-supp
 ++       select ATH79_DEV_M25P80
 ++       select ATH79_DEV_WMAC
 ++
-++config ATH79_MACH_COMFAST_CF_E355AC
-++	bool "COMFAST CF-E380AC board support"
+++config ATH79_MACH_KUNTENG_KT9672
+++	bool "COMFAST KT9672 board support"
 ++	select SOC_QCA953X
 ++	select ATH79_DEV_ETH
 ++	select ATH79_DEV_GPIO_BUTTONS
@@ -3846,7 +3842,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/940-MIPS-ath79-add-comfast-supp
 + obj-$(CONFIG_ATH79_MACH_BSB)		+= mach-bsb.o
 + obj-$(CONFIG_ATH79_MACH_CAP4200AG)	+= mach-cap4200ag.o
 ++obj-$(CONFIG_ATH79_MACH_COMFAST)	+= mach-comfast.o
-++obj-$(CONFIG_ATH79_MACH_COMFAST_CF_E355AC)	+= mach-comfast.o
+++obj-$(CONFIG_ATH79_MACH_KUNTENG_KT9672)	+= mach-comfast.o
 ++obj-$(CONFIG_ATH79_MACH_COMFAST_CF_E380AC)	+= mach-comfast.o
 ++obj-$(CONFIG_ATH79_MACH_COMFAST_CF_WR650AC)	+= mach-comfast.o
 ++obj-$(CONFIG_ATH79_MACH_KUNTENG_KT9671)	+= mach-comfast.o
@@ -3855,7 +3851,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/940-MIPS-ath79-add-comfast-supp
 + obj-$(CONFIG_ATH79_MACH_DLAN_PRO_500_WP)	+= mach-dlan-pro-500-wp.o
 diff -urpN target_orig/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device-v0-support.patch target/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device-v0-support.patch
 --- target_orig/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device-v0-support.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device-v0-support.patch	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device-v0-support.patch	2016-07-18 09:34:17.025095090 +0800
 @@ -0,0 +1,1493 @@
 +--- a/arch/mips/ath79/Kconfig
 ++++ b/arch/mips/ath79/Kconfig
@@ -5352,7 +5348,7 @@ diff -urpN target_orig/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device
 + 	if (ret < 0)
 diff -urpN target_orig/linux/ar71xx/wdpi_kernel/files/wdpi.conf target/linux/ar71xx/wdpi_kernel/files/wdpi.conf
 --- target_orig/linux/ar71xx/wdpi_kernel/files/wdpi.conf	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/wdpi_kernel/files/wdpi.conf	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/wdpi_kernel/files/wdpi.conf	2016-07-18 09:34:17.029095092 +0800
 @@ -0,0 +1,6 @@
 +config wdpi_kernel
 +	option	wan_interface	'eth1'
@@ -5362,7 +5358,7 @@ diff -urpN target_orig/linux/ar71xx/wdpi_kernel/files/wdpi.conf target/linux/ar7
 +
 diff -urpN target_orig/linux/ar71xx/wdpi_kernel/files/wdpi.init target/linux/ar71xx/wdpi_kernel/files/wdpi.init
 --- target_orig/linux/ar71xx/wdpi_kernel/files/wdpi.init	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ar71xx/wdpi_kernel/files/wdpi.init	2016-06-17 15:12:41.732793319 +0800
++++ target/linux/ar71xx/wdpi_kernel/files/wdpi.init	2016-07-18 09:34:17.029095092 +0800
 @@ -0,0 +1,47 @@
 +#!/bin/sh /etc/rc.common
 +
@@ -5396,8 +5392,8 @@ diff -urpN target_orig/linux/ar71xx/wdpi_kernel/files/wdpi.init target/linux/ar7
 +	config_foreach prepare_wdpi_conf wdpi_kernel
 +	
 +	if [ ! -n "$eth_str" ]; then
-+		wan_ifname=WDPI_wan_if
-+		echo "config error: wan_ifname is not exist" >/dev/ttyS0
++		wan_ifname=$WDPI_wan_if
++		echo "config error: wan_ifname is not exist, replace with $wan_ifname" >/dev/ttyS0
 +	fi	
 +	
 +	if [ -n "$wdpi_mod" ]; then
@@ -5413,7 +5409,7 @@ diff -urpN target_orig/linux/ar71xx/wdpi_kernel/files/wdpi.init target/linux/ar7
 +		
 diff -urpN target_orig/linux/generic/config-3.18 target/linux/generic/config-3.18
 --- target_orig/linux/generic/config-3.18	2016-06-17 15:12:18.472786380 +0800
-+++ target/linux/generic/config-3.18	2016-06-17 15:12:41.688793306 +0800
++++ target/linux/generic/config-3.18	2016-07-18 09:34:16.673094991 +0800
 @@ -4639,3 +4639,4 @@ CONFIG_ZONE_DMA_FLAG=1
  # CONFIG_ZRAM is not set
  # CONFIG_ZRAM_LZ4_COMPRESS is not set
@@ -5421,7 +5417,7 @@ diff -urpN target_orig/linux/generic/config-3.18 target/linux/generic/config-3.1
 +
 diff -urpN target_orig/linux/ramips/base-files/etc/board.d/01_leds target/linux/ramips/base-files/etc/board.d/01_leds
 --- target_orig/linux/ramips/base-files/etc/board.d/01_leds	2016-06-17 15:12:18.492786386 +0800
-+++ target/linux/ramips/base-files/etc/board.d/01_leds	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/base-files/etc/board.d/01_leds	2016-07-18 09:34:16.833095036 +0800
 @@ -8,7 +8,7 @@ set_usb_led() {
  }
  
@@ -5431,7 +5427,7 @@ diff -urpN target_orig/linux/ramips/base-files/etc/board.d/01_leds target/linux/
  }
  
  
-@@ -266,6 +266,45 @@ case $board in
+@@ -266,6 +266,50 @@ case $board in
  	zte-q7)
  		set_wifi_led "zte:blue:status"
  		;;
@@ -5467,6 +5463,7 @@ diff -urpN target_orig/linux/ramips/base-files/etc/board.d/01_leds target/linux/
 +		ucidef_set_led_netdev "internet" "internet" "hc5661a:blue:internet" "eth0.2"
 +		set_wifi_led "hc5661a:blue:wlan2g"
 +		ucidef_set_led_netdev "wifi5g" "wifi5g" "hc5661a:blue:wlan5g" "rai0"
++		ucidef_set_led_netdev "wanled" "wanled" "hc5661a:blue:internet" "eth0.2"
 +		;;	
 +	kt9962)
 +		ucidef_set_led_default "system" "system" "kt9962:blue:system" "1"
@@ -5474,17 +5471,22 @@ diff -urpN target_orig/linux/ramips/base-files/etc/board.d/01_leds target/linux/
 +		set_wifi_led "kt9962:blue:wifi2g"
 +		ucidef_set_led_netdev "wifi5g" "wifi5g" "kt9962:blue:wifi5g" "rai0"
 +		;;	
++	kt9990)
++		ucidef_set_led_default "system" "system" "kt9990:blue:system" "1"
++		ucidef_set_led_netdev "internet" "internet" "kt9990:blue:internet" "eth0.2"
++		;;	
  esac
  
  board_config_flush
 diff -urpN target_orig/linux/ramips/base-files/etc/board.d/02_network target/linux/ramips/base-files/etc/board.d/02_network
 --- target_orig/linux/ramips/base-files/etc/board.d/02_network	2016-06-17 15:12:18.492786386 +0800
-+++ target/linux/ramips/base-files/etc/board.d/02_network	2016-06-17 15:12:41.712793313 +0800
-@@ -146,13 +146,14 @@ ramips_setup_interfaces()
++++ target/linux/ramips/base-files/etc/board.d/02_network	2016-07-18 09:34:16.833095036 +0800
+@@ -146,13 +146,15 @@ ramips_setup_interfaces()
  	wt1520 | \
  	xiaomi-miwifi-mini |\
  	y1|\
 +	kt9962|\
++	kt9990|\
  	zbt-wg2626)
  		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
  		ucidef_add_switch "switch0" "1" "1"
@@ -5496,7 +5498,7 @@ diff -urpN target_orig/linux/ramips/base-files/etc/board.d/02_network target/lin
  	whr-1166d)
  		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
  		ucidef_add_switch "switch0" "1" "1"
-@@ -177,6 +178,9 @@ ramips_setup_interfaces()
+@@ -177,6 +179,9 @@ ramips_setup_interfaces()
  	wrtnode | \
  	wt3020 | \
  	ur-326n4g | \
@@ -5506,45 +5508,15 @@ diff -urpN target_orig/linux/ramips/base-files/etc/board.d/02_network target/lin
  	zbt-wa05)
  		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
  		ucidef_add_switch "switch0" "1" "1"
-@@ -184,6 +188,52 @@ ramips_setup_interfaces()
+@@ -184,6 +189,22 @@ ramips_setup_interfaces()
  		ucidef_add_switch_vlan "switch0" "2" "0 6t"
  		;;
  
 +	zc9527)
-+	
-+		if [ ! -e /etc/config/network ]; then
-+			touch /etc/config/network
-+		fi
-+		local br_mac=$(mtd_get_mac_ascii bdinfo "Vfac_mac ")
-+		echo "br mac = $br_mac" > /tmp/brmac.log
-+        	
-+		local ifname="eth0.1 eth0.2"
-+		
-+		uci set network.loopback='interface'
-+		uci set network.loopback.ifname='lo'
-+		uci set network.loopback.proto='static'
-+		uci set network.loopback.ipaddr='127.0.0.1'
-+		uci set network.loopback.netmask='255.0.0.0'
-+		uci set network.globals='globals'
-+		uci set network.globals.ula_prefix='auto'
-+		
-+		r1=$(dd if=/dev/urandom bs=1 count=1 |hexdump -e '1/1 "%02x"')
-+		r2=$(dd if=/dev/urandom bs=2 count=1 |hexdump -e '2/1 "%02x"')
-+		r3=$(dd if=/dev/urandom bs=2 count=1 |hexdump -e '2/1 "%02x"')
-+		
-+		uci set network.globals='globals'
-+		uci set network.globals.ula_prefix=fd$r1:$r2:$r3::/48
-+		
-+		uci set network.lan='interface'
-+		uci set network.lan.ifname="$ifname"
-+		uci set network.lan.force_link=0
-+		uci set network.lan.type='bridge'
-+		uci set network.lan.proto='dhcp'
-+		uci set network.lan.ipaddr='192.168.199.1'
-+		uci set network.lan.netmask='255.255.255.0'
-+		uci set network.lan.ip6assign='60'
-+		[ -n "$br_mac" ] && uci set network.lan.macaddr="$br_mac"
-+        	uci commit
++		ucidef_set_interface_ap_lan "eth0.1 eth0.2"
++		#ucidef_add_switch "switch0" "1" "1"
++		#ucidef_add_switch_vlan "switch0" "1" "1 2 3 4 6t"
++		#ucidef_add_switch_vlan "switch0" "2" "0 6t"
 +		;;
 +
 +	hc5661a |\
@@ -5559,17 +5531,19 @@ diff -urpN target_orig/linux/ramips/base-files/etc/board.d/02_network target/lin
  	ur-336un)
  		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
  		;;
-@@ -385,6 +435,23 @@ ramips_setup_macs()
+@@ -385,6 +406,32 @@ ramips_setup_macs()
  		wan_mac=$(mtd_get_mac_binary factory 4)
  		lan_mac=$(mtd_get_mac_binary factory 46)
  		;;
 +	kt9762 |\
++	kt9990 |\
 +	kt9962)
 +		lan_mac=`mtd_get_mac_ascii bdinfo "&fac_mac "`
 +		[ -n "$lan_mac" ] || lan_mac=$(cat /sys/class/net/eth0/address)
 +		wan_mac=$(macaddr_add "$lan_mac" 1)
 +		;;
-+	zc952? |\
++	zc9525 |\
++	zc9526 |\
 +	zc9525a |\
 +	hc5661a |\
 +	hc5661 |\
@@ -5579,13 +5553,20 @@ diff -urpN target_orig/linux/ramips/base-files/etc/board.d/02_network target/lin
 +		[ -n "$lan_mac" ] || lan_mac=$(cat /sys/class/net/eth0/address)
 +		wan_mac=$(macaddr_add "$lan_mac" 1)
 +		;;
++	# gukq 20160707 changed for ap to get mac-addr
++	zc9527)
++		lan_mac=`mtd_get_mac_ascii bdinfo "Vfac_mac "`
++		[ -n "$lan_mac" ] || lan_mac=$(cat /sys/class/net/eth0/address)
++		wan_mac=$(macaddr_add "$lan_mac" 1)
++		[ -n "$lan_mac" ] && ucidef_set_interface_macaddr ap $lan_mac
++		;;
 +
  	*)
  		lan_mac=$(cat /sys/class/net/eth0/address)
  		wan_mac=$(macaddr_add "$lan_mac" 1)
 diff -urpN target_orig/linux/ramips/base-files/etc/diag.sh target/linux/ramips/base-files/etc/diag.sh
 --- target_orig/linux/ramips/base-files/etc/diag.sh	2016-06-17 15:12:18.492786386 +0800
-+++ target/linux/ramips/base-files/etc/diag.sh	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/base-files/etc/diag.sh	2016-07-18 09:34:16.833095036 +0800
 @@ -253,6 +253,33 @@ get_status_led() {
  	zte-q7)
  		status_led="zte:red:status"
@@ -5622,7 +5603,7 @@ diff -urpN target_orig/linux/ramips/base-files/etc/diag.sh target/linux/ramips/b
  
 diff -urpN target_orig/linux/ramips/base-files/etc/inittab target/linux/ramips/base-files/etc/inittab
 --- target_orig/linux/ramips/base-files/etc/inittab	2016-06-17 15:12:18.492786386 +0800
-+++ target/linux/ramips/base-files/etc/inittab	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/base-files/etc/inittab	2016-07-18 09:34:16.833095036 +0800
 @@ -1,3 +1,3 @@
  ::sysinit:/etc/init.d/rcS S boot
  ::shutdown:/etc/init.d/rcS K shutdown
@@ -5630,7 +5611,7 @@ diff -urpN target_orig/linux/ramips/base-files/etc/inittab target/linux/ramips/b
 +ttyS0::askfirst:/bin/ash --login
 diff -urpN target_orig/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211-file target/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211-file
 --- target_orig/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211-file	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211-file	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211-file	2016-07-18 09:34:16.837095036 +0800
 @@ -0,0 +1,9 @@
 +#!/bin/sh
 +
@@ -5643,7 +5624,7 @@ diff -urpN target_orig/linux/ramips/base-files/etc/uci-defaults/12_move-mac80211
 +exit 0
 diff -urpN target_orig/linux/ramips/base-files/lib/ramips.sh target/linux/ramips/base-files/lib/ramips.sh
 --- target_orig/linux/ramips/base-files/lib/ramips.sh	2016-06-17 15:12:18.492786386 +0800
-+++ target/linux/ramips/base-files/lib/ramips.sh	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/base-files/lib/ramips.sh	2016-07-18 09:34:16.837095036 +0800
 @@ -3,6 +3,8 @@
  # Copyright (C) 2010-2013 OpenWrt.org
  #
@@ -5653,7 +5634,7 @@ diff -urpN target_orig/linux/ramips/base-files/lib/ramips.sh target/linux/ramips
  RAMIPS_BOARD_NAME=
  RAMIPS_MODEL=
  
-@@ -433,17 +435,81 @@ ramips_board_detect() {
+@@ -433,17 +435,85 @@ ramips_board_detect() {
  			name="linkits7688"
  		fi
  		;;
@@ -5680,6 +5661,10 @@ diff -urpN target_orig/linux/ramips/base-files/lib/ramips.sh target/linux/ramips
 +	*"KunTeng KT9962")
 +		RAMIPS_BOARD_TYPE="9962"
 +		name="kt9962"
++		;;
++	*"KunTeng KT9990")
++		RAMIPS_BOARD_TYPE="9990"
++		name="kt9990"
 +		;;
 +	*"HiWiFi HC5661")
 +		name="hc5661"
@@ -5737,7 +5722,7 @@ diff -urpN target_orig/linux/ramips/base-files/lib/ramips.sh target/linux/ramips
  	echo "$RAMIPS_MODEL" > /tmp/sysinfo/model
  }
  
-@@ -454,4 +520,14 @@ ramips_board_name() {
+@@ -454,4 +524,14 @@ ramips_board_name() {
  	[ -z "$name" ] && name="unknown"
  
  	echo "$name"
@@ -5754,8 +5739,8 @@ diff -urpN target_orig/linux/ramips/base-files/lib/ramips.sh target/linux/ramips
  }
 diff -urpN target_orig/linux/ramips/base-files/lib/upgrade/platform.sh target/linux/ramips/base-files/lib/upgrade/platform.sh
 --- target_orig/linux/ramips/base-files/lib/upgrade/platform.sh	2016-06-17 15:12:18.492786386 +0800
-+++ target/linux/ramips/base-files/lib/upgrade/platform.sh	2016-06-17 15:12:41.712793313 +0800
-@@ -124,6 +124,16 @@ platform_check_image() {
++++ target/linux/ramips/base-files/lib/upgrade/platform.sh	2016-07-18 09:34:16.837095036 +0800
+@@ -124,6 +124,17 @@ platform_check_image() {
  	x5 |\
  	x8 |\
  	xiaomi-miwifi-mini |\
@@ -5769,10 +5754,11 @@ diff -urpN target_orig/linux/ramips/base-files/lib/upgrade/platform.sh target/li
 +	zc9526 |\
 +	zc9527 |\
 +	kt9962 |\
++	kt9990 |\
  	y1 |\
  	y1s |\
  	zbt-wa05 |\
-@@ -179,15 +189,30 @@ platform_check_image() {
+@@ -179,15 +190,30 @@ platform_check_image() {
  	return 1
  }
  
@@ -5805,7 +5791,7 @@ diff -urpN target_orig/linux/ramips/base-files/lib/upgrade/platform.sh target/li
  	killall watchdog
 diff -urpN target_orig/linux/ramips/base-files/lib/wifi/ralink_common.sh target/linux/ramips/base-files/lib/wifi/ralink_common.sh
 --- target_orig/linux/ramips/base-files/lib/wifi/ralink_common.sh	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/base-files/lib/wifi/ralink_common.sh	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/base-files/lib/wifi/ralink_common.sh	2016-07-18 09:34:16.837095036 +0800
 @@ -0,0 +1,329 @@
 +# this file will be included in 
 +#     /lib/wifi/mt{chipname}.sh
@@ -6138,7 +6124,7 @@ diff -urpN target_orig/linux/ramips/base-files/lib/wifi/ralink_common.sh target/
 +
 diff -urpN target_orig/linux/ramips/dts/HC5661A.dts target/linux/ramips/dts/HC5661A.dts
 --- target_orig/linux/ramips/dts/HC5661A.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/HC5661A.dts	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/dts/HC5661A.dts	2016-07-18 09:34:16.841095038 +0800
 @@ -0,0 +1,186 @@
 +/dts-v1/;
 +
@@ -6328,7 +6314,7 @@ diff -urpN target_orig/linux/ramips/dts/HC5661A.dts target/linux/ramips/dts/HC56
 +};
 diff -urpN target_orig/linux/ramips/dts/HC5661.dts target/linux/ramips/dts/HC5661.dts
 --- target_orig/linux/ramips/dts/HC5661.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/HC5661.dts	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/dts/HC5661.dts	2016-07-18 09:34:16.841095038 +0800
 @@ -0,0 +1,32 @@
 +/dts-v1/;
 +
@@ -6364,7 +6350,7 @@ diff -urpN target_orig/linux/ramips/dts/HC5661.dts target/linux/ramips/dts/HC566
 +};
 diff -urpN target_orig/linux/ramips/dts/HC5761.dts target/linux/ramips/dts/HC5761.dts
 --- target_orig/linux/ramips/dts/HC5761.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/HC5761.dts	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/dts/HC5761.dts	2016-07-18 09:34:16.841095038 +0800
 @@ -0,0 +1,32 @@
 +/dts-v1/;
 +
@@ -6400,7 +6386,7 @@ diff -urpN target_orig/linux/ramips/dts/HC5761.dts target/linux/ramips/dts/HC576
 +};
 diff -urpN target_orig/linux/ramips/dts/HC5861.dts target/linux/ramips/dts/HC5861.dts
 --- target_orig/linux/ramips/dts/HC5861.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/HC5861.dts	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/dts/HC5861.dts	2016-07-18 09:34:16.841095038 +0800
 @@ -0,0 +1,92 @@
 +/dts-v1/;
 +
@@ -6496,7 +6482,7 @@ diff -urpN target_orig/linux/ramips/dts/HC5861.dts target/linux/ramips/dts/HC586
 +};
 diff -urpN target_orig/linux/ramips/dts/HC5XXX.dtsi target/linux/ramips/dts/HC5XXX.dtsi
 --- target_orig/linux/ramips/dts/HC5XXX.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/HC5XXX.dtsi	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/dts/HC5XXX.dtsi	2016-07-18 09:34:16.841095038 +0800
 @@ -0,0 +1,141 @@
 +/include/ "mt7620a.dtsi"
 +
@@ -6641,7 +6627,7 @@ diff -urpN target_orig/linux/ramips/dts/HC5XXX.dtsi target/linux/ramips/dts/HC5X
 +};
 diff -urpN target_orig/linux/ramips/dts/KT9762.dts target/linux/ramips/dts/KT9762.dts
 --- target_orig/linux/ramips/dts/KT9762.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/KT9762.dts	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/dts/KT9762.dts	2016-07-18 09:34:16.849095040 +0800
 @@ -0,0 +1,186 @@
 +/dts-v1/;
 +
@@ -6831,7 +6817,7 @@ diff -urpN target_orig/linux/ramips/dts/KT9762.dts target/linux/ramips/dts/KT976
 +};
 diff -urpN target_orig/linux/ramips/dts/KT9962.dts target/linux/ramips/dts/KT9962.dts
 --- target_orig/linux/ramips/dts/KT9962.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/KT9962.dts	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/dts/KT9962.dts	2016-07-18 09:34:16.849095040 +0800
 @@ -0,0 +1,156 @@
 +/dts-v1/;
 +
@@ -6989,9 +6975,159 @@ diff -urpN target_orig/linux/ramips/dts/KT9962.dts target/linux/ramips/dts/KT996
 +		};
 +	};
 +};
+diff -urpN target_orig/linux/ramips/dts/KT9990.dts target/linux/ramips/dts/KT9990.dts
+--- target_orig/linux/ramips/dts/KT9990.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/KT9990.dts	2016-07-18 09:34:16.849095040 +0800
+@@ -0,0 +1,146 @@
++/dts-v1/;
++
++/include/ "mt7621.dtsi"
++
++/ {
++	compatible = "mediatek,mt7621-eval-board", "mediatek,mt7621-soc";
++	model = "KunTeng KT9990";
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x10000000>;
++	};
++
++	palmbus@1E000000 {
++		spi@b00 {
++			status="disabled";
++		};
++	};
++
++	chosen {
++		bootargs = "console=ttyS0,115200";
++	};
++
++	nand@1e003000 {
++		status = "okay";
++
++		partition@0 {
++			label = "u-boot";
++			reg = <0x0 0x80000>;
++			read-only;
++		};
++
++		partition@80000 {
++			label = "debug";
++			reg = <0x80000 0x80000>;
++		};
++
++		factory: partition@100000 {
++			label = "factory";
++			reg = <0x100000 0x40000>;
++			read-only;
++		};
++		
++		firmware {
++			label = "firmware";
++			reg = <0x140000 0x2000000>;
++		};
++
++		partition@140000 {
++			label = "kernel";
++			reg = <0x140000 0x200000>;
++		};
++
++		partition@340000 {
++			label = "ubi";
++			reg = <0x340000 0x1E00000>;
++		};
++		
++		partition@21c0000 {
++			label = "bdinfo";
++			reg = <0x21c0000 0x80000>;
++		};
++		partition@2240000 {
++			label = "reserver";
++			reg = <0x2240000 0x80000>;
++		};
++		
++		partition@22c0000 {
++			label = "overly";
++			reg = <0x22c0000 0x1000000>;
++		};
++		
++		partition@32c0000 {
++			label = "firmware_backup";
++			reg = <0x32c0000 0x2000000>;
++		};
++		
++		partition@52c0000 {
++			label = "opt";
++			reg = <0x52c0000 0x2cc0000>;
++		};				
++		
++	};
++
++	pcie@1e140000 {
++		status = "okay";
++
++		pcie0 {
++			mt76@0,0 {
++				reg = <0x0000 0 0 0 0>;
++				device_type = "pci";
++				mediatek,mtd-eeprom = <&factory 0x8000>;
++				mediatek,2ghz = <0>;
++			};
++		};
++
++		pcie1 {
++			mt76@1,0 {
++				reg = <0x0000 0 0 0 0>;
++				device_type = "pci";
++				mediatek,mtd-eeprom = <&factory 0x0000>;
++				mediatek,5ghz = <0>;
++			};
++		};
++	};
++
++	ethernet@1e100000 {
++		mtd-mac-address = <&factory 0xe006>;
++	};	
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "kt9990:blue:system";
++			gpios = <&gpio0 6 1>;
++		};
++
++		internet {
++			label = "kt9990:blue:internet";
++			gpios = <&gpio0 15 1>;
++		};		
++	};
++
++	gpio-keys-polled {
++		compatible = "gpio-keys-polled";
++		#address-cells = <1>;
++		#size-cells = <0>;
++		poll-interval = <20>;
++
++		reset {
++			label = "reset";
++			gpios = <&gpio0 18 1>;
++			linux,code = <0x198>;
++		};
++	};
++
++	pinctrl {
++		state_default: pinctrl0 {
++			gpio {
++				ralink,group = "uart3", "jtag";
++				ralink,function = "gpio";
++			};
++		};
++	};
++};
 diff -urpN target_orig/linux/ramips/dts/LINKIT7688.dts target/linux/ramips/dts/LINKIT7688.dts
 --- target_orig/linux/ramips/dts/LINKIT7688.dts	2016-06-17 15:12:18.496786388 +0800
-+++ target/linux/ramips/dts/LINKIT7688.dts	2016-06-17 15:12:41.712793313 +0800
++++ target/linux/ramips/dts/LINKIT7688.dts	2016-07-18 09:34:16.841095038 +0800
 @@ -163,4 +163,7 @@
  		#gpio-cells = <2>;
  	};
@@ -7002,7 +7138,7 @@ diff -urpN target_orig/linux/ramips/dts/LINKIT7688.dts target/linux/ramips/dts/L
  };
 diff -urpN target_orig/linux/ramips/dts/ZC9525A.dts target/linux/ramips/dts/ZC9525A.dts
 --- target_orig/linux/ramips/dts/ZC9525A.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/ZC9525A.dts	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/dts/ZC9525A.dts	2016-07-18 09:34:16.849095040 +0800
 @@ -0,0 +1,181 @@
 +/dts-v1/;
 +
@@ -7187,7 +7323,7 @@ diff -urpN target_orig/linux/ramips/dts/ZC9525A.dts target/linux/ramips/dts/ZC95
 +};
 diff -urpN target_orig/linux/ramips/dts/ZC9525.dts target/linux/ramips/dts/ZC9525.dts
 --- target_orig/linux/ramips/dts/ZC9525.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/ZC9525.dts	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/dts/ZC9525.dts	2016-07-18 09:34:16.849095040 +0800
 @@ -0,0 +1,32 @@
 +/dts-v1/;
 +
@@ -7223,7 +7359,7 @@ diff -urpN target_orig/linux/ramips/dts/ZC9525.dts target/linux/ramips/dts/ZC952
 +};
 diff -urpN target_orig/linux/ramips/dts/ZC9526.dts target/linux/ramips/dts/ZC9526.dts
 --- target_orig/linux/ramips/dts/ZC9526.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/ZC9526.dts	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/dts/ZC9526.dts	2016-07-18 09:34:16.849095040 +0800
 @@ -0,0 +1,32 @@
 +/dts-v1/;
 +
@@ -7259,7 +7395,7 @@ diff -urpN target_orig/linux/ramips/dts/ZC9526.dts target/linux/ramips/dts/ZC952
 +};
 diff -urpN target_orig/linux/ramips/dts/ZC9527.dts target/linux/ramips/dts/ZC9527.dts
 --- target_orig/linux/ramips/dts/ZC9527.dts	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/dts/ZC9527.dts	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/dts/ZC9527.dts	2016-07-18 09:34:16.849095040 +0800
 @@ -0,0 +1,32 @@
 +/dts-v1/;
 +
@@ -7295,7 +7431,7 @@ diff -urpN target_orig/linux/ramips/dts/ZC9527.dts target/linux/ramips/dts/ZC952
 +};
 diff -urpN target_orig/linux/ramips/image/Makefile target/linux/ramips/image/Makefile
 --- target_orig/linux/ramips/image/Makefile	2016-06-17 15:12:18.496786388 +0800
-+++ target/linux/ramips/image/Makefile	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/image/Makefile	2016-07-18 09:34:16.909095058 +0800
 @@ -888,6 +888,13 @@ Image/Build/Profile/ZBT-WA05=$(call Buil
  Image/Build/Profile/ArcherC20i=$(call BuildFirmware/Tplink/$(1),$(1),ArcherC20i,ArcherC20i)
  microwrt_mtd_size=16515072
@@ -7324,7 +7460,7 @@ diff -urpN target_orig/linux/ramips/image/Makefile target/linux/ramips/image/Mak
  endef
  endif
  
-@@ -928,9 +942,20 @@ endif
+@@ -928,9 +942,40 @@ endif
  #
  
  ifeq ($(SUBTARGET),mt7621)
@@ -7343,10 +7479,30 @@ diff -urpN target_orig/linux/ramips/image/Makefile target/linux/ramips/image/Mak
 +  IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
 +endef
 +
++#
++# MT7621 Profiles
++#
++
++ifeq ($(SUBTARGET),mt7621)
++  #TARGET_DEVICES += mt7621 wsr-600 wsr-1166 dir-860l-b1 firewrt pbr-m1 re6500 zbt-wg2626
++  TARGET_DEVICES += kt9990
++endif
++
++define Device/kt9990
++  DTS := KT9990
++  BLOCKSIZE := 128KiB
++  IMAGES := sysupgrade.bin
++  PAGESIZE := 2048
++  KERNEL_SIZE := 2097152
++  FILESYSTEMS := squashfs
++  IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
++endef
++
++
  define Device/mt7621
    DTS := MT7621
    IMAGE_SIZE := $(ralink_default_fw_size_4M)
-@@ -984,10 +1009,36 @@ endef
+@@ -984,10 +1029,36 @@ endef
  #
  
  Image/Build/Profile/MT7628=$(call BuildFirmware/Default4M/$(1),$(1),mt7628,MT7628)
@@ -7385,7 +7541,7 @@ diff -urpN target_orig/linux/ramips/image/Makefile target/linux/ramips/image/Mak
  
 diff -urpN target_orig/linux/ramips/mt7620/config-3.18 target/linux/ramips/mt7620/config-3.18
 --- target_orig/linux/ramips/mt7620/config-3.18	2016-06-17 15:12:18.496786388 +0800
-+++ target/linux/ramips/mt7620/config-3.18	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/mt7620/config-3.18	2016-07-18 09:34:16.913095058 +0800
 @@ -13,6 +13,7 @@ CONFIG_ARCH_WANT_IPC_PARSE_VERSION=y
  CONFIG_AT803X_PHY=y
  CONFIG_CC_OPTIMIZE_FOR_SIZE=y
@@ -7432,7 +7588,7 @@ diff -urpN target_orig/linux/ramips/mt7620/config-3.18 target/linux/ramips/mt762
 +
 diff -urpN target_orig/linux/ramips/mt7620/profiles/hiwifi.mk target/linux/ramips/mt7620/profiles/hiwifi.mk
 --- target_orig/linux/ramips/mt7620/profiles/hiwifi.mk	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/mt7620/profiles/hiwifi.mk	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/mt7620/profiles/hiwifi.mk	2016-07-18 09:34:16.913095058 +0800
 @@ -0,0 +1,47 @@
 +#
 +# Copyright (C) 2015 OpenWrt.org
@@ -7483,7 +7639,7 @@ diff -urpN target_orig/linux/ramips/mt7620/profiles/hiwifi.mk target/linux/ramip
 +$(eval $(call Profile,HC5861))
 diff -urpN target_orig/linux/ramips/mt7620/profiles/kunteng.mk target/linux/ramips/mt7620/profiles/kunteng.mk
 --- target_orig/linux/ramips/mt7620/profiles/kunteng.mk	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/mt7620/profiles/kunteng.mk	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/mt7620/profiles/kunteng.mk	2016-07-18 09:34:16.913095058 +0800
 @@ -0,0 +1,48 @@
 +#
 +# Copyright (C) 2015 OpenWrt.org
@@ -7535,7 +7691,7 @@ diff -urpN target_orig/linux/ramips/mt7620/profiles/kunteng.mk target/linux/rami
 +$(eval $(call Profile,ZC9527))
 diff -urpN target_orig/linux/ramips/mt7620/target.mk target/linux/ramips/mt7620/target.mk
 --- target_orig/linux/ramips/mt7620/target.mk	2016-06-17 15:12:18.496786388 +0800
-+++ target/linux/ramips/mt7620/target.mk	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/mt7620/target.mk	2016-07-18 09:34:16.913095058 +0800
 @@ -9,7 +9,7 @@ FEATURES+=usb
  CPU_TYPE:=24kec
  CPU_SUBTYPE:=dsp
@@ -7547,7 +7703,7 @@ diff -urpN target_orig/linux/ramips/mt7620/target.mk target/linux/ramips/mt7620/
  	Build firmware images for Ralink MT7620 based boards.
 diff -urpN target_orig/linux/ramips/mt7621/config-3.18 target/linux/ramips/mt7621/config-3.18
 --- target_orig/linux/ramips/mt7621/config-3.18	2016-06-17 15:12:18.496786388 +0800
-+++ target/linux/ramips/mt7621/config-3.18	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/mt7621/config-3.18	2016-07-18 09:34:16.913095058 +0800
 @@ -36,6 +36,9 @@ CONFIG_CPU_RMAP=y
  CONFIG_CPU_SUPPORTS_32BIT_KERNEL=y
  CONFIG_CPU_SUPPORTS_HIGHMEM=y
@@ -7622,8 +7778,8 @@ diff -urpN target_orig/linux/ramips/mt7621/config-3.18 target/linux/ramips/mt762
  CONFIG_ZONE_DMA_FLAG=0
 diff -urpN target_orig/linux/ramips/mt7621/profiles/kunteng.mk target/linux/ramips/mt7621/profiles/kunteng.mk
 --- target_orig/linux/ramips/mt7621/profiles/kunteng.mk	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/mt7621/profiles/kunteng.mk	2016-06-17 15:12:41.716793314 +0800
-@@ -0,0 +1,24 @@
++++ target/linux/ramips/mt7621/profiles/kunteng.mk	2016-07-18 09:34:16.913095058 +0800
+@@ -0,0 +1,40 @@
 +#
 +# Copyright (C) 2015 OpenWrt.org
 +#
@@ -7648,9 +7804,25 @@ diff -urpN target_orig/linux/ramips/mt7621/profiles/kunteng.mk target/linux/rami
 +
 +$(eval $(call Profile,KT9962))
 +
++define Profile/KT9990
++	NAME:=KunTeng KT9990
++	PACKAGES:=\
++		kmod-usb-core kmod-usb3 kmod-usb-hid \
++		kmod-ledtrig-netdev
++endef
++
++define Profile/KT9990/Description
++	Support KunTeng KT9990 model(MT7621-NAND).
++endef
++
++#-m <min io size> -e <LEB size> -c <Eraseblocks count>
++KT9990_UBIFS_OPTS:="-m 2048 -e 129024 -c 1024"
++KT9990_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
++
++$(eval $(call Profile,KT9990))
 diff -urpN target_orig/linux/ramips/mt7621/target.mk target/linux/ramips/mt7621/target.mk
 --- target_orig/linux/ramips/mt7621/target.mk	2016-06-17 15:12:18.496786388 +0800
-+++ target/linux/ramips/mt7621/target.mk	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/mt7621/target.mk	2016-07-18 09:34:16.913095058 +0800
 @@ -5,7 +5,7 @@
  SUBTARGET:=mt7621
  BOARDNAME:=MT7621 based boards
@@ -7662,7 +7834,7 @@ diff -urpN target_orig/linux/ramips/mt7621/target.mk target/linux/ramips/mt7621/
  CFLAGS:=-Os -pipe -mmt -mips32r2 -mtune=1004kc
 diff -urpN target_orig/linux/ramips/mt7628/profiles/hiwifi.mk target/linux/ramips/mt7628/profiles/hiwifi.mk
 --- target_orig/linux/ramips/mt7628/profiles/hiwifi.mk	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/mt7628/profiles/hiwifi.mk	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/mt7628/profiles/hiwifi.mk	2016-07-18 09:34:16.913095058 +0800
 @@ -0,0 +1,19 @@
 +#
 +# Copyright (C) 2015 OpenWrt.org
@@ -7685,7 +7857,7 @@ diff -urpN target_orig/linux/ramips/mt7628/profiles/hiwifi.mk target/linux/ramip
 +$(eval $(call Profile,HC5661A))
 diff -urpN target_orig/linux/ramips/mt7628/profiles/kunteng.mk target/linux/ramips/mt7628/profiles/kunteng.mk
 --- target_orig/linux/ramips/mt7628/profiles/kunteng.mk	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/mt7628/profiles/kunteng.mk	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/mt7628/profiles/kunteng.mk	2016-07-18 09:34:16.913095058 +0800
 @@ -0,0 +1,33 @@
 +#
 +# Copyright (C) 2015 OpenWrt.org
@@ -7723,7 +7895,7 @@ diff -urpN target_orig/linux/ramips/mt7628/profiles/kunteng.mk target/linux/rami
 \ 文件尾没有 newline 字符
 diff -urpN target_orig/linux/ramips/patches-3.18/1000-01-mt762x-send-wan-plug-event-for-hotplug.patch target/linux/ramips/patches-3.18/1000-01-mt762x-send-wan-plug-event-for-hotplug.patch
 --- target_orig/linux/ramips/patches-3.18/1000-01-mt762x-send-wan-plug-event-for-hotplug.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/patches-3.18/1000-01-mt762x-send-wan-plug-event-for-hotplug.patch	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/patches-3.18/1000-01-mt762x-send-wan-plug-event-for-hotplug.patch	2016-07-18 09:34:16.925095061 +0800
 @@ -0,0 +1,34 @@
 +--- a/drivers/net/ethernet/ralink/gsw_mt7620a.c
 ++++ b/drivers/net/ethernet/ralink/gsw_mt7620a.c
@@ -7761,7 +7933,7 @@ diff -urpN target_orig/linux/ramips/patches-3.18/1000-01-mt762x-send-wan-plug-ev
 + 			priv->link[i] = link;
 diff -urpN target_orig/linux/ramips/patches-3.18/1000-02-mt7628-send-wan-plug-event-for-hotplug.patch target/linux/ramips/patches-3.18/1000-02-mt7628-send-wan-plug-event-for-hotplug.patch
 --- target_orig/linux/ramips/patches-3.18/1000-02-mt7628-send-wan-plug-event-for-hotplug.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/patches-3.18/1000-02-mt7628-send-wan-plug-event-for-hotplug.patch	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/patches-3.18/1000-02-mt7628-send-wan-plug-event-for-hotplug.patch	2016-07-18 09:34:16.925095061 +0800
 @@ -0,0 +1,58 @@
 +--- a/drivers/net/ethernet/ralink/esw_rt3052.c
 ++++ b/drivers/net/ethernet/ralink/esw_rt3052.c
@@ -7821,9 +7993,116 @@ diff -urpN target_orig/linux/ramips/patches-3.18/1000-02-mt7628-send-wan-plug-ev
 + 	}
 + 	esw_w32(esw, status, RT305X_ESW_REG_ISR);
 + 
+diff -urpN target_orig/linux/ramips/patches-3.18/1000-03-mt7628-wan-led.patch target/linux/ramips/patches-3.18/1000-03-mt7628-wan-led.patch
+--- target_orig/linux/ramips/patches-3.18/1000-03-mt7628-wan-led.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/patches-3.18/1000-03-mt7628-wan-led.patch	2016-07-18 09:34:16.925095061 +0800
+@@ -0,0 +1,70 @@
++--- a/drivers/net/ethernet/ralink/esw_rt3052.c
+++++ b/drivers/net/ethernet/ralink/esw_rt3052.c
++@@ -721,10 +721,14 @@ static void esw_hw_init(struct rt305x_es
++ 	esw_w32(esw, ~RT305X_ESW_PORT_ST_CHG, RT305X_ESW_REG_IMR);
++ }
++ 
+++/* begin: add by chenzejun for wan led by 2016.6.22 */
+++struct net_device *ralink_esw_netdev = NULL;
+++EXPORT_SYMBOL_GPL(ralink_esw_netdev);
+++/* end: add by chenzejun for wan led by 2016.6.22 */
++ static irqreturn_t esw_interrupt(int irq, void *_esw)
++ {
++ 	struct rt305x_esw *esw = (struct rt305x_esw *) _esw;
++-	u32 status;
+++	u32 status, carrier = 0;
++ 	u32 poa, i, link_status;
++ 	char port_num[32];
++ 	char *envp[] = {port_num, NULL};
++@@ -754,10 +758,24 @@ static irqreturn_t esw_interrupt(int irq
++                  		       kobject_uevent_env(&esw->dev->kobj, KOBJ_OFFLINE, envp);
++          		              }
++                                   }
+++                                  if (link_status)  carrier++;
++                           }
++ 	}
++ 	esw_w32(esw, status, RT305X_ESW_REG_ISR);
++ 
+++/* begin: add by chenzejun for wan led by 2016.6.22 */
+++             if (ralink_esw_netdev && (carrier > 1))
+++        	{
+++        		//printk("link up wan, carrier:%d\n", carrier);
+++        		netif_carrier_on(ralink_esw_netdev);
+++        	}
+++        	else
+++        	{
+++        		//printk("link down wan, carrier:%d\n", carrier);
+++        		netif_carrier_off(ralink_esw_netdev);
+++        	}
+++/* end: add by chenzejun for wan led by 2016.6.22 */
+++
++ 	return IRQ_HANDLED;
++ }
++ 
++--- a/drivers/net/ethernet/ralink/ralink_soc_eth.c
+++++ b/drivers/net/ethernet/ralink/ralink_soc_eth.c
++@@ -1411,6 +1411,11 @@ static void fe_pending_work(struct work_
++ 	}
++ }
++ 
+++/* begin: add by chenzejun for wan led by 2016.6.22 */
+++#ifdef CONFIG_NET_RALINK_ESW_RT3052
+++extern struct net_device *ralink_esw_netdev;
+++#endif
+++/* end: add by chenzejun for wan led by 2016.6.22 */
++ static int fe_probe(struct platform_device *pdev)
++ {
++ 	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++@@ -1508,6 +1513,12 @@ static int fe_probe(struct platform_devi
++ 
++ 	platform_set_drvdata(pdev, netdev);
++ 
+++/* begin: add by chenzejun for wan led by 2016.6.22 */
+++#ifdef CONFIG_NET_RALINK_ESW_RT3052
+++	ralink_esw_netdev = netdev;
+++#endif
+++/* end: add by chenzejun for wan led by 2016.6.22 */
+++
++ 	netif_info(priv, probe, netdev, "ralink at 0x%08lx, irq %d\n",
++ 			netdev->base_addr, netdev->irq);
++ 
+diff -urpN target_orig/linux/ramips/patches-3.18/1000-04-mt7621-send-wan-plug-event-for-hotplug.patch target/linux/ramips/patches-3.18/1000-04-mt7621-send-wan-plug-event-for-hotplug.patch
+--- target_orig/linux/ramips/patches-3.18/1000-04-mt7621-send-wan-plug-event-for-hotplug.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/patches-3.18/1000-04-mt7621-send-wan-plug-event-for-hotplug.patch	2016-07-18 09:34:16.929095063 +0800
+@@ -0,0 +1,29 @@
++--- a/drivers/net/ethernet/ralink/gsw_mt7620a.c
+++++ b/drivers/net/ethernet/ralink/gsw_mt7620a.c
++@@ -328,6 +328,8 @@ static irqreturn_t gsw_interrupt_mt7621(
++ 	struct fe_priv *priv = (struct fe_priv *) _priv;
++ 	struct mt7620_gsw *gsw = (struct mt7620_gsw *) priv->soc->swpriv;
++ 	u32 reg, i;
+++	char port_num[32];
+++	char *envp[] = {port_num, NULL};
++ 
++ 	reg = mt7530_mdio_r32(gsw, 0x700c);
++ 
++@@ -338,9 +340,17 @@ static irqreturn_t gsw_interrupt_mt7621(
++ 			if (link != priv->link[i]) {
++ 				priv->link[i] = link;
++ 				if (link)
+++                                {
++ 					netdev_info(priv->netdev, "port %d link up\n", i);
+++                                        snprintf(port_num, sizeof(port_num), "PORT_ID=%d", i);
+++                                        kobject_uevent_env(&priv->netdev->dev.kobj, KOBJ_ONLINE, envp);
+++                                }
++ 				else
+++                                {
++ 					netdev_info(priv->netdev, "port %d link down\n", i);
+++                                        snprintf(port_num, sizeof(port_num), "PORT_ID=%d", i);
+++                                        kobject_uevent_env(&priv->netdev->dev.kobj, KOBJ_OFFLINE, envp);
+++                                }
++ 			}
++ 		}
++ 
 diff -urpN target_orig/linux/ramips/patches-3.18/1000-mt7628-zc9525a-wifi-led-support.patch target/linux/ramips/patches-3.18/1000-mt7628-zc9525a-wifi-led-support.patch
 --- target_orig/linux/ramips/patches-3.18/1000-mt7628-zc9525a-wifi-led-support.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/patches-3.18/1000-mt7628-zc9525a-wifi-led-support.patch	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/patches-3.18/1000-mt7628-zc9525a-wifi-led-support.patch	2016-07-18 09:34:16.925095061 +0800
 @@ -0,0 +1,106 @@
 +Index: linux-3.18.23/drivers/gpio/gpio-mt7621.c
 +===================================================================
@@ -7933,7 +8212,7 @@ diff -urpN target_orig/linux/ramips/patches-3.18/1000-mt7628-zc9525a-wifi-led-su
 + 			mediatek_gpio_bank_probe(pdev, bank);
 diff -urpN target_orig/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.patch target/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.patch
 --- target_orig/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.patch	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.patch	2016-07-18 09:34:16.925095061 +0800
 @@ -0,0 +1,13 @@
 +Index: linux-3.18.23/Kconfig
 +===================================================================
@@ -7950,7 +8229,7 @@ diff -urpN target_orig/linux/ramips/patches-3.18/1000-mt76xx-support-openwrt.pat
 + source "arch/$SRCARCH/Kconfig"
 diff -urpN target_orig/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch target/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch
 --- target_orig/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch	2016-07-18 09:34:16.925095061 +0800
 @@ -0,0 +1,13 @@
 +Index: linux-3.18.23/net/bridge/br_fdb.c
 +===================================================================
@@ -7967,7 +8246,7 @@ diff -urpN target_orig/linux/ramips/patches-3.18/1001-enable-br-fastpath.patch t
 + /* Interface used by ATM LANE hook to test
 diff -urpN target_orig/linux/ramips/patches-3.18/907-fix-mt7621-nand-driver-build-faild.patch target/linux/ramips/patches-3.18/907-fix-mt7621-nand-driver-build-faild.patch
 --- target_orig/linux/ramips/patches-3.18/907-fix-mt7621-nand-driver-build-faild.patch	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/patches-3.18/907-fix-mt7621-nand-driver-build-faild.patch	2016-06-17 15:12:41.716793314 +0800
++++ target/linux/ramips/patches-3.18/907-fix-mt7621-nand-driver-build-faild.patch	2016-07-18 09:34:16.929095063 +0800
 @@ -0,0 +1,148 @@
 +diff -urNb a/drivers/mtd/nand/mtk_nand.c b/drivers/mtd/nand/mtk_nand.c
 +--- a/drivers/mtd/nand/mtk_nand.c	2015-11-06 16:44:31.000000000 +0400
@@ -8119,7 +8398,7 @@ diff -urpN target_orig/linux/ramips/patches-3.18/907-fix-mt7621-nand-driver-buil
 + 	int (*onfi_get_features)(struct mtd_info *mtd, struct nand_chip *chip,
 diff -urpN target_orig/linux/ramips/wdpi_kernel/files/wdpi.conf target/linux/ramips/wdpi_kernel/files/wdpi.conf
 --- target_orig/linux/ramips/wdpi_kernel/files/wdpi.conf	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/wdpi_kernel/files/wdpi.conf	2016-06-17 15:12:41.720793316 +0800
++++ target/linux/ramips/wdpi_kernel/files/wdpi.conf	2016-07-18 09:34:16.933095063 +0800
 @@ -0,0 +1,6 @@
 +config wdpi_kernel
 +	option	wan_interface	'eth0.2'
@@ -8129,7 +8408,7 @@ diff -urpN target_orig/linux/ramips/wdpi_kernel/files/wdpi.conf target/linux/ram
 +
 diff -urpN target_orig/linux/ramips/wdpi_kernel/files/wdpi.init target/linux/ramips/wdpi_kernel/files/wdpi.init
 --- target_orig/linux/ramips/wdpi_kernel/files/wdpi.init	1970-01-01 08:00:00.000000000 +0800
-+++ target/linux/ramips/wdpi_kernel/files/wdpi.init	2016-06-17 15:12:41.720793316 +0800
++++ target/linux/ramips/wdpi_kernel/files/wdpi.init	2016-07-18 09:34:16.933095063 +0800
 @@ -0,0 +1,41 @@
 +#!/bin/sh /etc/rc.common
 +
@@ -8162,8 +8441,8 @@ diff -urpN target_orig/linux/ramips/wdpi_kernel/files/wdpi.init target/linux/ram
 +	config_foreach prepare_wdpi_conf wdpi_kernel
 +	
 +	if [ ! -n "$eth_str" ]; then
-+		wan_ifname=WDPI_wan_if
-+		echo "config error: wan_ifname is not exist" >/dev/ttyS0
++		wan_ifname=$WDPI_wan_if
++		echo "config error: wan_ifname is not exist, replace with $wan_ifname" >/dev/ttyS0
 +	fi	
 +	
 +	insmod $WDPI debug=$WDPI_debug samples=$WDPI_sample br_if=$WDPI_br_if wan_if=$wan_ifname
