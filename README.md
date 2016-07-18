@@ -65,14 +65,13 @@ libxml-parser-perl gengetopt patch
 
 2. 将helloworld示例package代码拷贝到openwrt对应packages目录，选择对应平台（以KT9661为例）：
 ![image](http://7xl7m7.com1.z0.glb.clouddn.com/sample.gif)
-
-
 3. 执行`make menuconfig`，选择helloworld中的指定分类（示例代码为Utilities，可自行指定），选择helloworld：
 ![image](http://7xl7m7.com1.z0.glb.clouddn.com/sample2.gif)
-4. 保存配置（Save），退出make menuconfig界面（Exit），执行编译命令：
+4. 使用默认配置名config来保存配置（Save），退出make menuconfig界面（Exit），执行编译命令(make)：
 ![image](http://7xl7m7.com1.z0.glb.clouddn.com/sample3.gif)
-
 5. 待编译结束后，固件中就包含我们的helloworld示例程序了。
+
+- 说明：上面若第四步无gif图片显示，请点击4.下的空白，在单独的网页里查看。
 
 #### Openwrt source
 
