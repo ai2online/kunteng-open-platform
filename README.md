@@ -1,12 +1,10 @@
 ----
 
-# Kunteng open platform
 
 
 #### 关于坤腾开放平台
 
-- 为坤腾路由设备提供插件编译平台；
-- 路由内核基于openwrt官方[源码chaos-calmer版本](https://git.openwrt.org/15.05/openwrt.git)，svn版本：git-svn-id: svn://svn.openwrt.org/openwrt/branches/chaos_calmer@47727 3c298f89-4303-0410-b956-a3cf2f4a3e73 
+- 为坤腾路由设备提供插件编译平台（SDK）；
 
 
 #### 支持设备型号：
@@ -20,7 +18,7 @@
 
 # Install
 
-**注意，下面的操作指引旨在ubuntu发行版上的自动化SDK编译流程，其他Linux发行版请按对应平台的安装命令，自行安装依赖库，依赖库包括但不限于(由于平台差异)以下lib及工具(以空格分隔)**
+**注意，下面的操作指引旨在ubuntu发行版上的自动化SDK编译流程，ubuntu系发行版中可以使用`sudo apt-get install`命令直接安装，其他Linux发行版请按对应平台的安装命令，自行安装依赖库，依赖库包括但不限于(由于平台差异)以下lib及工具(以空格分隔)**
 
 ```
 subversion build-essential libncurses5-dev zlib1g-dev 
@@ -59,11 +57,27 @@ libxml-parser-perl gengetopt patch
 
 #### Package创建
 
-[Openwrt简体中文wiki-创建软件包](https://wiki.openwrt.org/zh-cn/doc/devel/packages)
+- Openwrt编译源码存放在git项目目录的`openwrt`文件夹下。
+- 官方教程 [Openwrt简体中文wiki-创建软件包](https://wiki.openwrt.org/zh-cn/doc/devel/packages)
+- example目录下提供了openwrt `helloworld` 的示例package代码，该示例代码的用法如下：
+
+1. 进入kunteng-open-platform主目录；
+
+2. 将helloworld示例package代码拷贝到openwrt对应packages目录，选择对应平台（以KT9661为例）：
+![image](http://7xl7m7.com1.z0.glb.clouddn.com/sample.gif)
+
+
+3. 执行`make menuconfig`，选择helloworld中的指定分类（示例代码为Utilities，可自行指定），选择helloworld：
+![image](http://7xl7m7.com1.z0.glb.clouddn.com/sample2.gif)
+4. 保存配置（Save），退出make menuconfig界面（Exit），执行编译命令：
+![image](http://7xl7m7.com1.z0.glb.clouddn.com/sample3.gif)
+
+5. 待编译结束后，固件中就包含我们的helloworld示例程序了。
 
 #### Openwrt source
 
-openwrt源码版本：`r47727`
+- 路由内核基于openwrt官方[源码chaos-calmer版本](https://git.openwrt.org/15.05/openwrt.git)；
+- svn版本校验：git-svn-id: svn://svn.openwrt.org/openwrt/branches/chaos_calmer@47727 3c298f89-4303-0410-b956-a3cf2f4a3e73 
 
 ----
 
