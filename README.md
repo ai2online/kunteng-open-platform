@@ -13,8 +13,8 @@
 
 - MT7620系：KunTeng9525、KunTeng ZC9526、 KunTeng ZC9527
 - MT7621系：KunTeng9990、KunTeng9962
-- MT7628系：KunTeng ZC9525A、KT9762
-- AR71XX系：KT9661(原KunTeng-Foxconn 2010)、KT9671
+- MT7628系：KunTeng ZC9525A、KunTeng9762
+- AR71XX系：KunTeng9661(原KunTeng-Foxconn 2010)、KunTeng9671
 
 ----
 
