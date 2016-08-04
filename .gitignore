@@ -4,3 +4,4 @@
 /.kt_*
 /.Makefile.swp
 /.*.swp
+.config*
