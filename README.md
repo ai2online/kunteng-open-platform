@@ -53,21 +53,6 @@ libxml-parser-perl gengetopt patch
 
 		make
 
-## 信息提示
-
-上面`Install`的过程中出现如下错误信息的含义：
-
-- 执行`make`后，显示：
-
-```
-******************************
-*** configuration file:'config_kt' and '.config' missing, 
-*** you need to specify a defaultconfiguration file named 'config_kt'
-******************************
-```
-
-重新执行上面`Install`的第1.和第2.步骤。
-
 ----
 
 
@@ -90,6 +75,25 @@ libxml-parser-perl gengetopt patch
 5. 待编译结束后，固件中就包含我们的helloworld示例程序了。
 
 - 说明：上面若第四步无gif图片显示，请点击4.下的空白，在单独的网页里查看。
+
+----
+
+#### 可能会出现的问题及解决方案
+
+上面`Install`的过程中出现如下错误信息的含义：
+
+- 执行`make`后，显示：
+
+```
+******************************
+*** configuration file:'config_kt' and '.config' missing,
+*** you need to specify a defaultconfiguration file named 'config_kt'
+******************************
+```
+
+重新执行上面`Install`的第1.和第2.步骤。
+
+----
 
 #### Openwrt source
 
