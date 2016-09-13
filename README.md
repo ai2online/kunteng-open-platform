@@ -49,9 +49,27 @@ libxml-parser-perl gengetopt patch
 
 		git clone http://121.194.169.198:8888/root/openwrt-cc-dl.git openwrt/dl
 		
-5. 执行编译(自动检查CPU线程数，自动添加V、-j参数进行并发编译)
+5. 执行编译(自动检查CPU线程数，自动添加 V、-j 参数进行并发编译)
 
 		make
+
+## 信息提示
+
+上面`Install`的过程中出现如下错误信息的含义：
+
+- 执行`make`后，显示：
+
+```
+******************************
+*** configuration file:'config_kt' and '.config' missing, 
+*** you need to specify a defaultconfiguration file named 'config_kt'
+******************************
+```
+
+重新执行上面`Install`的第1.和第2.步骤。
+
+----
+
 
 # Others
 
@@ -79,5 +97,6 @@ libxml-parser-perl gengetopt patch
 - svn版本校验：git-svn-id: svn://svn.openwrt.org/openwrt/branches/chaos_calmer@47727 3c298f89-4303-0410-b956-a3cf2f4a3e73 
 
 ----
+
 
 

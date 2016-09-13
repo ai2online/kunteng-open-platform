@@ -61,7 +61,10 @@ define config_check
 # check kunteng default config
 	@if [ ! -e $(OPENWRT)/.config ]; then \
 		if [ ! -e $(CONFIG_FILENAME) ]; then \
-			echo "*** configuration file:'$(CONFIG_FILENAME)' and '.config' missing, you need to specify a defaultconfiguration file named '$(CONFIG_FILENAME)'";\
+			echo "******************************";\
+			echo "*** configuration file:'$(CONFIG_FILENAME)' and '.config' missing, ";\
+			echo "*** you need to specify a defaultconfiguration file named '$(CONFIG_FILENAME)'";\
+			echo "******************************";\
 			exit 1;\
 		else \
 			cp $(CONFIG_FILENAME) $(OPENWRT)/.config; \
