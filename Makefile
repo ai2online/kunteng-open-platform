@@ -1,5 +1,5 @@
 # kunteng openwrt platform for openwrt
-# created @ 2015-03-15
+# created @ 2016-03-15
 DEPEND_PKGS := subversion build-essential \
       libncurses5-dev zlib1g-dev gawk git ccache \
       gettext libssl-dev xsltproc libxml-parser-perl gengetopt patch
@@ -97,5 +97,6 @@ clean:
 	make clean -C $(OPENWRT) V=s
 	
 distclean:
-	rm .kt_*
+	echo $(PACKAGES)
+	rm -rf .kt_*
 	rm -rf $(OPENWRT)
