@@ -1,0 +1,5011 @@
+diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/01_leds target/linux/ar71xx/base-files/etc/uci-defaults/01_leds
+--- target_orig/linux/ar71xx/base-files/etc/uci-defaults/01_leds	2016-09-28 14:47:05.267354058 +0800
++++ target/linux/ar71xx/base-files/etc/uci-defaults/01_leds	2016-09-28 14:47:19.324048541 +0800
+@@ -31,12 +31,6 @@ all0315n)
+ 	ucidef_set_led_rssi "rssihigh" "RSSIHIGH" "all0315n:green:rssihigh" "wlan0" "70" "100" "-69" "8"
+ 	;;
+ 
+-kt9661)
+-	ucidef_set_led_netdev "wlan" "WLAN" "kt9661:green:wlan" "ath0" "link tx rx"
+-	ucidef_set_led_switch "sysfs" "SYS" "kt9661:green:system" "default-on"
+-	ucidef_set_led_netdev "wan" "WAN" "kt9661:green:wan" "eth1" "link tx rx"
+-	;;
+-
+ antminer-s1)
+ 	ucidef_set_led_default "sys" "SYS" "antminer-s1:green:sys" "0"
+ 	ucidef_set_led_wlan "wlan" "WLAN" "antminer-s1:green:wlan" "phy0tpt"
+@@ -84,17 +78,6 @@ cf-e325n)
+ 	ucidef_set_led_wlan "wlan" "WLAN" "comfast:blue" "phy0tpt"
+ 	;;
+ 
+-kt9671)
+-	ucidef_set_led_netdev "wan1" "WAN1" "comfast:green:wan1" "eth1"
+-	ucidef_set_led_switch "lan1" "LAN1" "comfast:green:lan1" "switch0" "0x02"
+-	ucidef_set_led_switch "lan2" "LAN2" "comfast:green:lan2" "switch0" "0x04"
+-	ucidef_set_led_switch "lan3" "LAN3" "comfast:green:lan3" "switch0" "0x08"
+-	ucidef_set_led_switch "lan4" "LAN4" "comfast:green:lan4" "switch0" "0x10"
+-	ucidef_set_led_netdev "wan" "WAN" "comfast:red:wan" "eth1"
+-	ucidef_set_led_netdev "lan" "LAN" "comfast:green:lan" "eth0"
+-	ucidef_set_led_wlan "wlan" "WLAN" "comfast:blue:wlan" "phy0tpt"
+-	;;
+-
+ cf-wr600n)
+ 	ucidef_set_led_netdev "wan1" "WAN1" "cf_wr600n:green:wan1" "eth0"
+ 	ucidef_set_led_switch "lan1" "LAN1" "cf_wr600n:green:lan1" "switch0" "0x04"
+@@ -141,11 +124,23 @@ cf-wr615n)
+ #	ucidef_set_led_wlan "wlan" "WLAN" "comfast:blue:wlan" "phy0tpt"
+ 	ucidef_set_led_wlan "wlan" "WLAN" "comfast:blue:wifi" "phy0tpt"
+ 	;;
++	
++kt9661)
++	ucidef_set_led_netdev "wlan" "WLAN" "kt9661:green:wlan" "ath0" "link tx rx"
++	ucidef_set_led_switch "sysfs" "SYS" "kt9661:green:system" "default-on"
++	ucidef_set_led_netdev "wan" "WAN" "kt9661:green:wan" "eth1" "link tx rx"
++	;;
++
++kt9671)
++	ucidef_set_led_netdev "wan" "WAN" "comfast:red:wan" "eth1"
++	ucidef_set_led_netdev "lan" "LAN" "comfast:green:lan" "eth0"
++	ucidef_set_led_netdev "wlan" "WLAN" "comfast:blue:wlan" "wifi0" "link tx rx"
++	;;
+ 
+ kt9672)
+ 	ucidef_set_led_netdev "wan" "WAN" "comfast:red:wan" "eth1"
+ 	ucidef_set_led_netdev "lan" "LAN" "comfast:green:lan" "eth0"
+-	ucidef_set_led_wlan "wlan" "WLAN" "comfast:blue:wlan" "phy0tpt"
++	ucidef_set_led_netdev "wlan" "WLAN" "comfast:blue:wlan" "wifi0" "link tx rx"
+ 	;;
+ 
+ cf-e380ac)
+diff -urpN target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network target/linux/ar71xx/base-files/etc/uci-defaults/02_network
+--- target_orig/linux/ar71xx/base-files/etc/uci-defaults/02_network	2016-09-28 14:47:05.267354058 +0800
++++ target/linux/ar71xx/base-files/etc/uci-defaults/02_network	2016-09-28 14:47:19.324048541 +0800
+@@ -98,7 +98,21 @@ kt9672)
+         br_mac=$(cat /sys/class/net/eth0/address)
+         [ -n "$br_mac" ] && ucidef_set_interface_macaddr lan $br_mac
+         ;;
+-        
++
++# router ap
++kt9672sc)
++	ucidef_set_interfaces_lan_wan "eth1" "eth0"
++	ucidef_add_switch "switch0" "1" "1"
++	ucidef_add_switch_vlan "switch0" "1" "1 2 5"
++	;;
++
++# bridged ap
++# kt9672sc)
++#	ucidef_set_interface_ap_lan "eth0 eth1"
++#        br_mac=$(cat /sys/class/net/eth0/address)
++#        [ -n "$br_mac" ] && ucidef_set_interface_macaddr lan $br_mac
++#        ;;
++
+ cf-wr600n)
+ 	ucidef_set_interfaces_lan_wan "eth1" "eth0"
+ 	ucidef_add_switch "switch0" "1" "1"
+@@ -284,7 +298,7 @@ nbg6716)
+ 	ucidef_add_switch_vlan "switch0" "1" "0t 1 2 3 4"
+ 	ucidef_add_switch_vlan "switch0" "2" "5 6"
+ 	;;
+-
++	
+ ap143 |\
+ rb-433 |\
+ rb-433u)
+diff -urpN target_orig/linux/ar71xx/base-files/lib/ar71xx.sh target/linux/ar71xx/base-files/lib/ar71xx.sh
+--- target_orig/linux/ar71xx/base-files/lib/ar71xx.sh	2016-09-28 14:47:05.271354257 +0800
++++ target/linux/ar71xx/base-files/lib/ar71xx.sh	2016-09-28 14:47:19.328048738 +0800
+@@ -374,7 +374,11 @@ ar71xx_board_detect() {
+ 		;;
+ 	*"KUNTENG KT9661")
+ 		name="kt9661"
+-		board_type="kt9661"
++		board_type="9661"
++		;;
++	*"KunTeng KT9672SC")
++		name="kt9672sc"
++		board_type="9672sc"
+ 		;;
+ 	*"AP143 reference board")
+ 		name="ap143"
+@@ -417,7 +421,7 @@ ar71xx_board_detect() {
+ 		;;
+ 	*"KunTeng KT9671")
+ 		name="kt9671"
+-		board_type="kt9671"
++		board_type="9671"
+ 		;;
+ 	*CF-WR600N)
+ 		name="cf-wr600n"
+@@ -436,7 +440,7 @@ ar71xx_board_detect() {
+ 		;;
+ 	*"KunTeng KT9672")
+ 		name="kt9672"
+-		board_type="kt9672"
++		board_type="9672"
+ 		;;
+ 	*"CF-E380AC")
+ 		name="cf-e380ac"
+@@ -1025,6 +1029,13 @@ ar71xx_board_detect() {
+ 	
+ 	AR71XX_BOARD_TYPE=$board_type
+ 
++    # 20160908 add banGongYi oem support
++    check_ban='/usr/lib/opkg/info/zorro-BanGongYi-OEM.control'
++    if [ -f $check_ban  ]; then
++        AR71XX_BOARD_TYPE="ban$board_type"
++    fi
++    # end zhangzf
++
+ 	echo "$AR71XX_BOARD_NAME" > /tmp/sysinfo/board_name
+ 	echo "$AR71XX_MODEL" > /tmp/sysinfo/model
+ 	echo "$AR71XX_BOARD_TYPE" > /tmp/sysinfo/board_type
+diff -urpN target_orig/linux/ar71xx/config-3.18 target/linux/ar71xx/config-3.18
+--- target_orig/linux/ar71xx/config-3.18	2016-09-28 14:47:05.275354455 +0800
++++ target/linux/ar71xx/config-3.18	2016-09-28 14:47:19.240044404 +0800
+@@ -36,6 +36,7 @@ CONFIG_ATH79_MACH_AP121=y
+ CONFIG_ATH79_MACH_AP132=y
+ CONFIG_ATH79_MACH_AP136=y
+ CONFIG_ATH79_MACH_AP143=y
++CONFIG_ATH79_MACH_KT9672SC=y
+ CONFIG_ATH79_MACH_AP147=y
+ CONFIG_ATH79_MACH_AP152=y
+ CONFIG_ATH79_MACH_AP81=y
+@@ -108,7 +109,6 @@ CONFIG_ATH79_MACH_PB44=y
+ CONFIG_ATH79_MACH_PB92=y
+ CONFIG_ATH79_MACH_QIHOO_C301=y
+ CONFIG_ATH79_MACH_R6100=y
+-CONFIG_ATH79_MACH_KT9661=y
+ # CONFIG_ATH79_MACH_RB2011 is not set
+ # CONFIG_ATH79_MACH_RB4XX is not set
+ # CONFIG_ATH79_MACH_RB750 is not set
+@@ -349,4 +349,4 @@ CONFIG_SYS_SUPPORTS_MIPS16=y
+ CONFIG_TICK_CPU_ACCOUNTING=y
+ CONFIG_USB_SUPPORT=y
+ CONFIG_ZONE_DMA_FLAG=0
+-CONFIG_ATH79_MACH_COMFAST_CF_E355AC=y
+\ 文件尾没有 newline 字符
++CONFIG_ATH79_MACH_COMFAST_CF_E355AC=y
+diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-ap143.c target/linux/ar71xx/files/arch/mips/ath79/mach-ap143.c
+--- target_orig/linux/ar71xx/files/arch/mips/ath79/mach-ap143.c	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/files/arch/mips/ath79/mach-ap143.c	2016-09-28 14:47:19.256045192 +0800
+@@ -0,0 +1,160 @@
++/*
++ * Atheros AP143 reference board support
++ *
++ * Copyright (c) 2013 The Linux Foundation. All rights reserved.
++ * Copyright (c) 2012 Gabor Juhos <juhosg@openwrt.org>
++ *
++ * Permission to use, copy, modify, and/or distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <linux/platform_device.h>
++#include <linux/ath9k_platform.h>
++#include <linux/ar8216_platform.h>
++
++#include <asm/mach-ath79/ar71xx_regs.h>
++
++#include "common.h"
++#include "pci.h"
++#include "dev-ap9x-pci.h"
++
++
++#include "dev-eth.h"
++#include "dev-gpio-buttons.h"
++#include "dev-leds-gpio.h"
++#include "dev-m25p80.h"
++#include "dev-spi.h"
++#include "dev-usb.h"
++#include "dev-wmac.h"
++#include "machtypes.h"
++
++#define AP143_GPIO_LED_WLAN		12
++#define AP143_GPIO_LED_WPS		13
++#define AP143_GPIO_LED_STATUS		13
++
++#define AP143_GPIO_LED_WAN		4
++#define AP143_GPIO_LED_LAN1		16
++#define AP143_GPIO_LED_LAN2		15
++#define AP143_GPIO_LED_LAN3		14
++#define AP143_GPIO_LED_LAN4		11
++
++#define AP143_GPIO_BTN_WPS		17
++
++#define AP143_KEYS_POLL_INTERVAL	20	/* msecs */
++#define AP143_KEYS_DEBOUNCE_INTERVAL	(3 * AP143_KEYS_POLL_INTERVAL)
++
++#define AP143_MAC0_OFFSET		0
++#define AP143_MAC1_OFFSET		6
++#define AP143_WMAC_CALDATA_OFFSET	0x1000
++#define AP143_PCIE_CALDATA_OFFSET       0x5000
++
++static struct gpio_led ap143_leds_gpio[] __initdata = {
++	{
++		.name		= "ap143:green:status",
++		.gpio		= AP143_GPIO_LED_STATUS,
++		.active_low	= 1,
++	},
++	{
++		.name		= "ap143:green:wlan",
++		.gpio		= AP143_GPIO_LED_WLAN,
++		.active_low	= 1,
++	}
++};
++
++static struct gpio_keys_button ap143_gpio_keys[] __initdata = {
++	{
++		.desc		= "WPS button",
++		.type		= EV_KEY,
++		.code		= KEY_WPS_BUTTON,
++		.debounce_interval = AP143_KEYS_DEBOUNCE_INTERVAL,
++		.gpio		= AP143_GPIO_BTN_WPS,
++		.active_low	= 1,
++	},
++};
++
++static void __init ap143_gpio_led_setup(void)
++{
++	ath79_gpio_direction_select(AP143_GPIO_LED_WAN, true);
++	ath79_gpio_direction_select(AP143_GPIO_LED_LAN1, true);
++	ath79_gpio_direction_select(AP143_GPIO_LED_LAN2, true);
++	ath79_gpio_direction_select(AP143_GPIO_LED_LAN3, true);
++	ath79_gpio_direction_select(AP143_GPIO_LED_LAN4, true);
++
++	ath79_gpio_output_select(AP143_GPIO_LED_WAN,
++			QCA953X_GPIO_OUT_MUX_LED_LINK5);
++	ath79_gpio_output_select(AP143_GPIO_LED_LAN1,
++			QCA953X_GPIO_OUT_MUX_LED_LINK1);
++	ath79_gpio_output_select(AP143_GPIO_LED_LAN2,
++			QCA953X_GPIO_OUT_MUX_LED_LINK2);
++	ath79_gpio_output_select(AP143_GPIO_LED_LAN3,
++			QCA953X_GPIO_OUT_MUX_LED_LINK3);
++	ath79_gpio_output_select(AP143_GPIO_LED_LAN4,
++			QCA953X_GPIO_OUT_MUX_LED_LINK4);
++
++	ath79_register_leds_gpio(-1, ARRAY_SIZE(ap143_leds_gpio),
++			ap143_leds_gpio);
++	ath79_register_gpio_keys_polled(-1, AP143_KEYS_POLL_INTERVAL,
++			ARRAY_SIZE(ap143_gpio_keys),
++			ap143_gpio_keys);
++}
++
++static void __init ap143_setup(void)
++{
++	#if 1
++	//0x9fff0000
++	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
++	#else
++	//0x9f7f0000
++	u8 *art = (u8 *) KSEG1ADDR(0x1f7f0000);
++	#endif
++
++	ath79_register_m25p80(NULL);
++
++	ap143_gpio_led_setup();
++
++	ath79_register_usb();
++
++	ath79_register_wmac(art + AP143_WMAC_CALDATA_OFFSET, NULL);
++	
++	/* gukq: added from qcacom for AP143 5G wifi support
++	 * the 5G wireless device recorgnised as wifi1: Atheros 9580
++	 */
++    	//add pci support
++	//ath79_register_pci();
++	ap91_pci_init(art + AP143_PCIE_CALDATA_OFFSET,NULL);
++	/* added over */
++
++	ath79_register_mdio(0, 0x0);
++	ath79_register_mdio(1, 0x0);
++
++	ath79_init_mac(ath79_eth0_data.mac_addr, art + AP143_MAC0_OFFSET, 0);
++	ath79_init_mac(ath79_eth1_data.mac_addr, art + AP143_MAC1_OFFSET, 0);
++
++	/* WAN port */
++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
++	ath79_eth0_data.speed = SPEED_100;
++	ath79_eth0_data.duplex = DUPLEX_FULL;
++	ath79_eth0_data.phy_mask = BIT(4);
++	ath79_register_eth(0);
++
++	/* LAN ports */
++	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
++	ath79_eth1_data.speed = SPEED_1000;
++	ath79_eth1_data.duplex = DUPLEX_FULL;
++	ath79_switch_data.phy_poll_mask |= BIT(4);
++	ath79_switch_data.phy4_mii_en = 1;
++	ath79_register_eth(1);
++}
++
++MIPS_MACHINE(ATH79_MACH_AP143, "AP143", "Qualcomm Atheros AP143 reference board",
++	     ap143_setup);
+diff -urpN target_orig/linux/ar71xx/files/arch/mips/ath79/mach-kt9672sc.c target/linux/ar71xx/files/arch/mips/ath79/mach-kt9672sc.c
+--- target_orig/linux/ar71xx/files/arch/mips/ath79/mach-kt9672sc.c	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/files/arch/mips/ath79/mach-kt9672sc.c	2016-09-28 14:47:19.256045192 +0800
+@@ -0,0 +1,171 @@
++/*
++ * Atheros KT9672SC reference board support
++ *
++ * Copyright (c) 2013 The Linux Foundation. All rights reserved.
++ * Copyright (c) 2012 Gabor Juhos <juhosg@openwrt.org>
++ *
++ * Permission to use, copy, modify, and/or distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ */
++
++#include <linux/platform_device.h>
++#include <linux/ath9k_platform.h>
++#include <linux/ar8216_platform.h>
++
++#include <asm/mach-ath79/ar71xx_regs.h>
++
++#include "common.h"
++#include "pci.h"
++#include "dev-ap9x-pci.h"
++
++
++#include "dev-eth.h"
++#include "dev-gpio-buttons.h"
++#include "dev-leds-gpio.h"
++#include "dev-m25p80.h"
++#include "dev-spi.h"
++#include "dev-usb.h"
++#include "dev-wmac.h"
++#include "machtypes.h"
++
++#define KT9672SC_GPIO_LED_WLAN		12
++// gukq add KT9672SC_GPIO_LED_WLAN_5G GPIO
++// #define KT9672SC_GPIO_LED_WLAN_5G	7
++#define KT9672SC_GPIO_LED_WPS		13
++#define KT9672SC_GPIO_LED_STATUS		13
++
++#define KT9672SC_GPIO_LED_WAN		4
++#define KT9672SC_GPIO_LED_LAN1		16
++#define KT9672SC_GPIO_LED_LAN2		15
++#define KT9672SC_GPIO_LED_LAN3		14
++#define KT9672SC_GPIO_LED_LAN4		11
++
++#define KT9672SC_GPIO_BTN_WPS		17
++
++#define KT9672SC_KEYS_POLL_INTERVAL	20	/* msecs */
++#define KT9672SC_KEYS_DEBOUNCE_INTERVAL	(3 * KT9672SC_KEYS_POLL_INTERVAL)
++
++#define KT9672SC_MAC0_OFFSET		0
++#define KT9672SC_MAC1_OFFSET		6
++#define KT9672SC_WMAC_CALDATA_OFFSET	0x1000
++#define KT9672SC_PCIE_CALDATA_OFFSET       0x5000
++
++static struct gpio_led kt9672sc_leds_gpio[] __initdata = {
++	{
++		.name		= "kt9672sc:green:status",
++		.gpio		= KT9672SC_GPIO_LED_STATUS,
++		.active_low	= 1,
++	},
++	{
++		.name		= "kt9672sc:green:wlan",
++		.gpio		= KT9672SC_GPIO_LED_WLAN,
++		.active_low	= 1,
++	}
++	
++	/* gukq add for wlan-5G led support */
++	/*
++	{
++		.name		= "kt9672sc:green:wlan_5g",
++		.gpio		= KT9672SC_GPIO_LED_WLAN_5G,
++		.active_low	= 1,
++	}*/
++};
++
++static struct gpio_keys_button kt9672sc_gpio_keys[] __initdata = {
++	{
++		.desc		= "WPS button",
++		.type		= EV_KEY,
++		.code		= KEY_WPS_BUTTON,
++		.debounce_interval = KT9672SC_KEYS_DEBOUNCE_INTERVAL,
++		.gpio		= KT9672SC_GPIO_BTN_WPS,
++		.active_low	= 1,
++	},
++};
++
++static void __init kt9672sc_gpio_led_setup(void)
++{
++	ath79_gpio_direction_select(KT9672SC_GPIO_LED_WAN, true);
++	ath79_gpio_direction_select(KT9672SC_GPIO_LED_LAN1, true);
++	ath79_gpio_direction_select(KT9672SC_GPIO_LED_LAN2, true);
++	ath79_gpio_direction_select(KT9672SC_GPIO_LED_LAN3, true);
++	ath79_gpio_direction_select(KT9672SC_GPIO_LED_LAN4, true);
++	
++	// ath79_gpio_output_select(KT9672SC_GPIO_LED_WLAN, 0);
++
++	ath79_gpio_output_select(KT9672SC_GPIO_LED_WAN,
++			QCA953X_GPIO_OUT_MUX_LED_LINK5);
++	ath79_gpio_output_select(KT9672SC_GPIO_LED_LAN1,
++			QCA953X_GPIO_OUT_MUX_LED_LINK1);
++	ath79_gpio_output_select(KT9672SC_GPIO_LED_LAN2,
++			QCA953X_GPIO_OUT_MUX_LED_LINK2);
++	ath79_gpio_output_select(KT9672SC_GPIO_LED_LAN3,
++			QCA953X_GPIO_OUT_MUX_LED_LINK3);
++	ath79_gpio_output_select(KT9672SC_GPIO_LED_LAN4,
++			QCA953X_GPIO_OUT_MUX_LED_LINK4);
++
++	ath79_register_leds_gpio(-1, ARRAY_SIZE(kt9672sc_leds_gpio),
++			kt9672sc_leds_gpio);
++	ath79_register_gpio_keys_polled(-1, KT9672SC_KEYS_POLL_INTERVAL,
++			ARRAY_SIZE(kt9672sc_gpio_keys),
++			kt9672sc_gpio_keys);
++}
++
++static void __init kt9672sc_setup(void)
++{
++	#if 1
++	//0x9fff0000
++	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
++	#else
++	//0x9f7f0000
++	u8 *art = (u8 *) KSEG1ADDR(0x1f7f0000);
++	#endif
++
++	ath79_register_m25p80(NULL);
++
++	kt9672sc_gpio_led_setup();
++
++	ath79_register_usb();
++
++	ath79_register_wmac(art + KT9672SC_WMAC_CALDATA_OFFSET, NULL);
++	
++	/* gukq: added from qcacom for KT9672SC 5G wifi support
++	 * the 5G wireless device recorgnised as wifi1: Atheros 9580
++	 */
++    	//add pci support
++	//ath79_register_pci();
++	ap91_pci_init(art + KT9672SC_PCIE_CALDATA_OFFSET,NULL);
++	/* added over */
++
++	ath79_register_mdio(0, 0x0);
++	ath79_register_mdio(1, 0x0);
++
++	ath79_init_mac(ath79_eth0_data.mac_addr, art + KT9672SC_MAC0_OFFSET, 0);
++	ath79_init_mac(ath79_eth1_data.mac_addr, art + KT9672SC_MAC1_OFFSET, 0);
++
++	/* WAN port */
++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
++	ath79_eth0_data.speed = SPEED_100;
++	ath79_eth0_data.duplex = DUPLEX_FULL;
++	ath79_eth0_data.phy_mask = BIT(4);
++	ath79_register_eth(0);
++
++	/* LAN ports */
++	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
++	ath79_eth1_data.speed = SPEED_1000;
++	ath79_eth1_data.duplex = DUPLEX_FULL;
++	ath79_switch_data.phy_poll_mask |= BIT(4);
++	ath79_switch_data.phy4_mii_en = 1;
++	ath79_register_eth(1);
++}
++
++MIPS_MACHINE(ATH79_MACH_KT9672SC, "KT9672SC", "KunTeng KT9672SC", kt9672sc_setup);
+diff -urpN target_orig/linux/ar71xx/generic/profiles/kf20x0.mk target/linux/ar71xx/generic/profiles/kf20x0.mk
+--- target_orig/linux/ar71xx/generic/profiles/kf20x0.mk	2016-09-28 14:47:05.363358816 +0800
++++ target/linux/ar71xx/generic/profiles/kf20x0.mk	2016-09-28 14:47:19.340049329 +0800
+@@ -7,7 +7,7 @@
+ 
+ # renamed by gukq 20160526 from kf-2010 to kt9661
+ define Profile/KT9661
+-	NAME:=KunTeng KT-9661
++	NAME:=KunTeng KT9661
+ 	PACKAGES:=kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev kmod-ath10k
+ endef
+ 
+diff -urpN target_orig/linux/ar71xx/generic/profiles/kunteng.mk target/linux/ar71xx/generic/profiles/kunteng.mk
+--- target_orig/linux/ar71xx/generic/profiles/kunteng.mk	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/generic/profiles/kunteng.mk	2016-09-28 14:47:19.344049526 +0800
+@@ -0,0 +1,17 @@
++#
++# Copyright (C) 2009-2010 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++define Profile/KT9672SC
++	NAME:=KunTeng KT9672SC
++	PACKAGES:=kmod-usb-core kmod-usb2 kmod-usb-storage
++endef
++
++define Profile/KT9672SC/Description
++	Package set optimized for the KunTeng KT9672SC (Sicun ShangHai) reference board.
++endef
++
++$(eval $(call Profile,KT9672SC))
+diff -urpN target_orig/linux/ar71xx/image/Makefile target/linux/ar71xx/image/Makefile
+--- target_orig/linux/ar71xx/image/Makefile	2016-09-28 14:47:05.371359213 +0800
++++ target/linux/ar71xx/image/Makefile	2016-09-28 14:47:19.348049723 +0800
+@@ -955,8 +955,9 @@ ap121_mtdlayout_4M=mtdparts=spi0.0:256k(
+ ap132_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,1408k(kernel),6400k(rootfs),64k(art),7808k@0x50000(firmware)
+ ap135_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware)
+ ap136_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,6336k(rootfs),1408k(kernel),64k(mib0),64k(art)ro,7744k@0x50000(firmware)
+-ap143_mtdlayout_8M=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,6336k(rootfs),1472k(kernel),64k(art)ro,7744k@0x50000(firmware)
++ap143_mtdlayout_8M=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,6336k(rootfs),1472k(kernel),64k(art),7744k@0x50000(firmware)
+ ap143_mtdlayout_16M=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware)
++kt9672sc_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware)
+ ap147_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art),16000k@0x50000(firmware)
+ ap152_mtdlayout_16M=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware)
+ gb_cgw600_16m_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art),16000k@0x50000(firmware)
+@@ -2093,6 +2094,8 @@ $(eval $(call SingleProfile,AthLzma,64k,
+ $(eval $(call SingleProfile,AthLzma,64k,AP136_020,ap136-020,AP136-020,ttyS0,115200,$$(ap136_mtdlayout),RKuImage))
+ $(eval $(call SingleProfile,AthLzma,64k,AP143_8M,ap143-8M,AP143,ttyS0,115200,$$(ap143_mtdlayout_8M),RKuImage))
+ $(eval $(call SingleProfile,AthLzma,64k,AP143_16M,ap143-16M,AP143,ttyS0,115200,$$(ap143_mtdlayout_16M),RKuImage))
++#$(eval $(call SingleProfile,KUNTENG_KT9672,64k,KUNTENGKT9672,kt9672,KUNTENG-KT9672,ttyS0,115200,$$(qca9531_kt9672_mtdlayout),KT-9672,qca953x))
++$(eval $(call SingleProfile,AthLzma,64k,KUNTENG_KT9672SC,kt9672sc,KT9672SC,ttyS0,115200,$$(kt9672sc_mtdlayout),RKuImage))
+ $(eval $(call SingleProfile,AthLzma,64k,AP147_010,ap147-010,AP147-010,ttyS0,115200,$$(ap147_mtdlayout),RKuImage))
+ $(eval $(call SingleProfile,AthLzma,64k,AP152_16M,ap152-16M,AP152,ttyS0,115200,$$(ap152_mtdlayout_16M),RKuImage))
+ $(eval $(call SingleProfile,AthLzma,64k,GB_CGW600_16M,gb_cgw600_16m,GB-CGW600,ttyS0,115200,$$(gb_cgw600_16m_mtdlayout),RKuImage))
+@@ -2289,6 +2292,7 @@ $(eval $(call MultiProfile,AP121,AP121_2
+ $(eval $(call MultiProfile,DIR615IX,DIR615I1 DIR615I3))
+ $(eval $(call MultiProfile,AP136,AP136_010 AP136_020))
+ $(eval $(call MultiProfile,AP143,AP143_8M AP143_16M))
++$(eval $(call MultiProfile,KT9672SC,KUNTENG_KT9672SC))
+ $(eval $(call MultiProfile,AP147,AP147_010))
+ $(eval $(call MultiProfile,AP152,AP152_16M))
+ $(eval $(call MultiProfile,GB_CGW600,GB_CGW600_16M))
+diff -urpN target_orig/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-QCA953x-SoC.patch target/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-QCA953x-SoC.patch
+--- target_orig/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-QCA953x-SoC.patch	2016-09-28 14:47:05.403360799 +0800
++++ target/linux/ar71xx/patches-3.18/707-MIPS-ath79-add-support-for-QCA953x-SoC.patch	2016-09-28 14:47:19.328048738 +0800
+@@ -632,7 +632,7 @@ meaning of the bits CPUCLK_FROM_CPUPLL a
+  #define AR913X_GPIO_COUNT		22
+  #define AR933X_GPIO_COUNT		30
+  #define AR934X_GPIO_COUNT		23
+-+#define QCA953X_GPIO_COUNT		24
+++#define QCA953X_GPIO_COUNT		18
+  #define QCA955X_GPIO_COUNT		24
+  
+  /*
+diff -urpN target_orig/linux/ar71xx/patches-3.18/921-linux-spi-support-for-new-chip.patch target/linux/ar71xx/patches-3.18/921-linux-spi-support-for-new-chip.patch
+--- target_orig/linux/ar71xx/patches-3.18/921-linux-spi-support-for-new-chip.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/patches-3.18/921-linux-spi-support-for-new-chip.patch	2016-09-28 14:47:19.336049132 +0800
+@@ -0,0 +1,13 @@
++diff -rupN o/drivers/mtd/spi-nor/spi-nor.c n/drivers/mtd/spi-nor/spi-nor.c
++--- o/drivers/mtd/spi-nor/spi-nor.c	2016-09-02 15:08:56.293425487 +0800
+++++ n/drivers/mtd/spi-nor/spi-nor.c	2016-09-02 15:09:09.017427881 +0800
++@@ -702,6 +702,9 @@ static const struct flash_info spi_nor_i
++ 	/* GigaDevice */
++ 	{ "gd25q32", INFO(0xc84016, 0, 64 * 1024,  64, SECT_4K) },
++ 	{ "gd25q64", INFO(0xc84017, 0, 64 * 1024, 128, SECT_4K) },
+++	/* gukq@kunteng.org add for ap143-qca9531-9582 and kt9672sc m25p80 support */
+++	{ "gd25q128", INFO(0xc84018, 0, 64 * 1024, 256, SECT_4K) },
+++	/* gukq add over */
++ 
++ 	/* Intel/Numonyx -- xxxs33b */
++ 	{ "160s33b",  INFO(0x898911, 0, 64 * 1024,  32, 0) },
+diff -urpN target_orig/linux/ar71xx/patches-3.18/941-ath79-qca953X-and-gbcom-support.patch target/linux/ar71xx/patches-3.18/941-ath79-qca953X-and-gbcom-support.patch
+--- target_orig/linux/ar71xx/patches-3.18/941-ath79-qca953X-and-gbcom-support.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/patches-3.18/941-ath79-qca953X-and-gbcom-support.patch	2016-09-28 14:47:19.336049132 +0800
+@@ -0,0 +1,1200 @@
++--- a/arch/mips/ath79/common.h
+++++ b/arch/mips/ath79/common.h
++@@ -28,6 +28,7 @@ void ath79_gpio_function_enable(u32 mask
++ void ath79_gpio_function_disable(u32 mask);
++ void ath79_gpio_function_setup(u32 set, u32 clear);
++ void ath79_gpio_output_select(unsigned gpio, u8 val);
+++int ath79_gpio_direction_select(unsigned gpio, bool oe);
++ void ath79_gpio_init(void);
++ 
++ #endif /* __ATH79_COMMON_H */
++--- a/arch/mips/ath79/dev-eth.c
+++++ b/arch/mips/ath79/dev-eth.c
++@@ -183,7 +183,8 @@ void __init ath79_register_mdio(unsigned
++ 	    ath79_soc == ATH79_SOC_AR9342 ||
++ 	    ath79_soc == ATH79_SOC_AR9344 ||
++ 	    ath79_soc == ATH79_SOC_QCA9556 ||
++-	    ath79_soc == ATH79_SOC_QCA9558)
+++	    ath79_soc == ATH79_SOC_QCA9558 ||
+++	    ath79_soc == ATH79_SOC_QCA9561)
++ 		max_id = 1;
++ 	else
++ 		max_id = 0;
++@@ -198,7 +199,6 @@ void __init ath79_register_mdio(unsigned
++ 	case ATH79_SOC_AR9330:
++ 	case ATH79_SOC_AR9331:
++ 	case ATH79_SOC_QCA9533:
++-	case ATH79_SOC_QCA9561:
++ 	case ATH79_SOC_TP9343:
++ 		mdio_dev = &ath79_mdio1_device;
++ 		mdio_data = &ath79_mdio1_data;
++@@ -209,6 +209,7 @@ void __init ath79_register_mdio(unsigned
++ 	case ATH79_SOC_AR9344:
++ 	case ATH79_SOC_QCA9556:
++ 	case ATH79_SOC_QCA9558:
+++	case ATH79_SOC_QCA9561:
++ 		if (id == 0) {
++ 			mdio_dev = &ath79_mdio0_device;
++ 			mdio_data = &ath79_mdio0_data;
++@@ -258,7 +259,6 @@ void __init ath79_register_mdio(unsigned
++ 		break;
++ 
++ 	case ATH79_SOC_QCA9533:
++-	case ATH79_SOC_QCA9561:
++ 	case ATH79_SOC_TP9343:
++ 		mdio_data->builtin_switch = 1;
++ 		break;
++@@ -267,6 +267,12 @@ void __init ath79_register_mdio(unsigned
++ 	case ATH79_SOC_QCA9558:
++ 		mdio_data->is_ar934x = 1;
++ 		break;
+++		
+++	case ATH79_SOC_QCA9561:
+++		if (id == 1)
+++			mdio_data->builtin_switch = 1;
+++		mdio_data->is_ar934x = 1;
+++		break;
++ 
++ 	default:
++ 		break;
++@@ -387,6 +393,16 @@ static void qca955x_set_speed_sgmii(int
++ 	iounmap(base);
++ }
++ 
+++static void qca956x_set_speed_sgmii(int speed)
+++{
+++	void __iomem *base;
+++	u32 val = ath79_get_eth_pll(0, speed);
+++
+++	base = ioremap_nocache(AR71XX_PLL_BASE, AR71XX_PLL_SIZE);
+++	__raw_writel(val, base + QCA955X_PLL_ETH_SGMII_CONTROL_REG);
+++	iounmap(base);
+++}
+++
++ static void ath79_set_speed_dummy(int speed)
++ {
++ }
++@@ -517,6 +533,10 @@ struct ag71xx_switch_platform_data ath79
++ #define AR934X_PLL_VAL_100	0x00000101
++ #define AR934X_PLL_VAL_10	0x00001616
++ 
+++#define QCA956X_PLL_VAL_1000	0x03000000
+++#define QCA956X_PLL_VAL_100	0x00000101
+++#define QCA956X_PLL_VAL_10	0x00001919
+++
++ static void __init ath79_init_eth_pll_data(unsigned int id)
++ {
++ 	struct ath79_eth_pll_data *pll_data;
++@@ -575,12 +595,17 @@ static void __init ath79_init_eth_pll_da
++ 	case ATH79_SOC_QCA9533:
++ 	case ATH79_SOC_QCA9556:
++ 	case ATH79_SOC_QCA9558:
++-	case ATH79_SOC_QCA9561:
++ 	case ATH79_SOC_TP9343:
++ 		pll_10 = AR934X_PLL_VAL_10;
++ 		pll_100 = AR934X_PLL_VAL_100;
++ 		pll_1000 = AR934X_PLL_VAL_1000;
++ 		break;
+++		
+++	case ATH79_SOC_QCA9561:
+++		pll_10 = QCA956X_PLL_VAL_10;
+++		pll_100 = QCA956X_PLL_VAL_100;
+++		pll_1000 = QCA956X_PLL_VAL_1000;
+++		break;
++ 
++ 	default:
++ 		BUG();
++@@ -633,7 +658,6 @@ static int __init ath79_setup_phy_if_mod
++ 		case ATH79_SOC_AR9330:
++ 		case ATH79_SOC_AR9331:
++ 		case ATH79_SOC_QCA9533:
++-		case ATH79_SOC_QCA9561:
++ 		case ATH79_SOC_TP9343:
++ 			pdata->phy_if_mode = PHY_INTERFACE_MODE_MII;
++ 			break;
++@@ -657,6 +681,7 @@ static int __init ath79_setup_phy_if_mod
++ 
++ 		case ATH79_SOC_QCA9556:
++ 		case ATH79_SOC_QCA9558:
+++		case ATH79_SOC_QCA9561:
++ 			switch (pdata->phy_if_mode) {
++ 			case PHY_INTERFACE_MODE_MII:
++ 			case PHY_INTERFACE_MODE_RGMII:
++@@ -1028,7 +1053,6 @@ void __init ath79_register_eth(unsigned
++ 		break;
++ 
++ 	case ATH79_SOC_QCA9533:
++-	case ATH79_SOC_QCA9561:
++ 	case ATH79_SOC_TP9343:
++ 		if (id == 0) {
++ 			pdata->reset_bit = AR933X_RESET_GE0_MAC |
++@@ -1095,6 +1119,43 @@ void __init ath79_register_eth(unsigned
++ 			pdata->fifo_cfg3 = 0x01f00140;
++ 		break;
++ 
+++	case ATH79_SOC_QCA9561:
+++		if (id == 0) {
+++			pdata->reset_bit = QCA955X_RESET_GE0_MAC |
+++					   QCA955X_RESET_GE0_MDIO;
+++
+++			if (pdata->phy_if_mode == PHY_INTERFACE_MODE_SGMII)
+++				pdata->set_speed = qca956x_set_speed_sgmii;
+++			else
+++				pdata->set_speed = ath79_set_speed_ge0;
+++		} else {
+++			pdata->reset_bit = QCA955X_RESET_GE1_MAC |
+++					   QCA955X_RESET_GE1_MDIO;
+++
+++			pdata->set_speed = ath79_set_speed_dummy;
+++
+++			pdata->switch_data = &ath79_switch_data;
+++
+++			pdata->speed = SPEED_1000;
+++			pdata->duplex = DUPLEX_FULL;
+++
+++			/* reset the built-in switch */
+++			ath79_device_reset_set(AR934X_RESET_ETH_SWITCH);
+++			ath79_device_reset_clear(AR934X_RESET_ETH_SWITCH);
+++		}
+++
+++		pdata->ddr_flush = ath79_ddr_no_flush;
+++		pdata->has_gbit = 1;
+++		pdata->is_ar724x = 1;
+++
+++		if (!pdata->fifo_cfg1)
+++			pdata->fifo_cfg1 = 0x0010ffff;
+++		if (!pdata->fifo_cfg2)
+++			pdata->fifo_cfg2 = 0x015500aa;
+++		if (!pdata->fifo_cfg3)
+++			pdata->fifo_cfg3 = 0x01f00140;
+++		break;
+++
++ 	default:
++ 		BUG();
++ 	}
++@@ -1135,7 +1196,6 @@ void __init ath79_register_eth(unsigned
++ 		case ATH79_SOC_AR9330:
++ 		case ATH79_SOC_AR9331:
++ 		case ATH79_SOC_QCA9533:
++-		case ATH79_SOC_QCA9561:
++ 		case ATH79_SOC_TP9343:
++ 			pdata->mii_bus_dev = &ath79_mdio1_device.dev;
++ 			break;
++@@ -1144,6 +1204,11 @@ void __init ath79_register_eth(unsigned
++ 		case ATH79_SOC_QCA9558:
++ 			/* don't assign any MDIO device by default */
++ 			break;
+++			
+++		case ATH79_SOC_QCA9561:
+++			if (pdata->phy_if_mode != PHY_INTERFACE_MODE_SGMII)
+++				pdata->mii_bus_dev = &ath79_mdio1_device.dev;
+++			break;
++ 
++ 		default:
++ 			pdata->mii_bus_dev = &ath79_mdio0_device.dev;
++--- a/arch/mips/ath79/dev-wmac.c
+++++ b/arch/mips/ath79/dev-wmac.c
++@@ -398,6 +398,11 @@ void __init ath79_wmac_set_ext_lna_gpio(
++ 		ar934x_set_ext_lna_gpio(chain, gpio);
++ }
++ 
+++void __init ath79_wmac_set_led_pin(int gpio)
+++{
+++	ath79_wmac_data.led_pin = gpio;
+++}
+++
++ void __init ath79_register_wmac(u8 *cal_data, u8 *mac_addr)
++ {
++ 	if (soc_is_ar913x())
++--- a/arch/mips/ath79/dev-wmac.h
+++++ b/arch/mips/ath79/dev-wmac.h
++@@ -18,6 +18,7 @@ void ath79_wmac_disable_2ghz(void);
++ void ath79_wmac_disable_5ghz(void);
++ void ath79_wmac_set_tx_gain_buffalo(void);
++ void ath79_wmac_set_ext_lna_gpio(unsigned chain, int gpio);
+++void ath79_wmac_set_led_pin(int gpio);
++ 
++ bool ar93xx_wmac_read_mac_address(u8 *dest);
++ 
++--- a/arch/mips/ath79/gpio.c
+++++ b/arch/mips/ath79/gpio.c
++@@ -130,6 +130,30 @@ static int ar934x_gpio_direction_output(
++ 	return 0;
++ }
++ 
+++int ath79_gpio_direction_select(unsigned gpio, bool oe)
+++{
+++	void __iomem *base = ath79_gpio_base;
+++	unsigned long flags;
+++	bool ieq_1 = (soc_is_ar934x() ||
+++			soc_is_qca953x());
+++
+++	if (gpio >= ath79_gpio_count)
+++		return -1;
+++
+++	spin_lock_irqsave(&ath79_gpio_lock, flags);
+++
+++	if ((ieq_1 && oe) || (!ieq_1 && !oe))
+++		__raw_writel(__raw_readl(base + AR71XX_GPIO_REG_OE) & ~(1 << gpio),
+++				base + AR71XX_GPIO_REG_OE);
+++	else
+++		__raw_writel(__raw_readl(base + AR71XX_GPIO_REG_OE) | (1 << gpio),
+++				base + AR71XX_GPIO_REG_OE);
+++
+++	spin_unlock_irqrestore(&ath79_gpio_lock, flags);
+++
+++	return 0;
+++}
+++
++ static struct gpio_chip ath79_gpio_chip = {
++ 	.label			= "ath79",
++ 	.get			= ath79_gpio_get_value,
++--- /dev/null
+++++ b/arch/mips/ath79/mach-ap147.c
++@@ -0,0 +1,125 @@
+++/*
+++ *  Atheros AP147 reference board support
+++ *
+++ *  Copyright (C) 2014 Matthias Schiffer <mschiffer@universe-factory.net>
+++ *  Copyright (C) 2015 Sven Eckelmann <sven@open-mesh.com>
+++ *
+++ *  This program is free software; you can redistribute it and/or modify it
+++ *  under the terms of the GNU General Public License version 2 as published
+++ *  by the Free Software Foundation.
+++ */
+++
+++#include <linux/platform_device.h>
+++#include <linux/ar8216_platform.h>
+++
+++#include <asm/mach-ath79/ar71xx_regs.h>
+++#include <asm/mach-ath79/ath79.h>
+++
+++#include "common.h"
+++#include "dev-ap9x-pci.h"
+++#include "dev-eth.h"
+++#include "dev-gpio-buttons.h"
+++#include "dev-leds-gpio.h"
+++#include "dev-m25p80.h"
+++#include "dev-usb.h"
+++#include "dev-wmac.h"
+++#include "machtypes.h"
+++#include "pci.h"
+++
+++#define AP147_GPIO_LED_WAN	4
+++#define AP147_GPIO_LED_LAN1	16
+++#define AP147_GPIO_LED_LAN2	15
+++#define AP147_GPIO_LED_LAN3	14
+++#define AP147_GPIO_LED_LAN4	11
+++#define AP147_GPIO_LED_STATUS	13
+++#define AP147_GPIO_LED_WLAN_2G	12
+++
+++#define AP147_GPIO_BTN_WPS	17
+++
+++#define AP147_KEYS_POLL_INTERVAL	20	/* msecs */
+++#define AP147_KEYS_DEBOUNCE_INTERVAL	(3 * AP147_KEYS_POLL_INTERVAL)
+++
+++#define AP147_MAC0_OFFSET	0x1000
+++
+++static struct gpio_led ap147_leds_gpio[] __initdata = {
+++	{
+++		.name		= "ap147:green:status",
+++		.gpio		= AP147_GPIO_LED_STATUS,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "ap147:green:wlan-2g",
+++		.gpio		= AP147_GPIO_LED_WLAN_2G,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "ap147:green:lan1",
+++		.gpio		= AP147_GPIO_LED_LAN1,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "ap147:green:lan2",
+++		.gpio		= AP147_GPIO_LED_LAN2,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "ap147:green:lan3",
+++		.gpio		= AP147_GPIO_LED_LAN3,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "ap147:green:lan4",
+++		.gpio		= AP147_GPIO_LED_LAN4,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "ap147:green:wan",
+++		.gpio		= AP147_GPIO_LED_WAN,
+++		.active_low	= 1,
+++	},
+++};
+++
+++static struct gpio_keys_button ap147_gpio_keys[] __initdata = {
+++	{
+++		.desc		= "wps button",
+++		.type		= EV_KEY,
+++		.code		= KEY_WPS_BUTTON,
+++		.debounce_interval = AP147_KEYS_DEBOUNCE_INTERVAL,
+++		.gpio		= AP147_GPIO_BTN_WPS,
+++		.active_low	= 1,
+++	}
+++};
+++
+++static void __init ap147_setup(void)
+++{
+++	u8 *art = (u8 *)KSEG1ADDR(0x1fff0000);
+++
+++	ath79_register_m25p80(NULL);
+++	ath79_register_leds_gpio(-1, ARRAY_SIZE(ap147_leds_gpio),
+++				 ap147_leds_gpio);
+++	ath79_register_gpio_keys_polled(-1, AP147_KEYS_POLL_INTERVAL,
+++					ARRAY_SIZE(ap147_gpio_keys),
+++					ap147_gpio_keys);
+++
+++	ath79_register_usb();
+++
+++	ath79_register_pci();
+++
+++	ath79_register_wmac(art + AP147_MAC0_OFFSET, NULL);
+++
+++	ath79_setup_ar933x_phy4_switch(false, false);
+++
+++	ath79_register_mdio(0, 0x0);
+++
+++	/* LAN */
+++	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
+++	ath79_eth1_data.duplex = DUPLEX_FULL;
+++	ath79_switch_data.phy_poll_mask |= BIT(4);
+++	ath79_init_mac(ath79_eth1_data.mac_addr, art, 0);
+++	ath79_register_eth(1);
+++
+++	/* WAN */
+++	ath79_switch_data.phy4_mii_en = 1;
+++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
+++	ath79_eth0_data.duplex = DUPLEX_FULL;
+++	ath79_eth0_data.speed = SPEED_100;
+++	ath79_eth0_data.phy_mask = BIT(4);
+++	ath79_init_mac(ath79_eth0_data.mac_addr, art, 1);
+++	ath79_register_eth(0);
+++}
+++
+++MIPS_MACHINE(ATH79_MACH_AP147_010, "AP147-010", "Atheros AP147-010 reference board", ap147_setup);
++--- /dev/null
+++++ b/arch/mips/ath79/mach-ap152.c
++@@ -0,0 +1,140 @@
+++
+++/*
+++ * Qualcomm Atheros AP152 reference board support
+++ *
+++ * Copyright (c) 2015 Qualcomm Atheros
+++ * Copyright (c) 2012 Gabor Juhos <juhosg@openwrt.org>
+++ *
+++ * Permission to use, copy, modify, and/or distribute this software for any
+++ * purpose with or without fee is hereby granted, provided that the above
+++ * copyright notice and this permission notice appear in all copies.
+++ *
+++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+++ *
+++ */
+++
+++#include <linux/platform_device.h>
+++#include <linux/ath9k_platform.h>
+++#include <linux/ar8216_platform.h>
+++#include <asm/mach-ath79/ar71xx_regs.h>
+++
+++#include "common.h"
+++#include "dev-m25p80.h"
+++#include "machtypes.h"
+++#include "pci.h"
+++#include "dev-eth.h"
+++#include "dev-gpio-buttons.h"
+++#include "dev-leds-gpio.h"
+++#include "dev-spi.h"
+++#include "dev-usb.h"
+++#include "dev-wmac.h"
+++
+++#define AP152_GPIO_LED_USB0		7
+++#define AP152_GPIO_LED_USB1		8
+++
+++#define AP152_GPIO_BTN_RESET            2
+++#define AP152_GPIO_BTN_WPS              1
+++#define AP152_KEYS_POLL_INTERVAL        20     /* msecs */
+++#define AP152_KEYS_DEBOUNCE_INTERVAL    (3 * AP152_KEYS_POLL_INTERVAL)
+++
+++#define AP152_MAC0_OFFSET               0
+++#define AP152_WMAC_CALDATA_OFFSET       0x1000
+++
+++static struct gpio_led ap152_leds_gpio[] __initdata = {
+++	{
+++		.name		= "ap152:green:usb0",
+++		.gpio		= AP152_GPIO_LED_USB0,
+++		.active_low	= 1,
+++	},
+++	{
+++		.name		= "ap152:green:usb1",
+++		.gpio		= AP152_GPIO_LED_USB1,
+++		.active_low	= 1,
+++	},
+++};
+++
+++static struct gpio_keys_button ap152_gpio_keys[] __initdata = {
+++	{
+++		.desc		= "WPS button",
+++		.type		= EV_KEY,
+++		.code		= KEY_WPS_BUTTON,
+++		.debounce_interval = AP152_KEYS_DEBOUNCE_INTERVAL,
+++		.gpio		= AP152_GPIO_BTN_WPS,
+++		.active_low	= 1,
+++	},
+++	{
+++		.desc		= "Reset button",
+++		.type		= EV_KEY,
+++		.code		= KEY_RESTART,
+++		.debounce_interval = AP152_KEYS_DEBOUNCE_INTERVAL,
+++		.gpio		= AP152_GPIO_BTN_RESET,
+++		.active_low	= 1,
+++	},
+++};
+++
+++static struct ar8327_pad_cfg ap152_ar8337_pad0_cfg = {
+++	.mode = AR8327_PAD_MAC_SGMII,
+++	.sgmii_delay_en = true,
+++};
+++
+++static struct ar8327_platform_data ap152_ar8337_data = {
+++	.pad0_cfg = &ap152_ar8337_pad0_cfg,
+++	.port0_cfg = {
+++		.force_link = 1,
+++		.speed = AR8327_PORT_SPEED_1000,
+++		.duplex = 1,
+++		.txpause = 1,
+++		.rxpause = 1,
+++	},
+++};
+++
+++static struct mdio_board_info ap152_mdio0_info[] = {
+++	{
+++		.bus_id = "ag71xx-mdio.0",
+++		.phy_addr = 0,
+++		.platform_data = &ap152_ar8337_data,
+++	},
+++};
+++
+++static void __init ap152_setup(void)
+++{
+++	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+++
+++	ath79_register_m25p80(NULL);
+++
+++	ath79_register_leds_gpio(-1, ARRAY_SIZE(ap152_leds_gpio),
+++				 ap152_leds_gpio);
+++	ath79_register_gpio_keys_polled(-1, AP152_KEYS_POLL_INTERVAL,
+++					ARRAY_SIZE(ap152_gpio_keys),
+++					ap152_gpio_keys);
+++
+++	ath79_register_usb();
+++
+++	platform_device_register(&ath79_mdio0_device);
+++
+++	mdiobus_register_board_info(ap152_mdio0_info,
+++				    ARRAY_SIZE(ap152_mdio0_info));
+++
+++	ath79_register_wmac(art + AP152_WMAC_CALDATA_OFFSET, NULL);
+++	ath79_register_pci();
+++
+++	ath79_init_mac(ath79_eth0_data.mac_addr, art + AP152_MAC0_OFFSET, 0);
+++
+++	/* GMAC0 is connected to an AR8337 switch */
+++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_SGMII;
+++	ath79_eth0_data.speed = SPEED_1000;
+++	ath79_eth0_data.duplex = DUPLEX_FULL;
+++	ath79_eth0_data.phy_mask = BIT(0);
+++	ath79_eth0_data.mii_bus_dev = &ath79_mdio0_device.dev;
+++
+++	ath79_register_eth(0);
+++}
+++
+++MIPS_MACHINE(ATH79_MACH_AP152, "AP152", "Qualcomm Atheros AP152 reference board",
+++	     ap152_setup);
++--- /dev/null
+++++ b/arch/mips/ath79/mach-gb-cgw600.c
++@@ -0,0 +1,151 @@
+++/*
+++ *  Atheros AP147 reference board support
+++ *
+++ *  Copyright (C) 2014 Matthias Schiffer <mschiffer@universe-factory.net>
+++ *  Copyright (C) 2015 Sven Eckelmann <sven@open-mesh.com>
+++ *
+++ *  This program is free software; you can redistribute it and/or modify it
+++ *  under the terms of the GNU General Public License version 2 as published
+++ *  by the Free Software Foundation.
+++ */
+++
+++#include <linux/platform_device.h>
+++#include <linux/ar8216_platform.h>
+++
+++#include <asm/mach-ath79/ar71xx_regs.h>
+++#include <asm/mach-ath79/ath79.h>
+++
+++#include "common.h"
+++#include "dev-ap9x-pci.h"
+++#include "dev-eth.h"
+++#include "dev-gpio-buttons.h"
+++#include "dev-leds-gpio.h"
+++#include "dev-m25p80.h"
+++#include "dev-usb.h"
+++#include "dev-wmac.h"
+++#include "machtypes.h"
+++#include "pci.h"
+++
+++#define CGW600_GPIO_LED_STATUS	15 /*SYS_LED   1-on*/
+++#define CGW600_GPIO_LED_WLAN	3         /*WLAN_2.4G_LED 1-on*/
+++#define CGW600_GPIO_LED_LAN1	16        /*LAN1_LED  0-on*/
+++#define CGW600_GPIO_LED_LAN2	17	     /*LAN2_LED  0-on*/
+++#define CGW600_GPIO_LED_LAN3	14        /*LAN3_LED  0-on*/
+++#define CGW600_GPIO_LED_LAN4	12        /*LAN4_LED  0-on*/
+++#define CGW600_GPIO_LED_WAN	11        /*WAN_LED   0-on*/
+++
+++#define CGW600_GPIO_BTN_RST	13   /*SW_RST*/ 
+++
+++#define CGW600_KEYS_POLL_INTERVAL	20	/* msecs */
+++#define CGW600_KEYS_DEBOUNCE_INTERVAL	(3 * CGW600_KEYS_POLL_INTERVAL)
+++
+++#define CGW600_MAC0_OFFSET	0x1000
+++
+++static struct gpio_led cgw600_leds_gpio[] __initdata = {
+++	{
+++		.name		= "cgw600:green:status",
+++		.gpio		= CGW600_GPIO_LED_STATUS,
+++		.active_low	= 0,
+++	},{
+++		.name		= "cgw600:green:wlan",
+++		.gpio		= CGW600_GPIO_LED_WLAN,
+++		.active_low	= 0,
+++	},  {
+++		.name		= "cgw600:green:lan1",
+++		.gpio		= CGW600_GPIO_LED_LAN1,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "cgw600:green:lan2",
+++		.gpio		= CGW600_GPIO_LED_LAN2,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "cgw600:green:lan3",
+++		.gpio		= CGW600_GPIO_LED_LAN3,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "cgw600:green:lan4",
+++		.gpio		= CGW600_GPIO_LED_LAN4,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "cgw600:green:wan",
+++		.gpio		= CGW600_GPIO_LED_WAN,
+++		.active_low	= 1,
+++	},
+++};
+++
+++static struct gpio_keys_button cgw600_gpio_keys[] __initdata = {
+++	{
+++		.desc		= "Reset button",
+++		.type		= EV_KEY,
+++		.code		= KEY_RESTART,
+++		.debounce_interval =CGW600_KEYS_DEBOUNCE_INTERVAL,
+++		.gpio		= CGW600_GPIO_BTN_RST,
+++		.active_low	= 0,
+++	}
+++};
+++
+++
+++static void __init cgw600_gpio_led_setup(void)
+++{
+++	ath79_gpio_direction_select(CGW600_GPIO_LED_WAN, true);
+++	ath79_gpio_direction_select(CGW600_GPIO_LED_LAN1, true);
+++	ath79_gpio_direction_select(CGW600_GPIO_LED_LAN2, true);
+++	ath79_gpio_direction_select(CGW600_GPIO_LED_LAN3, true);
+++	ath79_gpio_direction_select(CGW600_GPIO_LED_LAN4, true);
+++
+++	ath79_gpio_output_select(CGW600_GPIO_LED_WAN,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK5);
+++	ath79_gpio_output_select(CGW600_GPIO_LED_LAN1,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK4);
+++	ath79_gpio_output_select(CGW600_GPIO_LED_LAN2,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK3);
+++	ath79_gpio_output_select(CGW600_GPIO_LED_LAN3,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK2);
+++	ath79_gpio_output_select(CGW600_GPIO_LED_LAN4,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK1);
+++
+++}
+++
+++
+++static void __init gb_cgw600_setup(void)
+++{
+++	u8 *art = (u8 *)KSEG1ADDR(0x1fff0000);
+++
+++	ath79_register_m25p80(NULL);
+++
+++	cgw600_gpio_led_setup();
+++	
+++	ath79_register_leds_gpio(-1, ARRAY_SIZE(cgw600_leds_gpio),
+++				 cgw600_leds_gpio);
+++	ath79_register_gpio_keys_polled(-1, CGW600_KEYS_POLL_INTERVAL,
+++					ARRAY_SIZE(cgw600_gpio_keys),
+++					cgw600_gpio_keys);
+++
+++	ath79_register_usb();
+++
+++	ath79_register_pci();
+++
+++	ath79_register_wmac(art + CGW600_MAC0_OFFSET, NULL);
+++
+++	ath79_setup_ar933x_phy4_switch(false, false);
+++
+++	ath79_register_mdio(0, 0x0);
+++
+++	/* LAN */
+++	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
+++	ath79_eth1_data.duplex = DUPLEX_FULL;
+++	ath79_switch_data.phy_poll_mask |= BIT(4);
+++	ath79_init_mac(ath79_eth1_data.mac_addr, art, 0);
+++	ath79_register_eth(1);
+++
+++	/* WAN */
+++	ath79_switch_data.phy4_mii_en = 1;
+++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
+++	ath79_eth0_data.duplex = DUPLEX_FULL;
+++	ath79_eth0_data.speed = SPEED_100;
+++	ath79_eth0_data.phy_mask = BIT(4);
+++	ath79_init_mac(ath79_eth0_data.mac_addr, art, 1);
+++	ath79_register_eth(0);
+++}
+++
+++MIPS_MACHINE(ATH79_MACH_GB_CGW600, "GB-CGW600", "GBCOM CGW600 board", gb_cgw600_setup);
++--- /dev/null
+++++ b/arch/mips/ath79/mach-gb-cgw800.c
++@@ -0,0 +1,155 @@
+++/*
+++ *  Atheros AP147 reference board support
+++ *
+++ *  Copyright (C) 2014 Matthias Schiffer <mschiffer@universe-factory.net>
+++ *  Copyright (C) 2015 Sven Eckelmann <sven@open-mesh.com>
+++ *
+++ *  This program is free software; you can redistribute it and/or modify it
+++ *  under the terms of the GNU General Public License version 2 as published
+++ *  by the Free Software Foundation.
+++ */
+++
+++#include <linux/platform_device.h>
+++#include <linux/ar8216_platform.h>
+++
+++#include <asm/mach-ath79/ar71xx_regs.h>
+++#include <asm/mach-ath79/ath79.h>
+++
+++#include "common.h"
+++#include "dev-ap9x-pci.h"
+++#include "dev-eth.h"
+++#include "dev-gpio-buttons.h"
+++#include "dev-leds-gpio.h"
+++#include "dev-m25p80.h"
+++#include "dev-usb.h"
+++#include "dev-wmac.h"
+++#include "machtypes.h"
+++#include "pci.h"
+++
+++#define CGW800_GPIO_LED_STATUS	15 /*SYS_LED   1-on*/
+++#define CGW800_GPIO_LED_WLAN	3         /*WLAN_2.4G_LED 1-on*/
+++#define CGW800_GPIO_LED_LAN1	16        /*LAN1_LED  0-on*/
+++#define CGW800_GPIO_LED_LAN2	17	     /*LAN2_LED  0-on*/
+++#define CGW800_GPIO_LED_LAN3	14        /*LAN3_LED  0-on*/
+++#define CGW800_GPIO_LED_LAN4	12        /*LAN4_LED  0-on*/
+++#define CGW800_GPIO_LED_WAN	11        /*WAN_LED   0-on*/
+++
+++
+++
+++
+++#define CGW800_GPIO_BTN_RST	13   /*SW_RST*/
+++
+++#define CGW800_KEYS_POLL_INTERVAL	20	/* msecs */
+++#define CGW800_KEYS_DEBOUNCE_INTERVAL	(3 * CGW800_KEYS_POLL_INTERVAL)
+++
+++#define CGW800_MAC0_OFFSET	0x1000
+++
+++static struct gpio_led cgw800_leds_gpio[] __initdata = {
+++	{
+++		.name		= "cgw800:green:status",
+++		.gpio		= CGW800_GPIO_LED_STATUS,
+++		.active_low	= 0,
+++	}, {
+++		.name		= "cgw800:green:wlan",
+++		.gpio		= CGW800_GPIO_LED_WLAN,
+++		.active_low	= 0,
+++	},{
+++		.name		= "cgw800:green:lan1",
+++		.gpio		= CGW800_GPIO_LED_LAN1,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "cgw800:green:lan2",
+++		.gpio		= CGW800_GPIO_LED_LAN2,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "cgw800:green:lan3",
+++		.gpio		= CGW800_GPIO_LED_LAN3,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "cgw800:green:lan4",
+++		.gpio		= CGW800_GPIO_LED_LAN4,
+++		.active_low	= 1,
+++	}, {
+++		.name		= "cgw800:green:wan",
+++		.gpio		= CGW800_GPIO_LED_WAN,
+++		.active_low	= 1,
+++	},
+++};
+++
+++static struct gpio_keys_button cgw800_gpio_keys[] __initdata = {
+++	{
+++		.desc		= "Reset button",
+++		.type		= EV_KEY,
+++		.code		= KEY_RESTART,
+++		.debounce_interval =CGW800_KEYS_DEBOUNCE_INTERVAL,
+++		.gpio		= CGW800_GPIO_BTN_RST,
+++		.active_low	= 0,
+++	}
+++};
+++
+++
+++static void __init cgw800_gpio_led_setup(void)
+++{
+++	ath79_gpio_direction_select(CGW800_GPIO_LED_WAN, true);
+++	ath79_gpio_direction_select(CGW800_GPIO_LED_LAN1, true);
+++	ath79_gpio_direction_select(CGW800_GPIO_LED_LAN2, true);
+++	ath79_gpio_direction_select(CGW800_GPIO_LED_LAN3, true);
+++	ath79_gpio_direction_select(CGW800_GPIO_LED_LAN4, true);
+++
+++	ath79_gpio_output_select(CGW800_GPIO_LED_WAN,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK5);
+++	ath79_gpio_output_select(CGW800_GPIO_LED_LAN1,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK4);
+++	ath79_gpio_output_select(CGW800_GPIO_LED_LAN2,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK3);
+++	ath79_gpio_output_select(CGW800_GPIO_LED_LAN3,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK2);
+++	ath79_gpio_output_select(CGW800_GPIO_LED_LAN4,
+++			QCA953X_GPIO_OUT_MUX_LED_LINK1);
+++
+++}
+++
+++
+++static void __init gb_cgw800_setup(void)
+++{
+++	u8 *art = (u8 *)KSEG1ADDR(0x1fff0000);
+++
+++	ath79_register_m25p80(NULL);
+++
+++	cgw800_gpio_led_setup();
+++	
+++	ath79_register_leds_gpio(-1, ARRAY_SIZE(cgw800_leds_gpio),
+++				 cgw800_leds_gpio);
+++	ath79_register_gpio_keys_polled(-1, CGW800_KEYS_POLL_INTERVAL,
+++					ARRAY_SIZE(cgw800_gpio_keys),
+++					cgw800_gpio_keys);
+++
+++	ath79_register_usb();
+++
+++	ath79_register_pci();
+++
+++	ath79_register_wmac(art + CGW800_MAC0_OFFSET, NULL);
+++
+++	ath79_setup_ar933x_phy4_switch(false, false);
+++
+++	ath79_register_mdio(0, 0x0);
+++
+++	/* LAN */
+++	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
+++	ath79_eth1_data.duplex = DUPLEX_FULL;
+++	ath79_switch_data.phy_poll_mask |= BIT(4);
+++	ath79_init_mac(ath79_eth1_data.mac_addr, art, 0);
+++	ath79_register_eth(1);
+++
+++	/* WAN */
+++	ath79_switch_data.phy4_mii_en = 1;
+++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
+++	ath79_eth0_data.duplex = DUPLEX_FULL;
+++	ath79_eth0_data.speed = SPEED_100;
+++	ath79_eth0_data.phy_mask = BIT(4);
+++	ath79_init_mac(ath79_eth0_data.mac_addr, art, 1);
+++	ath79_register_eth(0);
+++}
+++
+++MIPS_MACHINE(ATH79_MACH_GB_CGW800, "GB-CGW800", "GBCOM CGW800 board", gb_cgw800_setup);
+++
++--- /dev/null
+++++ b/arch/mips/ath79/mach-gb-oa5025.c
++@@ -0,0 +1,137 @@
+++
+++/*
+++ * Qualcomm Atheros AP152 reference board support
+++ *
+++ * Copyright (c) 2015 Qualcomm Atheros
+++ * Copyright (c) 2012 Gabor Juhos <juhosg@openwrt.org>
+++ *
+++ * Permission to use, copy, modify, and/or distribute this software for any
+++ * purpose with or without fee is hereby granted, provided that the above
+++ * copyright notice and this permission notice appear in all copies.
+++ *
+++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+++ *
+++ */
+++
+++#include <linux/platform_device.h>
+++#include <linux/ath9k_platform.h>
+++#include <linux/ar8216_platform.h>
+++#include <asm/mach-ath79/ar71xx_regs.h>
+++
+++#include "common.h"
+++#include "dev-m25p80.h"
+++#include "machtypes.h"
+++#include "pci.h"
+++#include "dev-eth.h"
+++#include "dev-gpio-buttons.h"
+++#include "dev-leds-gpio.h"
+++#include "dev-spi.h"
+++#include "dev-usb.h"
+++#include "dev-wmac.h"
+++
+++#define OA5025_GPIO_LED_WLAN             10
+++#define OA5025_GPIO_LED_RUN              11
+++
+++#define OA5025_GPIO_BTN_RESET            5
+++
+++#define OA5025_KEYS_POLL_INTERVAL        20     /* msecs */
+++#define OA5025_KEYS_DEBOUNCE_INTERVAL    (3 * OA5025_KEYS_POLL_INTERVAL)
+++
+++#define OA5025_KEYS_POLL_INTERVAL        20     /* msecs */
+++#define OA5025_KEYS_DEBOUNCE_INTERVAL    (3 * OA5025_KEYS_POLL_INTERVAL)
+++
+++
+++#define OA5025_MAC0_OFFSET               0
+++#define OA5025_WMAC_CALDATA_OFFSET       0x1000
+++
+++
+++static struct gpio_led oa5025_leds_gpio[] __initdata = {
+++	{
+++		.name		= "oa5025:green:status",
+++		.gpio		= OA5025_GPIO_LED_RUN,
+++		.active_low	= 0,
+++	},
+++	{
+++		.name		= "oa5025:green:wlan",
+++		.gpio		= OA5025_GPIO_LED_WLAN,
+++		.active_low	= 0,
+++	},
+++};
+++
+++static struct gpio_keys_button oa5025_gpio_keys[] __initdata = {
+++        {
+++                .desc           = "Reset button",
+++                .type           = EV_KEY,
+++                .code           = KEY_RESTART,
+++                .debounce_interval = OA5025_KEYS_DEBOUNCE_INTERVAL,
+++                .gpio           = OA5025_GPIO_BTN_RESET,
+++                .active_low     = 1,
+++        },
+++};
+++
+++
+++static struct ar8327_pad_cfg oa5025_ar8337_pad0_cfg = {
+++	.mode = AR8327_PAD_MAC_SGMII,
+++	.sgmii_delay_en = true,
+++};
+++
+++static struct ar8327_platform_data oa5025_ar8337_data = {
+++	.pad0_cfg = &oa5025_ar8337_pad0_cfg,
+++	.port0_cfg = {
+++		.force_link = 1,
+++		.speed = AR8327_PORT_SPEED_1000,
+++		.duplex = 1,
+++		.txpause = 1,
+++		.rxpause = 1,
+++	},
+++};
+++
+++static struct mdio_board_info oa5025_mdio0_info[] = {
+++	{
+++		.bus_id = "ag71xx-mdio.0",
+++		.phy_addr = 0,
+++		.platform_data = &oa5025_ar8337_data,
+++	},
+++};
+++
+++static void __init oa5025_setup(void)
+++{
+++	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+++
+++	ath79_register_m25p80(NULL);
+++
+++	ath79_register_leds_gpio(-1, ARRAY_SIZE(oa5025_leds_gpio),
+++				 oa5025_leds_gpio);
+++	ath79_register_gpio_keys_polled(-1, OA5025_KEYS_POLL_INTERVAL,
+++					ARRAY_SIZE(oa5025_gpio_keys),
+++					oa5025_gpio_keys);
+++
+++	ath79_register_usb();
+++
+++	platform_device_register(&ath79_mdio0_device);
+++
+++	mdiobus_register_board_info(oa5025_mdio0_info,
+++				    ARRAY_SIZE(oa5025_mdio0_info));
+++
+++	ath79_register_wmac(art + OA5025_WMAC_CALDATA_OFFSET, NULL);
+++	ath79_register_pci();
+++
+++	ath79_init_mac(ath79_eth0_data.mac_addr, art + OA5025_MAC0_OFFSET, 0);
+++
+++	/* GMAC0 is connected to an AR8337 switch */
+++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_SGMII;
+++	ath79_eth0_data.speed = SPEED_1000;
+++	ath79_eth0_data.duplex = DUPLEX_FULL;
+++	ath79_eth0_data.phy_mask = BIT(0);
+++	ath79_eth0_data.mii_bus_dev = &ath79_mdio0_device.dev;
+++
+++	ath79_register_eth(0);
+++}
+++MIPS_MACHINE(ATH79_MACH_GB_OA5025, "GB-OA5025", "GBCOM OA5025 board",
+++	     oa5025_setup);
++--- /dev/null
+++++ b/arch/mips/ath79/mach-gb-ta2025ac.c
++@@ -0,0 +1,139 @@
+++
+++/*
+++ * Qualcomm Atheros AP152 reference board support
+++ *
+++ * Copyright (c) 2015 Qualcomm Atheros
+++ * Copyright (c) 2012 Gabor Juhos <juhosg@openwrt.org>
+++ *
+++ * Permission to use, copy, modify, and/or distribute this software for any
+++ * purpose with or without fee is hereby granted, provided that the above
+++ * copyright notice and this permission notice appear in all copies.
+++ *
+++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+++ *
+++ */
+++
+++#include <linux/platform_device.h>
+++#include <linux/ath9k_platform.h>
+++#include <linux/ar8216_platform.h>
+++#include <asm/mach-ath79/ar71xx_regs.h>
+++
+++#include "common.h"
+++#include "dev-m25p80.h"
+++#include "machtypes.h"
+++#include "pci.h"
+++#include "dev-eth.h"
+++#include "dev-gpio-buttons.h"
+++#include "dev-leds-gpio.h"
+++#include "dev-spi.h"
+++#include "dev-usb.h"
+++#include "dev-wmac.h"
+++
+++
+++#define TA2025AC_GPIO_LED_WLAN             10
+++#define TA2025AC_GPIO_LED_RUN              11
+++
+++#define TA2025AC_GPIO_BTN_RESET            5
+++
+++#define TA2025AC_KEYS_POLL_INTERVAL        20     /* msecs */
+++#define TA2025AC_KEYS_DEBOUNCE_INTERVAL    (3 * TA2025AC_KEYS_POLL_INTERVAL)
+++
+++#define TA2025AC_KEYS_POLL_INTERVAL        20     /* msecs */
+++#define TA2025AC_KEYS_DEBOUNCE_INTERVAL    (3 * TA2025AC_KEYS_POLL_INTERVAL)
+++
+++
+++#define TA2025AC_MAC0_OFFSET               0
+++#define TA2025AC_WMAC_CALDATA_OFFSET       0x1000
+++
+++
+++static struct gpio_led ta2025ac_leds_gpio[] __initdata = {
+++	{
+++		.name		= "ta2025ac:green:status",
+++		.gpio		= TA2025AC_GPIO_LED_RUN,
+++		.active_low	= 0,
+++	},
+++	{
+++		.name		= "ta2025ac:green:wlan",
+++		.gpio		= TA2025AC_GPIO_LED_WLAN,
+++		.active_low	= 0,
+++	},
+++};
+++
+++static struct gpio_keys_button ta2025ac_gpio_keys[] __initdata = {
+++        {
+++                .desc           = "Reset button",
+++                .type           = EV_KEY,
+++                .code           = KEY_RESTART,
+++                .debounce_interval = TA2025AC_KEYS_DEBOUNCE_INTERVAL,
+++                .gpio           = TA2025AC_GPIO_BTN_RESET,
+++                .active_low     = 1,
+++        },
+++};
+++
+++
+++static struct ar8327_pad_cfg ta2025ac_ar8337_pad0_cfg = {
+++	.mode = AR8327_PAD_MAC_SGMII,
+++	.sgmii_delay_en = true,
+++};
+++
+++static struct ar8327_platform_data ta2025ac_ar8337_data = {
+++	.pad0_cfg = &ta2025ac_ar8337_pad0_cfg,
+++	.port0_cfg = {
+++		.force_link = 1,
+++		.speed = AR8327_PORT_SPEED_1000,
+++		.duplex = 1,
+++		.txpause = 1,
+++		.rxpause = 1,
+++	},
+++};
+++
+++static struct mdio_board_info ta2025ac_mdio0_info[] = {
+++	{
+++		.bus_id = "ag71xx-mdio.0",
+++		.phy_addr = 0,
+++		.platform_data = &ta2025ac_ar8337_data,
+++	},
+++};
+++
+++static void __init ta2025ac_setup(void)
+++{
+++	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+++
+++	ath79_register_m25p80(NULL);
+++
+++	ath79_register_leds_gpio(-1, ARRAY_SIZE(ta2025ac_leds_gpio),
+++				 ta2025ac_leds_gpio);
+++	ath79_register_gpio_keys_polled(-1, TA2025AC_KEYS_POLL_INTERVAL,
+++					ARRAY_SIZE(ta2025ac_gpio_keys),
+++					ta2025ac_gpio_keys);
+++
+++	ath79_register_usb();
+++
+++	platform_device_register(&ath79_mdio0_device);
+++
+++	mdiobus_register_board_info(ta2025ac_mdio0_info,
+++				    ARRAY_SIZE(ta2025ac_mdio0_info));
+++
+++	ath79_register_wmac(art + TA2025AC_WMAC_CALDATA_OFFSET, NULL);
+++	ath79_register_pci();
+++
+++	ath79_init_mac(ath79_eth0_data.mac_addr, art + TA2025AC_MAC0_OFFSET, 0);
+++
+++	/* GMAC0 is connected to an AR8337 switch */
+++	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_SGMII;
+++	ath79_eth0_data.speed = SPEED_1000;
+++	ath79_eth0_data.duplex = DUPLEX_FULL;
+++	ath79_eth0_data.phy_mask = BIT(0);
+++	ath79_eth0_data.mii_bus_dev = &ath79_mdio0_device.dev;
+++
+++	ath79_register_eth(0);
+++}
+++
+++MIPS_MACHINE(ATH79_MACH_GB_TA2025AC, "GB-TA2025AC", "GBCOM TA2025AC board",
+++	     ta2025ac_setup);
++--- a/arch/mips/ath79/pci.c
+++++ b/arch/mips/ath79/pci.c
++@@ -53,6 +53,15 @@ static const struct ath79_pci_irq ar724x
++ 	}
++ };
++ 
+++static const struct ath79_pci_irq qca953x_pci_irq_map[] __initconst = {
+++	{
+++		.bus	= 0,
+++		.slot	= 0,
+++		.pin	= 1,
+++		.irq	= ATH79_PCI_IRQ(0),
+++	},
+++};
+++
++ static const struct ath79_pci_irq qca955x_pci_irq_map[] __initconst = {
++ 	{
++ 		.bus	= 0,
++@@ -98,6 +107,9 @@ int __init pcibios_map_irq(const struct 
++ 			   soc_is_ar9344()) {
++ 			ath79_pci_irq_map = ar724x_pci_irq_map;
++ 			ath79_pci_nr_irqs = ARRAY_SIZE(ar724x_pci_irq_map);
+++		} else if (soc_is_qca953x()) {
+++			ath79_pci_irq_map = qca953x_pci_irq_map;
+++			ath79_pci_nr_irqs = ARRAY_SIZE(qca953x_pci_irq_map);
++ 		} else if (soc_is_qca955x()) {
++ 			ath79_pci_irq_map = qca955x_pci_irq_map;
++ 			ath79_pci_nr_irqs = ARRAY_SIZE(qca955x_pci_irq_map);
++@@ -303,6 +315,15 @@ int __init ath79_register_pci(void)
++ 						 AR724X_PCI_MEM_SIZE,
++ 						 0,
++ 						 ATH79_IP2_IRQ(0));
+++	} else if (soc_is_qca9533()) {
+++		pdev = ath79_register_pci_ar724x(0,
+++						 QCA953X_PCI_CFG_BASE0,
+++						 QCA953X_PCI_CTRL_BASE0,
+++						 QCA953X_PCI_CRP_BASE0,
+++						 QCA953X_PCI_MEM_BASE0,
+++						 QCA953X_PCI_MEM_SIZE,
+++						 0,
+++						 ATH79_IP2_IRQ(0));
++ 	} else if (soc_is_qca9558()) {
++ 		pdev = ath79_register_pci_ar724x(0,
++ 						 QCA955X_PCI_CFG_BASE0,
++--- a/drivers/net/phy/at803x.c
+++++ b/drivers/net/phy/at803x.c
++@@ -36,6 +36,9 @@
++ #define AT803X_INER				0x0012
++ #define AT803X_INER_INIT			0xec00
++ #define AT803X_INSR				0x0013
+++#define AT803X_REG_CHIP_CONFIG			0x1f
+++#define AT803X_BT_BX_REG_SEL			0x8000
+++#define AT803X_SGMII_ANEG_EN			0x1000
++ 
++ #define AT803X_PCS_SMART_EEE_CTRL3			0x805D
++ #define AT803X_SMART_EEE_CTRL3_LPI_TX_DELAY_SEL_MASK	0x3
++@@ -267,6 +270,27 @@ static int at803x_config_init(struct phy
++ {
++ 	struct at803x_platform_data *pdata;
++ 	int ret;
+++	u32 v;
+++
+++	if (phydev->drv->phy_id == ATH8031_PHY_ID &&
+++		phydev->interface == PHY_INTERFACE_MODE_SGMII)
+++	{
+++		v = phy_read(phydev, AT803X_REG_CHIP_CONFIG);
+++		/* select SGMII/fiber page */
+++		ret = phy_write(phydev, AT803X_REG_CHIP_CONFIG,
+++						v & ~AT803X_BT_BX_REG_SEL);
+++		if (ret)
+++			return ret;
+++		/* enable SGMII autonegotiation */
+++		ret = phy_write(phydev, MII_BMCR, AT803X_SGMII_ANEG_EN);
+++		if (ret)
+++			return ret;
+++		/* select copper page */
+++		ret = phy_write(phydev, AT803X_REG_CHIP_CONFIG,
+++						v | AT803X_BT_BX_REG_SEL);
+++		if (ret)
+++			return ret;
+++	}
++ 
++ 	ret = genphy_config_init(phydev);
++ 	if (ret < 0)
+diff -urpN target_orig/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device-v0-support.patch target/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device-v0-support.patch
+--- target_orig/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device-v0-support.patch	2016-09-28 14:47:05.403360799 +0800
++++ target/linux/ar71xx/patches-3.18/941-MIPS-ath79-add-gbcom-device-v0-support.patch	1970-01-01 08:00:00.000000000 +0800
+@@ -1,1493 +0,0 @@
+---- a/arch/mips/ath79/Kconfig
+-+++ b/arch/mips/ath79/Kconfig
+-@@ -146,6 +146,99 @@ config ATH79_MACH_AP81
+- 	  Say 'Y' here if you want your kernel to support the
+- 	  Atheros AP81 reference board.
+- 
+-+config ATH79_MACH_AP143
+-+	bool "Atheros AP143 reference board"
+-+	select SOC_QCA953X
+-+	select ATH79_DEV_GPIO_BUTTONS
+-+	select ATH79_DEV_LEDS_GPIO
+-+	select ATH79_DEV_SPI
+-+	select ATH79_DEV_USB
+-+	select ATH79_DEV_WMAC
+-+	select ATH79_DEV_ETH
+-+	select ATH79_DEV_M25P80
+-+	help
+-+	  Say 'Y' here if you want your kernel to support the
+-+	  Atheros AP143 reference board.
+-+
+-+config ATH79_MACH_AP147
+-+	bool "Atheros AP147 reference board"
+-+	select SOC_QCA953X
+-+	select ATH79_DEV_GPIO_BUTTONS
+-+	select ATH79_DEV_LEDS_GPIO
+-+	select ATH79_DEV_M25P80
+-+	select ATH79_DEV_USB
+-+	select ATH79_DEV_WMAC
+-+	select ATH79_DEV_AP9X_PCI if PCI
+-+	help
+-+	  Say 'Y' here if you want your kernel to support the
+-+	  QCA AP147 reference boards.
+-+
+-+config ATH79_MACH_AP152
+-+	bool "Atheros AP152 reference board"
+-+	select SOC_QCA956X
+-+	select ATH79_DEV_GPIO_BUTTONS
+-+	select ATH79_DEV_LEDS_GPIO
+-+	select ATH79_DEV_M25P80
+-+	select ATH79_DEV_USB
+-+	select ATH79_DEV_WMAC
+-+	select ATH79_DEV_AP9X_PCI if PCI
+-+	help
+-+	  Say 'Y' here if you want your kernel to support the
+-+	  QCA AP152 reference boards.
+-+
+-+
+-+config ATH79_MACH_GB_CGW600
+-+	bool "GBCOM CGW600 board"
+-+	select SOC_QCA953X
+-+	select ATH79_DEV_GPIO_BUTTONS
+-+	select ATH79_DEV_LEDS_GPIO
+-+	select ATH79_DEV_M25P80
+-+	select ATH79_DEV_USB
+-+	select ATH79_DEV_WMAC
+-+	select ATH79_DEV_AP9X_PCI if PCI
+-+	help
+-+	  Say 'Y' here if you want your kernel to support the
+-+	  GBCOM CGW600 board.
+-+
+-+config ATH79_MACH_GB_CGW800
+-+	bool "GBCOM CGW800 board"
+-+	select SOC_QCA953X
+-+	select ATH79_DEV_GPIO_BUTTONS
+-+	select ATH79_DEV_LEDS_GPIO
+-+	select ATH79_DEV_M25P80
+-+	select ATH79_DEV_USB
+-+	select ATH79_DEV_WMAC
+-+	select ATH79_DEV_AP9X_PCI if PCI
+-+	help
+-+	  Say 'Y' here if you want your kernel to support the
+-+	  GBCOM CGW800 board.
+-+
+-+config ATH79_MACH_GB_TA2025AC
+-+	bool "GBCOM TA2025AC board"
+-+	select SOC_QCA956X
+-+	select ATH79_DEV_GPIO_BUTTONS
+-+	select ATH79_DEV_LEDS_GPIO
+-+	select ATH79_DEV_M25P80
+-+	select ATH79_DEV_USB
+-+	select ATH79_DEV_WMAC
+-+	select ATH79_DEV_AP9X_PCI if PCI
+-+	help
+-+	  Say 'Y' here if you want your kernel to support the
+-+	  GBCOM TA2025AC board.
+-+
+-+config ATH79_MACH_GB_OA5025
+-+	bool "GBCOM OA5025 board"
+-+	select SOC_QCA956X
+-+	select ATH79_DEV_GPIO_BUTTONS
+-+	select ATH79_DEV_LEDS_GPIO
+-+	select ATH79_DEV_M25P80
+-+	select ATH79_DEV_USB
+-+	select ATH79_DEV_WMAC
+-+	select ATH79_DEV_AP9X_PCI if PCI
+-+	help
+-+	  Say 'Y' here if you want your kernel to support the
+-+	  GBCOM OA5025 board.
+-+
+- config ATH79_MACH_AP83
+- 	bool "Atheros AP83 board support"
+- 	select SOC_AR913X
+---- a/arch/mips/ath79/Makefile
+-+++ b/arch/mips/ath79/Makefile
+-@@ -49,6 +49,9 @@ obj-$(CONFIG_ATH79_MACH_AP113)		+= mach-
+- obj-$(CONFIG_ATH79_MACH_AP121)		+= mach-ap121.o
+- obj-$(CONFIG_ATH79_MACH_AP132)		+= mach-ap132.o
+- obj-$(CONFIG_ATH79_MACH_AP136)		+= mach-ap136.o
+-+obj-$(CONFIG_ATH79_MACH_AP143)		+= mach-ap143.o
+-+obj-$(CONFIG_ATH79_MACH_AP147)		+= mach-ap147.o
+-+obj-$(CONFIG_ATH79_MACH_AP152)		+= mach-ap152.o
+- obj-$(CONFIG_ATH79_MACH_AP81)		+= mach-ap81.o
+- obj-$(CONFIG_ATH79_MACH_AP83)		+= mach-ap83.o
+- obj-$(CONFIG_ATH79_MACH_AP96)		+= mach-ap96.o
+-@@ -79,6 +82,10 @@ obj-$(CONFIG_ATH79_MACH_EL_MINI)	+= mach
+- obj-$(CONFIG_ATH79_MACH_EPG5000)	+= mach-epg5000.o
+- obj-$(CONFIG_ATH79_MACH_ESR1750)	+= mach-esr1750.o
+- obj-$(CONFIG_ATH79_MACH_F9K1115V2)	+= mach-f9k1115v2.o
+-+obj-$(CONFIG_ATH79_MACH_GB_CGW600)		+= mach-gb-cgw600.o
+-+obj-$(CONFIG_ATH79_MACH_GB_CGW800)		+= mach-gb-cgw800.o
+-+obj-$(CONFIG_ATH79_MACH_GB_TA2025AC)		+= mach-gb-ta2025ac.o
+-+obj-$(CONFIG_ATH79_MACH_GB_OA5025)		+= mach-gb-oa5025.o
+- obj-$(CONFIG_ATH79_MACH_GL_INET)	+= mach-gl-inet.o
+- obj-$(CONFIG_ATH79_MACH_GS_MINIBOX_V1)	+= mach-gs-minibox-v1.o
+- obj-$(CONFIG_ATH79_MACH_GS_OOLITE)	+= mach-gs-oolite.o
+---- a/arch/mips/ath79/common.h
+-+++ b/arch/mips/ath79/common.h
+-@@ -28,6 +28,7 @@ void ath79_gpio_function_enable(u32 mask
+- void ath79_gpio_function_disable(u32 mask);
+- void ath79_gpio_function_setup(u32 set, u32 clear);
+- void ath79_gpio_output_select(unsigned gpio, u8 val);
+-+int ath79_gpio_direction_select(unsigned gpio, bool oe);
+- void ath79_gpio_init(void);
+- 
+- #endif /* __ATH79_COMMON_H */
+---- a/arch/mips/ath79/dev-eth.c
+-+++ b/arch/mips/ath79/dev-eth.c
+-@@ -183,7 +183,8 @@ void __init ath79_register_mdio(unsigned
+- 	    ath79_soc == ATH79_SOC_AR9342 ||
+- 	    ath79_soc == ATH79_SOC_AR9344 ||
+- 	    ath79_soc == ATH79_SOC_QCA9556 ||
+--	    ath79_soc == ATH79_SOC_QCA9558)
+-+	    ath79_soc == ATH79_SOC_QCA9558 ||
+-+	    ath79_soc == ATH79_SOC_QCA9561)
+- 		max_id = 1;
+- 	else
+- 		max_id = 0;
+-@@ -198,7 +199,6 @@ void __init ath79_register_mdio(unsigned
+- 	case ATH79_SOC_AR9330:
+- 	case ATH79_SOC_AR9331:
+- 	case ATH79_SOC_QCA9533:
+--	case ATH79_SOC_QCA9561:
+- 	case ATH79_SOC_TP9343:
+- 		mdio_dev = &ath79_mdio1_device;
+- 		mdio_data = &ath79_mdio1_data;
+-@@ -209,6 +209,7 @@ void __init ath79_register_mdio(unsigned
+- 	case ATH79_SOC_AR9344:
+- 	case ATH79_SOC_QCA9556:
+- 	case ATH79_SOC_QCA9558:
+-+	case ATH79_SOC_QCA9561:
+- 		if (id == 0) {
+- 			mdio_dev = &ath79_mdio0_device;
+- 			mdio_data = &ath79_mdio0_data;
+-@@ -258,7 +259,6 @@ void __init ath79_register_mdio(unsigned
+- 		break;
+- 
+- 	case ATH79_SOC_QCA9533:
+--	case ATH79_SOC_QCA9561:
+- 	case ATH79_SOC_TP9343:
+- 		mdio_data->builtin_switch = 1;
+- 		break;
+-@@ -267,6 +267,12 @@ void __init ath79_register_mdio(unsigned
+- 	case ATH79_SOC_QCA9558:
+- 		mdio_data->is_ar934x = 1;
+- 		break;
+-+		
+-+	case ATH79_SOC_QCA9561:
+-+		if (id == 1)
+-+			mdio_data->builtin_switch = 1;
+-+		mdio_data->is_ar934x = 1;
+-+		break;
+- 
+- 	default:
+- 		break;
+-@@ -387,6 +393,16 @@ static void qca955x_set_speed_sgmii(int
+- 	iounmap(base);
+- }
+- 
+-+static void qca956x_set_speed_sgmii(int speed)
+-+{
+-+	void __iomem *base;
+-+	u32 val = ath79_get_eth_pll(0, speed);
+-+
+-+	base = ioremap_nocache(AR71XX_PLL_BASE, AR71XX_PLL_SIZE);
+-+	__raw_writel(val, base + QCA955X_PLL_ETH_SGMII_CONTROL_REG);
+-+	iounmap(base);
+-+}
+-+
+- static void ath79_set_speed_dummy(int speed)
+- {
+- }
+-@@ -517,6 +533,10 @@ struct ag71xx_switch_platform_data ath79
+- #define AR934X_PLL_VAL_100	0x00000101
+- #define AR934X_PLL_VAL_10	0x00001616
+- 
+-+#define QCA956X_PLL_VAL_1000	0x03000000
+-+#define QCA956X_PLL_VAL_100	0x00000101
+-+#define QCA956X_PLL_VAL_10	0x00001919
+-+
+- static void __init ath79_init_eth_pll_data(unsigned int id)
+- {
+- 	struct ath79_eth_pll_data *pll_data;
+-@@ -575,12 +595,17 @@ static void __init ath79_init_eth_pll_da
+- 	case ATH79_SOC_QCA9533:
+- 	case ATH79_SOC_QCA9556:
+- 	case ATH79_SOC_QCA9558:
+--	case ATH79_SOC_QCA9561:
+- 	case ATH79_SOC_TP9343:
+- 		pll_10 = AR934X_PLL_VAL_10;
+- 		pll_100 = AR934X_PLL_VAL_100;
+- 		pll_1000 = AR934X_PLL_VAL_1000;
+- 		break;
+-+		
+-+	case ATH79_SOC_QCA9561:
+-+		pll_10 = QCA956X_PLL_VAL_10;
+-+		pll_100 = QCA956X_PLL_VAL_100;
+-+		pll_1000 = QCA956X_PLL_VAL_1000;
+-+		break;
+- 
+- 	default:
+- 		BUG();
+-@@ -633,7 +658,6 @@ static int __init ath79_setup_phy_if_mod
+- 		case ATH79_SOC_AR9330:
+- 		case ATH79_SOC_AR9331:
+- 		case ATH79_SOC_QCA9533:
+--		case ATH79_SOC_QCA9561:
+- 		case ATH79_SOC_TP9343:
+- 			pdata->phy_if_mode = PHY_INTERFACE_MODE_MII;
+- 			break;
+-@@ -657,6 +681,7 @@ static int __init ath79_setup_phy_if_mod
+- 
+- 		case ATH79_SOC_QCA9556:
+- 		case ATH79_SOC_QCA9558:
+-+		case ATH79_SOC_QCA9561:
+- 			switch (pdata->phy_if_mode) {
+- 			case PHY_INTERFACE_MODE_MII:
+- 			case PHY_INTERFACE_MODE_RGMII:
+-@@ -1028,7 +1053,6 @@ void __init ath79_register_eth(unsigned
+- 		break;
+- 
+- 	case ATH79_SOC_QCA9533:
+--	case ATH79_SOC_QCA9561:
+- 	case ATH79_SOC_TP9343:
+- 		if (id == 0) {
+- 			pdata->reset_bit = AR933X_RESET_GE0_MAC |
+-@@ -1095,6 +1119,43 @@ void __init ath79_register_eth(unsigned
+- 			pdata->fifo_cfg3 = 0x01f00140;
+- 		break;
+- 
+-+	case ATH79_SOC_QCA9561:
+-+		if (id == 0) {
+-+			pdata->reset_bit = QCA955X_RESET_GE0_MAC |
+-+					   QCA955X_RESET_GE0_MDIO;
+-+
+-+			if (pdata->phy_if_mode == PHY_INTERFACE_MODE_SGMII)
+-+				pdata->set_speed = qca956x_set_speed_sgmii;
+-+			else
+-+				pdata->set_speed = ath79_set_speed_ge0;
+-+		} else {
+-+			pdata->reset_bit = QCA955X_RESET_GE1_MAC |
+-+					   QCA955X_RESET_GE1_MDIO;
+-+
+-+			pdata->set_speed = ath79_set_speed_dummy;
+-+
+-+			pdata->switch_data = &ath79_switch_data;
+-+
+-+			pdata->speed = SPEED_1000;
+-+			pdata->duplex = DUPLEX_FULL;
+-+
+-+			/* reset the built-in switch */
+-+			ath79_device_reset_set(AR934X_RESET_ETH_SWITCH);
+-+			ath79_device_reset_clear(AR934X_RESET_ETH_SWITCH);
+-+		}
+-+
+-+		pdata->ddr_flush = ath79_ddr_no_flush;
+-+		pdata->has_gbit = 1;
+-+		pdata->is_ar724x = 1;
+-+
+-+		if (!pdata->fifo_cfg1)
+-+			pdata->fifo_cfg1 = 0x0010ffff;
+-+		if (!pdata->fifo_cfg2)
+-+			pdata->fifo_cfg2 = 0x015500aa;
+-+		if (!pdata->fifo_cfg3)
+-+			pdata->fifo_cfg3 = 0x01f00140;
+-+		break;
+-+
+- 	default:
+- 		BUG();
+- 	}
+-@@ -1135,7 +1196,6 @@ void __init ath79_register_eth(unsigned
+- 		case ATH79_SOC_AR9330:
+- 		case ATH79_SOC_AR9331:
+- 		case ATH79_SOC_QCA9533:
+--		case ATH79_SOC_QCA9561:
+- 		case ATH79_SOC_TP9343:
+- 			pdata->mii_bus_dev = &ath79_mdio1_device.dev;
+- 			break;
+-@@ -1144,6 +1204,11 @@ void __init ath79_register_eth(unsigned
+- 		case ATH79_SOC_QCA9558:
+- 			/* don't assign any MDIO device by default */
+- 			break;
+-+			
+-+		case ATH79_SOC_QCA9561:
+-+			if (pdata->phy_if_mode != PHY_INTERFACE_MODE_SGMII)
+-+				pdata->mii_bus_dev = &ath79_mdio1_device.dev;
+-+			break;
+- 
+- 		default:
+- 			pdata->mii_bus_dev = &ath79_mdio0_device.dev;
+---- a/arch/mips/ath79/dev-wmac.c
+-+++ b/arch/mips/ath79/dev-wmac.c
+-@@ -398,6 +398,11 @@ void __init ath79_wmac_set_ext_lna_gpio(
+- 		ar934x_set_ext_lna_gpio(chain, gpio);
+- }
+- 
+-+void __init ath79_wmac_set_led_pin(int gpio)
+-+{
+-+	ath79_wmac_data.led_pin = gpio;
+-+}
+-+
+- void __init ath79_register_wmac(u8 *cal_data, u8 *mac_addr)
+- {
+- 	if (soc_is_ar913x())
+---- a/arch/mips/ath79/dev-wmac.h
+-+++ b/arch/mips/ath79/dev-wmac.h
+-@@ -18,6 +18,7 @@ void ath79_wmac_disable_2ghz(void);
+- void ath79_wmac_disable_5ghz(void);
+- void ath79_wmac_set_tx_gain_buffalo(void);
+- void ath79_wmac_set_ext_lna_gpio(unsigned chain, int gpio);
+-+void ath79_wmac_set_led_pin(int gpio);
+- 
+- bool ar93xx_wmac_read_mac_address(u8 *dest);
+- 
+---- a/arch/mips/ath79/gpio.c
+-+++ b/arch/mips/ath79/gpio.c
+-@@ -130,6 +130,30 @@ static int ar934x_gpio_direction_output(
+- 	return 0;
+- }
+- 
+-+int ath79_gpio_direction_select(unsigned gpio, bool oe)
+-+{
+-+	void __iomem *base = ath79_gpio_base;
+-+	unsigned long flags;
+-+	bool ieq_1 = (soc_is_ar934x() ||
+-+			soc_is_qca953x());
+-+
+-+	if (gpio >= ath79_gpio_count)
+-+		return -1;
+-+
+-+	spin_lock_irqsave(&ath79_gpio_lock, flags);
+-+
+-+	if ((ieq_1 && oe) || (!ieq_1 && !oe))
+-+		__raw_writel(__raw_readl(base + AR71XX_GPIO_REG_OE) & ~(1 << gpio),
+-+				base + AR71XX_GPIO_REG_OE);
+-+	else
+-+		__raw_writel(__raw_readl(base + AR71XX_GPIO_REG_OE) | (1 << gpio),
+-+				base + AR71XX_GPIO_REG_OE);
+-+
+-+	spin_unlock_irqrestore(&ath79_gpio_lock, flags);
+-+
+-+	return 0;
+-+}
+-+
+- static struct gpio_chip ath79_gpio_chip = {
+- 	.label			= "ath79",
+- 	.get			= ath79_gpio_get_value,
+---- /dev/null
+-+++ b/arch/mips/ath79/mach-ap143.c
+-@@ -0,0 +1,142 @@
+-+/*
+-+ * Atheros AP143 reference board support
+-+ *
+-+ * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+-+ * Copyright (c) 2012 Gabor Juhos <juhosg@openwrt.org>
+-+ *
+-+ * Permission to use, copy, modify, and/or distribute this software for any
+-+ * purpose with or without fee is hereby granted, provided that the above
+-+ * copyright notice and this permission notice appear in all copies.
+-+ *
+-+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+-+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+-+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+-+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+-+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+-+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+-+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-+ *
+-+ */
+-+
+-+#include <linux/platform_device.h>
+-+#include <linux/ath9k_platform.h>
+-+#include <linux/ar8216_platform.h>
+-+
+-+#include <asm/mach-ath79/ar71xx_regs.h>
+-+
+-+#include "common.h"
+-+#include "dev-eth.h"
+-+#include "dev-gpio-buttons.h"
+-+#include "dev-leds-gpio.h"
+-+#include "dev-m25p80.h"
+-+#include "dev-spi.h"
+-+#include "dev-usb.h"
+-+#include "dev-wmac.h"
+-+#include "machtypes.h"
+-+
+-+#define AP143_GPIO_LED_WLAN		12
+-+#define AP143_GPIO_LED_WPS		13
+-+#define AP143_GPIO_LED_STATUS		13
+-+
+-+#define AP143_GPIO_LED_WAN		4
+-+#define AP143_GPIO_LED_LAN1		16
+-+#define AP143_GPIO_LED_LAN2		15
+-+#define AP143_GPIO_LED_LAN3		14
+-+#define AP143_GPIO_LED_LAN4		11
+-+
+-+#define AP143_GPIO_BTN_WPS		17
+-+
+-+#define AP143_KEYS_POLL_INTERVAL	20	/* msecs */
+-+#define AP143_KEYS_DEBOUNCE_INTERVAL	(3 * AP143_KEYS_POLL_INTERVAL)
+-+
+-+#define AP143_MAC0_OFFSET		0
+-+#define AP143_MAC1_OFFSET		6
+-+#define AP143_WMAC_CALDATA_OFFSET	0x1000
+-+
+-+static struct gpio_led ap143_leds_gpio[] __initdata = {
+-+	{
+-+		.name		= "ap143:green:status",
+-+		.gpio		= AP143_GPIO_LED_STATUS,
+-+		.active_low	= 1,
+-+	},
+-+	{
+-+		.name		= "ap143:green:wlan",
+-+		.gpio		= AP143_GPIO_LED_WLAN,
+-+		.active_low	= 1,
+-+	}
+-+};
+-+
+-+static struct gpio_keys_button ap143_gpio_keys[] __initdata = {
+-+	{
+-+		.desc		= "WPS button",
+-+		.type		= EV_KEY,
+-+		.code		= KEY_WPS_BUTTON,
+-+		.debounce_interval = AP143_KEYS_DEBOUNCE_INTERVAL,
+-+		.gpio		= AP143_GPIO_BTN_WPS,
+-+		.active_low	= 1,
+-+	},
+-+};
+-+
+-+static void __init ap143_gpio_led_setup(void)
+-+{
+-+	ath79_gpio_direction_select(AP143_GPIO_LED_WAN, true);
+-+	ath79_gpio_direction_select(AP143_GPIO_LED_LAN1, true);
+-+	ath79_gpio_direction_select(AP143_GPIO_LED_LAN2, true);
+-+	ath79_gpio_direction_select(AP143_GPIO_LED_LAN3, true);
+-+	ath79_gpio_direction_select(AP143_GPIO_LED_LAN4, true);
+-+
+-+	ath79_gpio_output_select(AP143_GPIO_LED_WAN,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK5);
+-+	ath79_gpio_output_select(AP143_GPIO_LED_LAN1,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK1);
+-+	ath79_gpio_output_select(AP143_GPIO_LED_LAN2,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK2);
+-+	ath79_gpio_output_select(AP143_GPIO_LED_LAN3,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK3);
+-+	ath79_gpio_output_select(AP143_GPIO_LED_LAN4,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK4);
+-+
+-+	ath79_register_leds_gpio(-1, ARRAY_SIZE(ap143_leds_gpio),
+-+			ap143_leds_gpio);
+-+	ath79_register_gpio_keys_polled(-1, AP143_KEYS_POLL_INTERVAL,
+-+			ARRAY_SIZE(ap143_gpio_keys),
+-+			ap143_gpio_keys);
+-+}
+-+
+-+static void __init ap143_setup(void)
+-+{
+-+	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+-+
+-+	ath79_register_m25p80(NULL);
+-+
+-+	ap143_gpio_led_setup();
+-+
+-+	ath79_register_usb();
+-+
+-+	ath79_wmac_set_led_pin(AP143_GPIO_LED_WLAN);
+-+	ath79_register_wmac(art + AP143_WMAC_CALDATA_OFFSET, NULL);
+-+
+-+	ath79_register_mdio(0, 0x0);
+-+	ath79_register_mdio(1, 0x0);
+-+
+-+	ath79_init_mac(ath79_eth0_data.mac_addr, art + AP143_MAC0_OFFSET, 0);
+-+	ath79_init_mac(ath79_eth1_data.mac_addr, art + AP143_MAC1_OFFSET, 0);
+-+
+-+	/* WAN port */
+-+	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
+-+	ath79_eth0_data.speed = SPEED_100;
+-+	ath79_eth0_data.duplex = DUPLEX_FULL;
+-+	ath79_eth0_data.phy_mask = BIT(4);
+-+	ath79_register_eth(0);
+-+
+-+	/* LAN ports */
+-+	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
+-+	ath79_eth1_data.speed = SPEED_1000;
+-+	ath79_eth1_data.duplex = DUPLEX_FULL;
+-+	ath79_switch_data.phy_poll_mask |= BIT(4);
+-+	ath79_switch_data.phy4_mii_en = 1;
+-+	ath79_register_eth(1);
+-+}
+-+
+-+MIPS_MACHINE(ATH79_MACH_AP143, "AP143", "Qualcomm Atheros AP143 reference board",
+-+	     ap143_setup);
+---- /dev/null
+-+++ b/arch/mips/ath79/mach-ap147.c
+-@@ -0,0 +1,125 @@
+-+/*
+-+ *  Atheros AP147 reference board support
+-+ *
+-+ *  Copyright (C) 2014 Matthias Schiffer <mschiffer@universe-factory.net>
+-+ *  Copyright (C) 2015 Sven Eckelmann <sven@open-mesh.com>
+-+ *
+-+ *  This program is free software; you can redistribute it and/or modify it
+-+ *  under the terms of the GNU General Public License version 2 as published
+-+ *  by the Free Software Foundation.
+-+ */
+-+
+-+#include <linux/platform_device.h>
+-+#include <linux/ar8216_platform.h>
+-+
+-+#include <asm/mach-ath79/ar71xx_regs.h>
+-+#include <asm/mach-ath79/ath79.h>
+-+
+-+#include "common.h"
+-+#include "dev-ap9x-pci.h"
+-+#include "dev-eth.h"
+-+#include "dev-gpio-buttons.h"
+-+#include "dev-leds-gpio.h"
+-+#include "dev-m25p80.h"
+-+#include "dev-usb.h"
+-+#include "dev-wmac.h"
+-+#include "machtypes.h"
+-+#include "pci.h"
+-+
+-+#define AP147_GPIO_LED_WAN	4
+-+#define AP147_GPIO_LED_LAN1	16
+-+#define AP147_GPIO_LED_LAN2	15
+-+#define AP147_GPIO_LED_LAN3	14
+-+#define AP147_GPIO_LED_LAN4	11
+-+#define AP147_GPIO_LED_STATUS	13
+-+#define AP147_GPIO_LED_WLAN_2G	12
+-+
+-+#define AP147_GPIO_BTN_WPS	17
+-+
+-+#define AP147_KEYS_POLL_INTERVAL	20	/* msecs */
+-+#define AP147_KEYS_DEBOUNCE_INTERVAL	(3 * AP147_KEYS_POLL_INTERVAL)
+-+
+-+#define AP147_MAC0_OFFSET	0x1000
+-+
+-+static struct gpio_led ap147_leds_gpio[] __initdata = {
+-+	{
+-+		.name		= "ap147:green:status",
+-+		.gpio		= AP147_GPIO_LED_STATUS,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "ap147:green:wlan-2g",
+-+		.gpio		= AP147_GPIO_LED_WLAN_2G,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "ap147:green:lan1",
+-+		.gpio		= AP147_GPIO_LED_LAN1,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "ap147:green:lan2",
+-+		.gpio		= AP147_GPIO_LED_LAN2,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "ap147:green:lan3",
+-+		.gpio		= AP147_GPIO_LED_LAN3,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "ap147:green:lan4",
+-+		.gpio		= AP147_GPIO_LED_LAN4,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "ap147:green:wan",
+-+		.gpio		= AP147_GPIO_LED_WAN,
+-+		.active_low	= 1,
+-+	},
+-+};
+-+
+-+static struct gpio_keys_button ap147_gpio_keys[] __initdata = {
+-+	{
+-+		.desc		= "wps button",
+-+		.type		= EV_KEY,
+-+		.code		= KEY_WPS_BUTTON,
+-+		.debounce_interval = AP147_KEYS_DEBOUNCE_INTERVAL,
+-+		.gpio		= AP147_GPIO_BTN_WPS,
+-+		.active_low	= 1,
+-+	}
+-+};
+-+
+-+static void __init ap147_setup(void)
+-+{
+-+	u8 *art = (u8 *)KSEG1ADDR(0x1fff0000);
+-+
+-+	ath79_register_m25p80(NULL);
+-+	ath79_register_leds_gpio(-1, ARRAY_SIZE(ap147_leds_gpio),
+-+				 ap147_leds_gpio);
+-+	ath79_register_gpio_keys_polled(-1, AP147_KEYS_POLL_INTERVAL,
+-+					ARRAY_SIZE(ap147_gpio_keys),
+-+					ap147_gpio_keys);
+-+
+-+	ath79_register_usb();
+-+
+-+	ath79_register_pci();
+-+
+-+	ath79_register_wmac(art + AP147_MAC0_OFFSET, NULL);
+-+
+-+	ath79_setup_ar933x_phy4_switch(false, false);
+-+
+-+	ath79_register_mdio(0, 0x0);
+-+
+-+	/* LAN */
+-+	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
+-+	ath79_eth1_data.duplex = DUPLEX_FULL;
+-+	ath79_switch_data.phy_poll_mask |= BIT(4);
+-+	ath79_init_mac(ath79_eth1_data.mac_addr, art, 0);
+-+	ath79_register_eth(1);
+-+
+-+	/* WAN */
+-+	ath79_switch_data.phy4_mii_en = 1;
+-+	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
+-+	ath79_eth0_data.duplex = DUPLEX_FULL;
+-+	ath79_eth0_data.speed = SPEED_100;
+-+	ath79_eth0_data.phy_mask = BIT(4);
+-+	ath79_init_mac(ath79_eth0_data.mac_addr, art, 1);
+-+	ath79_register_eth(0);
+-+}
+-+
+-+MIPS_MACHINE(ATH79_MACH_AP147_010, "AP147-010", "Atheros AP147-010 reference board", ap147_setup);
+---- /dev/null
+-+++ b/arch/mips/ath79/mach-ap152.c
+-@@ -0,0 +1,140 @@
+-+
+-+/*
+-+ * Qualcomm Atheros AP152 reference board support
+-+ *
+-+ * Copyright (c) 2015 Qualcomm Atheros
+-+ * Copyright (c) 2012 Gabor Juhos <juhosg@openwrt.org>
+-+ *
+-+ * Permission to use, copy, modify, and/or distribute this software for any
+-+ * purpose with or without fee is hereby granted, provided that the above
+-+ * copyright notice and this permission notice appear in all copies.
+-+ *
+-+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+-+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+-+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+-+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+-+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+-+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+-+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-+ *
+-+ */
+-+
+-+#include <linux/platform_device.h>
+-+#include <linux/ath9k_platform.h>
+-+#include <linux/ar8216_platform.h>
+-+#include <asm/mach-ath79/ar71xx_regs.h>
+-+
+-+#include "common.h"
+-+#include "dev-m25p80.h"
+-+#include "machtypes.h"
+-+#include "pci.h"
+-+#include "dev-eth.h"
+-+#include "dev-gpio-buttons.h"
+-+#include "dev-leds-gpio.h"
+-+#include "dev-spi.h"
+-+#include "dev-usb.h"
+-+#include "dev-wmac.h"
+-+
+-+#define AP152_GPIO_LED_USB0		7
+-+#define AP152_GPIO_LED_USB1		8
+-+
+-+#define AP152_GPIO_BTN_RESET            2
+-+#define AP152_GPIO_BTN_WPS              1
+-+#define AP152_KEYS_POLL_INTERVAL        20     /* msecs */
+-+#define AP152_KEYS_DEBOUNCE_INTERVAL    (3 * AP152_KEYS_POLL_INTERVAL)
+-+
+-+#define AP152_MAC0_OFFSET               0
+-+#define AP152_WMAC_CALDATA_OFFSET       0x1000
+-+
+-+static struct gpio_led ap152_leds_gpio[] __initdata = {
+-+	{
+-+		.name		= "ap152:green:usb0",
+-+		.gpio		= AP152_GPIO_LED_USB0,
+-+		.active_low	= 1,
+-+	},
+-+	{
+-+		.name		= "ap152:green:usb1",
+-+		.gpio		= AP152_GPIO_LED_USB1,
+-+		.active_low	= 1,
+-+	},
+-+};
+-+
+-+static struct gpio_keys_button ap152_gpio_keys[] __initdata = {
+-+	{
+-+		.desc		= "WPS button",
+-+		.type		= EV_KEY,
+-+		.code		= KEY_WPS_BUTTON,
+-+		.debounce_interval = AP152_KEYS_DEBOUNCE_INTERVAL,
+-+		.gpio		= AP152_GPIO_BTN_WPS,
+-+		.active_low	= 1,
+-+	},
+-+	{
+-+		.desc		= "Reset button",
+-+		.type		= EV_KEY,
+-+		.code		= KEY_RESTART,
+-+		.debounce_interval = AP152_KEYS_DEBOUNCE_INTERVAL,
+-+		.gpio		= AP152_GPIO_BTN_RESET,
+-+		.active_low	= 1,
+-+	},
+-+};
+-+
+-+static struct ar8327_pad_cfg ap152_ar8337_pad0_cfg = {
+-+	.mode = AR8327_PAD_MAC_SGMII,
+-+	.sgmii_delay_en = true,
+-+};
+-+
+-+static struct ar8327_platform_data ap152_ar8337_data = {
+-+	.pad0_cfg = &ap152_ar8337_pad0_cfg,
+-+	.port0_cfg = {
+-+		.force_link = 1,
+-+		.speed = AR8327_PORT_SPEED_1000,
+-+		.duplex = 1,
+-+		.txpause = 1,
+-+		.rxpause = 1,
+-+	},
+-+};
+-+
+-+static struct mdio_board_info ap152_mdio0_info[] = {
+-+	{
+-+		.bus_id = "ag71xx-mdio.0",
+-+		.phy_addr = 0,
+-+		.platform_data = &ap152_ar8337_data,
+-+	},
+-+};
+-+
+-+static void __init ap152_setup(void)
+-+{
+-+	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+-+
+-+	ath79_register_m25p80(NULL);
+-+
+-+	ath79_register_leds_gpio(-1, ARRAY_SIZE(ap152_leds_gpio),
+-+				 ap152_leds_gpio);
+-+	ath79_register_gpio_keys_polled(-1, AP152_KEYS_POLL_INTERVAL,
+-+					ARRAY_SIZE(ap152_gpio_keys),
+-+					ap152_gpio_keys);
+-+
+-+	ath79_register_usb();
+-+
+-+	platform_device_register(&ath79_mdio0_device);
+-+
+-+	mdiobus_register_board_info(ap152_mdio0_info,
+-+				    ARRAY_SIZE(ap152_mdio0_info));
+-+
+-+	ath79_register_wmac(art + AP152_WMAC_CALDATA_OFFSET, NULL);
+-+	ath79_register_pci();
+-+
+-+	ath79_init_mac(ath79_eth0_data.mac_addr, art + AP152_MAC0_OFFSET, 0);
+-+
+-+	/* GMAC0 is connected to an AR8337 switch */
+-+	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_SGMII;
+-+	ath79_eth0_data.speed = SPEED_1000;
+-+	ath79_eth0_data.duplex = DUPLEX_FULL;
+-+	ath79_eth0_data.phy_mask = BIT(0);
+-+	ath79_eth0_data.mii_bus_dev = &ath79_mdio0_device.dev;
+-+
+-+	ath79_register_eth(0);
+-+}
+-+
+-+MIPS_MACHINE(ATH79_MACH_AP152, "AP152", "Qualcomm Atheros AP152 reference board",
+-+	     ap152_setup);
+---- /dev/null
+-+++ b/arch/mips/ath79/mach-gb-cgw600.c
+-@@ -0,0 +1,151 @@
+-+/*
+-+ *  Atheros AP147 reference board support
+-+ *
+-+ *  Copyright (C) 2014 Matthias Schiffer <mschiffer@universe-factory.net>
+-+ *  Copyright (C) 2015 Sven Eckelmann <sven@open-mesh.com>
+-+ *
+-+ *  This program is free software; you can redistribute it and/or modify it
+-+ *  under the terms of the GNU General Public License version 2 as published
+-+ *  by the Free Software Foundation.
+-+ */
+-+
+-+#include <linux/platform_device.h>
+-+#include <linux/ar8216_platform.h>
+-+
+-+#include <asm/mach-ath79/ar71xx_regs.h>
+-+#include <asm/mach-ath79/ath79.h>
+-+
+-+#include "common.h"
+-+#include "dev-ap9x-pci.h"
+-+#include "dev-eth.h"
+-+#include "dev-gpio-buttons.h"
+-+#include "dev-leds-gpio.h"
+-+#include "dev-m25p80.h"
+-+#include "dev-usb.h"
+-+#include "dev-wmac.h"
+-+#include "machtypes.h"
+-+#include "pci.h"
+-+
+-+#define CGW600_GPIO_LED_STATUS	15 /*SYS_LED   1-on*/
+-+#define CGW600_GPIO_LED_WLAN	3         /*WLAN_2.4G_LED 1-on*/
+-+#define CGW600_GPIO_LED_LAN1	16        /*LAN1_LED  0-on*/
+-+#define CGW600_GPIO_LED_LAN2	17	     /*LAN2_LED  0-on*/
+-+#define CGW600_GPIO_LED_LAN3	14        /*LAN3_LED  0-on*/
+-+#define CGW600_GPIO_LED_LAN4	12        /*LAN4_LED  0-on*/
+-+#define CGW600_GPIO_LED_WAN	11        /*WAN_LED   0-on*/
+-+
+-+#define CGW600_GPIO_BTN_RST	13   /*SW_RST*/ 
+-+
+-+#define CGW600_KEYS_POLL_INTERVAL	20	/* msecs */
+-+#define CGW600_KEYS_DEBOUNCE_INTERVAL	(3 * CGW600_KEYS_POLL_INTERVAL)
+-+
+-+#define CGW600_MAC0_OFFSET	0x1000
+-+
+-+static struct gpio_led cgw600_leds_gpio[] __initdata = {
+-+	{
+-+		.name		= "cgw600:green:status",
+-+		.gpio		= CGW600_GPIO_LED_STATUS,
+-+		.active_low	= 0,
+-+	},{
+-+		.name		= "cgw600:green:wlan",
+-+		.gpio		= CGW600_GPIO_LED_WLAN,
+-+		.active_low	= 0,
+-+	},  {
+-+		.name		= "cgw600:green:lan1",
+-+		.gpio		= CGW600_GPIO_LED_LAN1,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "cgw600:green:lan2",
+-+		.gpio		= CGW600_GPIO_LED_LAN2,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "cgw600:green:lan3",
+-+		.gpio		= CGW600_GPIO_LED_LAN3,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "cgw600:green:lan4",
+-+		.gpio		= CGW600_GPIO_LED_LAN4,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "cgw600:green:wan",
+-+		.gpio		= CGW600_GPIO_LED_WAN,
+-+		.active_low	= 1,
+-+	},
+-+};
+-+
+-+static struct gpio_keys_button cgw600_gpio_keys[] __initdata = {
+-+	{
+-+		.desc		= "Reset button",
+-+		.type		= EV_KEY,
+-+		.code		= KEY_RESTART,
+-+		.debounce_interval =CGW600_KEYS_DEBOUNCE_INTERVAL,
+-+		.gpio		= CGW600_GPIO_BTN_RST,
+-+		.active_low	= 0,
+-+	}
+-+};
+-+
+-+
+-+static void __init cgw600_gpio_led_setup(void)
+-+{
+-+	ath79_gpio_direction_select(CGW600_GPIO_LED_WAN, true);
+-+	ath79_gpio_direction_select(CGW600_GPIO_LED_LAN1, true);
+-+	ath79_gpio_direction_select(CGW600_GPIO_LED_LAN2, true);
+-+	ath79_gpio_direction_select(CGW600_GPIO_LED_LAN3, true);
+-+	ath79_gpio_direction_select(CGW600_GPIO_LED_LAN4, true);
+-+
+-+	ath79_gpio_output_select(CGW600_GPIO_LED_WAN,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK5);
+-+	ath79_gpio_output_select(CGW600_GPIO_LED_LAN1,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK4);
+-+	ath79_gpio_output_select(CGW600_GPIO_LED_LAN2,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK3);
+-+	ath79_gpio_output_select(CGW600_GPIO_LED_LAN3,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK2);
+-+	ath79_gpio_output_select(CGW600_GPIO_LED_LAN4,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK1);
+-+
+-+}
+-+
+-+
+-+static void __init gb_cgw600_setup(void)
+-+{
+-+	u8 *art = (u8 *)KSEG1ADDR(0x1fff0000);
+-+
+-+	ath79_register_m25p80(NULL);
+-+
+-+	cgw600_gpio_led_setup();
+-+	
+-+	ath79_register_leds_gpio(-1, ARRAY_SIZE(cgw600_leds_gpio),
+-+				 cgw600_leds_gpio);
+-+	ath79_register_gpio_keys_polled(-1, CGW600_KEYS_POLL_INTERVAL,
+-+					ARRAY_SIZE(cgw600_gpio_keys),
+-+					cgw600_gpio_keys);
+-+
+-+	ath79_register_usb();
+-+
+-+	ath79_register_pci();
+-+
+-+	ath79_register_wmac(art + CGW600_MAC0_OFFSET, NULL);
+-+
+-+	ath79_setup_ar933x_phy4_switch(false, false);
+-+
+-+	ath79_register_mdio(0, 0x0);
+-+
+-+	/* LAN */
+-+	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
+-+	ath79_eth1_data.duplex = DUPLEX_FULL;
+-+	ath79_switch_data.phy_poll_mask |= BIT(4);
+-+	ath79_init_mac(ath79_eth1_data.mac_addr, art, 0);
+-+	ath79_register_eth(1);
+-+
+-+	/* WAN */
+-+	ath79_switch_data.phy4_mii_en = 1;
+-+	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
+-+	ath79_eth0_data.duplex = DUPLEX_FULL;
+-+	ath79_eth0_data.speed = SPEED_100;
+-+	ath79_eth0_data.phy_mask = BIT(4);
+-+	ath79_init_mac(ath79_eth0_data.mac_addr, art, 1);
+-+	ath79_register_eth(0);
+-+}
+-+
+-+MIPS_MACHINE(ATH79_MACH_GB_CGW600, "GB-CGW600", "GBCOM CGW600 board", gb_cgw600_setup);
+---- /dev/null
+-+++ b/arch/mips/ath79/mach-gb-cgw800.c
+-@@ -0,0 +1,155 @@
+-+/*
+-+ *  Atheros AP147 reference board support
+-+ *
+-+ *  Copyright (C) 2014 Matthias Schiffer <mschiffer@universe-factory.net>
+-+ *  Copyright (C) 2015 Sven Eckelmann <sven@open-mesh.com>
+-+ *
+-+ *  This program is free software; you can redistribute it and/or modify it
+-+ *  under the terms of the GNU General Public License version 2 as published
+-+ *  by the Free Software Foundation.
+-+ */
+-+
+-+#include <linux/platform_device.h>
+-+#include <linux/ar8216_platform.h>
+-+
+-+#include <asm/mach-ath79/ar71xx_regs.h>
+-+#include <asm/mach-ath79/ath79.h>
+-+
+-+#include "common.h"
+-+#include "dev-ap9x-pci.h"
+-+#include "dev-eth.h"
+-+#include "dev-gpio-buttons.h"
+-+#include "dev-leds-gpio.h"
+-+#include "dev-m25p80.h"
+-+#include "dev-usb.h"
+-+#include "dev-wmac.h"
+-+#include "machtypes.h"
+-+#include "pci.h"
+-+
+-+#define CGW800_GPIO_LED_STATUS	15 /*SYS_LED   1-on*/
+-+#define CGW800_GPIO_LED_WLAN	3         /*WLAN_2.4G_LED 1-on*/
+-+#define CGW800_GPIO_LED_LAN1	16        /*LAN1_LED  0-on*/
+-+#define CGW800_GPIO_LED_LAN2	17	     /*LAN2_LED  0-on*/
+-+#define CGW800_GPIO_LED_LAN3	14        /*LAN3_LED  0-on*/
+-+#define CGW800_GPIO_LED_LAN4	12        /*LAN4_LED  0-on*/
+-+#define CGW800_GPIO_LED_WAN	11        /*WAN_LED   0-on*/
+-+
+-+
+-+
+-+
+-+#define CGW800_GPIO_BTN_RST	13   /*SW_RST*/
+-+
+-+#define CGW800_KEYS_POLL_INTERVAL	20	/* msecs */
+-+#define CGW800_KEYS_DEBOUNCE_INTERVAL	(3 * CGW800_KEYS_POLL_INTERVAL)
+-+
+-+#define CGW800_MAC0_OFFSET	0x1000
+-+
+-+static struct gpio_led cgw800_leds_gpio[] __initdata = {
+-+	{
+-+		.name		= "cgw800:green:status",
+-+		.gpio		= CGW800_GPIO_LED_STATUS,
+-+		.active_low	= 0,
+-+	}, {
+-+		.name		= "cgw800:green:wlan",
+-+		.gpio		= CGW800_GPIO_LED_WLAN,
+-+		.active_low	= 0,
+-+	},{
+-+		.name		= "cgw800:green:lan1",
+-+		.gpio		= CGW800_GPIO_LED_LAN1,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "cgw800:green:lan2",
+-+		.gpio		= CGW800_GPIO_LED_LAN2,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "cgw800:green:lan3",
+-+		.gpio		= CGW800_GPIO_LED_LAN3,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "cgw800:green:lan4",
+-+		.gpio		= CGW800_GPIO_LED_LAN4,
+-+		.active_low	= 1,
+-+	}, {
+-+		.name		= "cgw800:green:wan",
+-+		.gpio		= CGW800_GPIO_LED_WAN,
+-+		.active_low	= 1,
+-+	},
+-+};
+-+
+-+static struct gpio_keys_button cgw800_gpio_keys[] __initdata = {
+-+	{
+-+		.desc		= "Reset button",
+-+		.type		= EV_KEY,
+-+		.code		= KEY_RESTART,
+-+		.debounce_interval =CGW800_KEYS_DEBOUNCE_INTERVAL,
+-+		.gpio		= CGW800_GPIO_BTN_RST,
+-+		.active_low	= 0,
+-+	}
+-+};
+-+
+-+
+-+static void __init cgw800_gpio_led_setup(void)
+-+{
+-+	ath79_gpio_direction_select(CGW800_GPIO_LED_WAN, true);
+-+	ath79_gpio_direction_select(CGW800_GPIO_LED_LAN1, true);
+-+	ath79_gpio_direction_select(CGW800_GPIO_LED_LAN2, true);
+-+	ath79_gpio_direction_select(CGW800_GPIO_LED_LAN3, true);
+-+	ath79_gpio_direction_select(CGW800_GPIO_LED_LAN4, true);
+-+
+-+	ath79_gpio_output_select(CGW800_GPIO_LED_WAN,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK5);
+-+	ath79_gpio_output_select(CGW800_GPIO_LED_LAN1,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK4);
+-+	ath79_gpio_output_select(CGW800_GPIO_LED_LAN2,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK3);
+-+	ath79_gpio_output_select(CGW800_GPIO_LED_LAN3,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK2);
+-+	ath79_gpio_output_select(CGW800_GPIO_LED_LAN4,
+-+			QCA953X_GPIO_OUT_MUX_LED_LINK1);
+-+
+-+}
+-+
+-+
+-+static void __init gb_cgw800_setup(void)
+-+{
+-+	u8 *art = (u8 *)KSEG1ADDR(0x1fff0000);
+-+
+-+	ath79_register_m25p80(NULL);
+-+
+-+	cgw800_gpio_led_setup();
+-+	
+-+	ath79_register_leds_gpio(-1, ARRAY_SIZE(cgw800_leds_gpio),
+-+				 cgw800_leds_gpio);
+-+	ath79_register_gpio_keys_polled(-1, CGW800_KEYS_POLL_INTERVAL,
+-+					ARRAY_SIZE(cgw800_gpio_keys),
+-+					cgw800_gpio_keys);
+-+
+-+	ath79_register_usb();
+-+
+-+	ath79_register_pci();
+-+
+-+	ath79_register_wmac(art + CGW800_MAC0_OFFSET, NULL);
+-+
+-+	ath79_setup_ar933x_phy4_switch(false, false);
+-+
+-+	ath79_register_mdio(0, 0x0);
+-+
+-+	/* LAN */
+-+	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
+-+	ath79_eth1_data.duplex = DUPLEX_FULL;
+-+	ath79_switch_data.phy_poll_mask |= BIT(4);
+-+	ath79_init_mac(ath79_eth1_data.mac_addr, art, 0);
+-+	ath79_register_eth(1);
+-+
+-+	/* WAN */
+-+	ath79_switch_data.phy4_mii_en = 1;
+-+	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
+-+	ath79_eth0_data.duplex = DUPLEX_FULL;
+-+	ath79_eth0_data.speed = SPEED_100;
+-+	ath79_eth0_data.phy_mask = BIT(4);
+-+	ath79_init_mac(ath79_eth0_data.mac_addr, art, 1);
+-+	ath79_register_eth(0);
+-+}
+-+
+-+MIPS_MACHINE(ATH79_MACH_GB_CGW800, "GB-CGW800", "GBCOM CGW800 board", gb_cgw800_setup);
+-+
+---- /dev/null
+-+++ b/arch/mips/ath79/mach-gb-oa5025.c
+-@@ -0,0 +1,137 @@
+-+
+-+/*
+-+ * Qualcomm Atheros AP152 reference board support
+-+ *
+-+ * Copyright (c) 2015 Qualcomm Atheros
+-+ * Copyright (c) 2012 Gabor Juhos <juhosg@openwrt.org>
+-+ *
+-+ * Permission to use, copy, modify, and/or distribute this software for any
+-+ * purpose with or without fee is hereby granted, provided that the above
+-+ * copyright notice and this permission notice appear in all copies.
+-+ *
+-+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+-+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+-+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+-+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+-+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+-+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+-+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-+ *
+-+ */
+-+
+-+#include <linux/platform_device.h>
+-+#include <linux/ath9k_platform.h>
+-+#include <linux/ar8216_platform.h>
+-+#include <asm/mach-ath79/ar71xx_regs.h>
+-+
+-+#include "common.h"
+-+#include "dev-m25p80.h"
+-+#include "machtypes.h"
+-+#include "pci.h"
+-+#include "dev-eth.h"
+-+#include "dev-gpio-buttons.h"
+-+#include "dev-leds-gpio.h"
+-+#include "dev-spi.h"
+-+#include "dev-usb.h"
+-+#include "dev-wmac.h"
+-+
+-+#define OA5025_GPIO_LED_WLAN             10
+-+#define OA5025_GPIO_LED_RUN              11
+-+
+-+#define OA5025_GPIO_BTN_RESET            5
+-+
+-+#define OA5025_KEYS_POLL_INTERVAL        20     /* msecs */
+-+#define OA5025_KEYS_DEBOUNCE_INTERVAL    (3 * OA5025_KEYS_POLL_INTERVAL)
+-+
+-+#define OA5025_KEYS_POLL_INTERVAL        20     /* msecs */
+-+#define OA5025_KEYS_DEBOUNCE_INTERVAL    (3 * OA5025_KEYS_POLL_INTERVAL)
+-+
+-+
+-+#define OA5025_MAC0_OFFSET               0
+-+#define OA5025_WMAC_CALDATA_OFFSET       0x1000
+-+
+-+
+-+static struct gpio_led oa5025_leds_gpio[] __initdata = {
+-+	{
+-+		.name		= "oa5025:green:status",
+-+		.gpio		= OA5025_GPIO_LED_RUN,
+-+		.active_low	= 0,
+-+	},
+-+	{
+-+		.name		= "oa5025:green:wlan",
+-+		.gpio		= OA5025_GPIO_LED_WLAN,
+-+		.active_low	= 0,
+-+	},
+-+};
+-+
+-+static struct gpio_keys_button oa5025_gpio_keys[] __initdata = {
+-+        {
+-+                .desc           = "Reset button",
+-+                .type           = EV_KEY,
+-+                .code           = KEY_RESTART,
+-+                .debounce_interval = OA5025_KEYS_DEBOUNCE_INTERVAL,
+-+                .gpio           = OA5025_GPIO_BTN_RESET,
+-+                .active_low     = 1,
+-+        },
+-+};
+-+
+-+
+-+static struct ar8327_pad_cfg oa5025_ar8337_pad0_cfg = {
+-+	.mode = AR8327_PAD_MAC_SGMII,
+-+	.sgmii_delay_en = true,
+-+};
+-+
+-+static struct ar8327_platform_data oa5025_ar8337_data = {
+-+	.pad0_cfg = &oa5025_ar8337_pad0_cfg,
+-+	.port0_cfg = {
+-+		.force_link = 1,
+-+		.speed = AR8327_PORT_SPEED_1000,
+-+		.duplex = 1,
+-+		.txpause = 1,
+-+		.rxpause = 1,
+-+	},
+-+};
+-+
+-+static struct mdio_board_info oa5025_mdio0_info[] = {
+-+	{
+-+		.bus_id = "ag71xx-mdio.0",
+-+		.phy_addr = 0,
+-+		.platform_data = &oa5025_ar8337_data,
+-+	},
+-+};
+-+
+-+static void __init oa5025_setup(void)
+-+{
+-+	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+-+
+-+	ath79_register_m25p80(NULL);
+-+
+-+	ath79_register_leds_gpio(-1, ARRAY_SIZE(oa5025_leds_gpio),
+-+				 oa5025_leds_gpio);
+-+	ath79_register_gpio_keys_polled(-1, OA5025_KEYS_POLL_INTERVAL,
+-+					ARRAY_SIZE(oa5025_gpio_keys),
+-+					oa5025_gpio_keys);
+-+
+-+	ath79_register_usb();
+-+
+-+	platform_device_register(&ath79_mdio0_device);
+-+
+-+	mdiobus_register_board_info(oa5025_mdio0_info,
+-+				    ARRAY_SIZE(oa5025_mdio0_info));
+-+
+-+	ath79_register_wmac(art + OA5025_WMAC_CALDATA_OFFSET, NULL);
+-+	ath79_register_pci();
+-+
+-+	ath79_init_mac(ath79_eth0_data.mac_addr, art + OA5025_MAC0_OFFSET, 0);
+-+
+-+	/* GMAC0 is connected to an AR8337 switch */
+-+	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_SGMII;
+-+	ath79_eth0_data.speed = SPEED_1000;
+-+	ath79_eth0_data.duplex = DUPLEX_FULL;
+-+	ath79_eth0_data.phy_mask = BIT(0);
+-+	ath79_eth0_data.mii_bus_dev = &ath79_mdio0_device.dev;
+-+
+-+	ath79_register_eth(0);
+-+}
+-+MIPS_MACHINE(ATH79_MACH_GB_OA5025, "GB-OA5025", "GBCOM OA5025 board",
+-+	     oa5025_setup);
+---- /dev/null
+-+++ b/arch/mips/ath79/mach-gb-ta2025ac.c
+-@@ -0,0 +1,139 @@
+-+
+-+/*
+-+ * Qualcomm Atheros AP152 reference board support
+-+ *
+-+ * Copyright (c) 2015 Qualcomm Atheros
+-+ * Copyright (c) 2012 Gabor Juhos <juhosg@openwrt.org>
+-+ *
+-+ * Permission to use, copy, modify, and/or distribute this software for any
+-+ * purpose with or without fee is hereby granted, provided that the above
+-+ * copyright notice and this permission notice appear in all copies.
+-+ *
+-+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+-+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+-+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+-+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+-+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+-+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+-+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-+ *
+-+ */
+-+
+-+#include <linux/platform_device.h>
+-+#include <linux/ath9k_platform.h>
+-+#include <linux/ar8216_platform.h>
+-+#include <asm/mach-ath79/ar71xx_regs.h>
+-+
+-+#include "common.h"
+-+#include "dev-m25p80.h"
+-+#include "machtypes.h"
+-+#include "pci.h"
+-+#include "dev-eth.h"
+-+#include "dev-gpio-buttons.h"
+-+#include "dev-leds-gpio.h"
+-+#include "dev-spi.h"
+-+#include "dev-usb.h"
+-+#include "dev-wmac.h"
+-+
+-+
+-+#define TA2025AC_GPIO_LED_WLAN             10
+-+#define TA2025AC_GPIO_LED_RUN              11
+-+
+-+#define TA2025AC_GPIO_BTN_RESET            5
+-+
+-+#define TA2025AC_KEYS_POLL_INTERVAL        20     /* msecs */
+-+#define TA2025AC_KEYS_DEBOUNCE_INTERVAL    (3 * TA2025AC_KEYS_POLL_INTERVAL)
+-+
+-+#define TA2025AC_KEYS_POLL_INTERVAL        20     /* msecs */
+-+#define TA2025AC_KEYS_DEBOUNCE_INTERVAL    (3 * TA2025AC_KEYS_POLL_INTERVAL)
+-+
+-+
+-+#define TA2025AC_MAC0_OFFSET               0
+-+#define TA2025AC_WMAC_CALDATA_OFFSET       0x1000
+-+
+-+
+-+static struct gpio_led ta2025ac_leds_gpio[] __initdata = {
+-+	{
+-+		.name		= "ta2025ac:green:status",
+-+		.gpio		= TA2025AC_GPIO_LED_RUN,
+-+		.active_low	= 0,
+-+	},
+-+	{
+-+		.name		= "ta2025ac:green:wlan",
+-+		.gpio		= TA2025AC_GPIO_LED_WLAN,
+-+		.active_low	= 0,
+-+	},
+-+};
+-+
+-+static struct gpio_keys_button ta2025ac_gpio_keys[] __initdata = {
+-+        {
+-+                .desc           = "Reset button",
+-+                .type           = EV_KEY,
+-+                .code           = KEY_RESTART,
+-+                .debounce_interval = TA2025AC_KEYS_DEBOUNCE_INTERVAL,
+-+                .gpio           = TA2025AC_GPIO_BTN_RESET,
+-+                .active_low     = 1,
+-+        },
+-+};
+-+
+-+
+-+static struct ar8327_pad_cfg ta2025ac_ar8337_pad0_cfg = {
+-+	.mode = AR8327_PAD_MAC_SGMII,
+-+	.sgmii_delay_en = true,
+-+};
+-+
+-+static struct ar8327_platform_data ta2025ac_ar8337_data = {
+-+	.pad0_cfg = &ta2025ac_ar8337_pad0_cfg,
+-+	.port0_cfg = {
+-+		.force_link = 1,
+-+		.speed = AR8327_PORT_SPEED_1000,
+-+		.duplex = 1,
+-+		.txpause = 1,
+-+		.rxpause = 1,
+-+	},
+-+};
+-+
+-+static struct mdio_board_info ta2025ac_mdio0_info[] = {
+-+	{
+-+		.bus_id = "ag71xx-mdio.0",
+-+		.phy_addr = 0,
+-+		.platform_data = &ta2025ac_ar8337_data,
+-+	},
+-+};
+-+
+-+static void __init ta2025ac_setup(void)
+-+{
+-+	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+-+
+-+	ath79_register_m25p80(NULL);
+-+
+-+	ath79_register_leds_gpio(-1, ARRAY_SIZE(ta2025ac_leds_gpio),
+-+				 ta2025ac_leds_gpio);
+-+	ath79_register_gpio_keys_polled(-1, TA2025AC_KEYS_POLL_INTERVAL,
+-+					ARRAY_SIZE(ta2025ac_gpio_keys),
+-+					ta2025ac_gpio_keys);
+-+
+-+	ath79_register_usb();
+-+
+-+	platform_device_register(&ath79_mdio0_device);
+-+
+-+	mdiobus_register_board_info(ta2025ac_mdio0_info,
+-+				    ARRAY_SIZE(ta2025ac_mdio0_info));
+-+
+-+	ath79_register_wmac(art + TA2025AC_WMAC_CALDATA_OFFSET, NULL);
+-+	ath79_register_pci();
+-+
+-+	ath79_init_mac(ath79_eth0_data.mac_addr, art + TA2025AC_MAC0_OFFSET, 0);
+-+
+-+	/* GMAC0 is connected to an AR8337 switch */
+-+	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_SGMII;
+-+	ath79_eth0_data.speed = SPEED_1000;
+-+	ath79_eth0_data.duplex = DUPLEX_FULL;
+-+	ath79_eth0_data.phy_mask = BIT(0);
+-+	ath79_eth0_data.mii_bus_dev = &ath79_mdio0_device.dev;
+-+
+-+	ath79_register_eth(0);
+-+}
+-+
+-+MIPS_MACHINE(ATH79_MACH_GB_TA2025AC, "GB-TA2025AC", "GBCOM TA2025AC board",
+-+	     ta2025ac_setup);
+---- a/arch/mips/ath79/machtypes.h
+-+++ b/arch/mips/ath79/machtypes.h
+-@@ -31,6 +31,9 @@ enum ath79_mach_type {
+- 	ATH79_MACH_AP135_020,		/* Atheros AP135-020 reference board */
+- 	ATH79_MACH_AP136_010,		/* Atheros AP136-010 reference board */
+- 	ATH79_MACH_AP136_020,		/* Atheros AP136-020 reference board */
+-+	ATH79_MACH_AP143,		/* Atheros AP143 reference board */
+-+	ATH79_MACH_AP147_010,		/* Atheros AP147-010 reference board */
+-+	ATH79_MACH_AP152,		/* Atheros AP152 reference board */
+- 	ATH79_MACH_AP81,		/* Atheros AP81 reference board */
+- 	ATH79_MACH_AP83,		/* Atheros AP83 */
+- 	ATH79_MACH_AP96,		/* Atheros AP96 */
+-@@ -68,6 +71,10 @@ enum ath79_mach_type {
+- 	ATH79_MACH_ESR1750,		/* EnGenius ESR1750 */
+- 	ATH79_MACH_EPG5000,		/* EnGenius EPG5000 */
+- 	ATH79_MACH_F9K1115V2,		/* Belkin AC1750DB */
+-+	ATH79_MACH_GB_CGW600,	/*GBCOM CGW600*/
+-+	ATH79_MACH_GB_CGW800,	/*GBCOM CGW800*/
+-+	ATH79_MACH_GB_TA2025AC,  /*GBCOM TA2025AC*/
+-+	ATH79_MACH_GB_OA5025,	/*GBCOM OA5025*/
+- 	ATH79_MACH_GL_INET,		/* GL-CONNECT GL-INET */
+- 	ATH79_MACH_GS_MINIBOX_V1,	/* Gainstrong MiniBox V1.0 */
+- 	ATH79_MACH_GS_OOLITE,           /* GS OOLITE V1.0 */
+---- a/arch/mips/ath79/pci.c
+-+++ b/arch/mips/ath79/pci.c
+-@@ -53,6 +53,15 @@ static const struct ath79_pci_irq ar724x
+- 	}
+- };
+- 
+-+static const struct ath79_pci_irq qca953x_pci_irq_map[] __initconst = {
+-+	{
+-+		.bus	= 0,
+-+		.slot	= 0,
+-+		.pin	= 1,
+-+		.irq	= ATH79_PCI_IRQ(0),
+-+	},
+-+};
+-+
+- static const struct ath79_pci_irq qca955x_pci_irq_map[] __initconst = {
+- 	{
+- 		.bus	= 0,
+-@@ -98,6 +107,9 @@ int __init pcibios_map_irq(const struct 
+- 			   soc_is_ar9344()) {
+- 			ath79_pci_irq_map = ar724x_pci_irq_map;
+- 			ath79_pci_nr_irqs = ARRAY_SIZE(ar724x_pci_irq_map);
+-+		} else if (soc_is_qca953x()) {
+-+			ath79_pci_irq_map = qca953x_pci_irq_map;
+-+			ath79_pci_nr_irqs = ARRAY_SIZE(qca953x_pci_irq_map);
+- 		} else if (soc_is_qca955x()) {
+- 			ath79_pci_irq_map = qca955x_pci_irq_map;
+- 			ath79_pci_nr_irqs = ARRAY_SIZE(qca955x_pci_irq_map);
+-@@ -303,6 +315,15 @@ int __init ath79_register_pci(void)
+- 						 AR724X_PCI_MEM_SIZE,
+- 						 0,
+- 						 ATH79_IP2_IRQ(0));
+-+	} else if (soc_is_qca9533()) {
+-+		pdev = ath79_register_pci_ar724x(0,
+-+						 QCA953X_PCI_CFG_BASE0,
+-+						 QCA953X_PCI_CTRL_BASE0,
+-+						 QCA953X_PCI_CRP_BASE0,
+-+						 QCA953X_PCI_MEM_BASE0,
+-+						 QCA953X_PCI_MEM_SIZE,
+-+						 0,
+-+						 ATH79_IP2_IRQ(0));
+- 	} else if (soc_is_qca9558()) {
+- 		pdev = ath79_register_pci_ar724x(0,
+- 						 QCA955X_PCI_CFG_BASE0,
+---- a/drivers/net/phy/at803x.c
+-+++ b/drivers/net/phy/at803x.c
+-@@ -36,6 +36,9 @@
+- #define AT803X_INER				0x0012
+- #define AT803X_INER_INIT			0xec00
+- #define AT803X_INSR				0x0013
+-+#define AT803X_REG_CHIP_CONFIG			0x1f
+-+#define AT803X_BT_BX_REG_SEL			0x8000
+-+#define AT803X_SGMII_ANEG_EN			0x1000
+- 
+- #define AT803X_PCS_SMART_EEE_CTRL3			0x805D
+- #define AT803X_SMART_EEE_CTRL3_LPI_TX_DELAY_SEL_MASK	0x3
+-@@ -267,6 +270,27 @@ static int at803x_config_init(struct phy
+- {
+- 	struct at803x_platform_data *pdata;
+- 	int ret;
+-+	u32 v;
+-+
+-+	if (phydev->drv->phy_id == ATH8031_PHY_ID &&
+-+		phydev->interface == PHY_INTERFACE_MODE_SGMII)
+-+	{
+-+		v = phy_read(phydev, AT803X_REG_CHIP_CONFIG);
+-+		/* select SGMII/fiber page */
+-+		ret = phy_write(phydev, AT803X_REG_CHIP_CONFIG,
+-+						v & ~AT803X_BT_BX_REG_SEL);
+-+		if (ret)
+-+			return ret;
+-+		/* enable SGMII autonegotiation */
+-+		ret = phy_write(phydev, MII_BMCR, AT803X_SGMII_ANEG_EN);
+-+		if (ret)
+-+			return ret;
+-+		/* select copper page */
+-+		ret = phy_write(phydev, AT803X_REG_CHIP_CONFIG,
+-+						v | AT803X_BT_BX_REG_SEL);
+-+		if (ret)
+-+			return ret;
+-+	}
+- 
+- 	ret = genphy_config_init(phydev);
+- 	if (ret < 0)
+diff -urpN target_orig/linux/ar71xx/patches-3.18/942-MIPS-ath79-add-ap143-support.patch target/linux/ar71xx/patches-3.18/942-MIPS-ath79-add-ap143-support.patch
+--- target_orig/linux/ar71xx/patches-3.18/942-MIPS-ath79-add-ap143-support.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/patches-3.18/942-MIPS-ath79-add-ap143-support.patch	2016-09-28 14:47:19.336049132 +0800
+@@ -0,0 +1,148 @@
++--- a/arch/mips/ath79/Kconfig
+++++ b/arch/mips/ath79/Kconfig
++@@ -146,6 +146,99 @@ config ATH79_MACH_AP81
++ 	  Say 'Y' here if you want your kernel to support the
++ 	  Atheros AP81 reference board.
++ 
+++config ATH79_MACH_AP143
+++	bool "Atheros AP143 reference board"
+++	select SOC_QCA953X
+++	select ATH79_DEV_GPIO_BUTTONS
+++	select ATH79_DEV_LEDS_GPIO
+++	select ATH79_DEV_SPI
+++	select ATH79_DEV_USB
+++	select ATH79_DEV_WMAC
+++	select ATH79_DEV_ETH
+++	select ATH79_DEV_M25P80
+++	help
+++	  Say 'Y' here if you want your kernel to support the
+++	  Atheros AP143 reference board.
+++
+++config ATH79_MACH_AP147
+++	bool "Atheros AP147 reference board"
+++	select SOC_QCA953X
+++	select ATH79_DEV_GPIO_BUTTONS
+++	select ATH79_DEV_LEDS_GPIO
+++	select ATH79_DEV_M25P80
+++	select ATH79_DEV_USB
+++	select ATH79_DEV_WMAC
+++	select ATH79_DEV_AP9X_PCI if PCI
+++	help
+++	  Say 'Y' here if you want your kernel to support the
+++	  QCA AP147 reference boards.
+++
+++config ATH79_MACH_AP152
+++	bool "Atheros AP152 reference board"
+++	select SOC_QCA956X
+++	select ATH79_DEV_GPIO_BUTTONS
+++	select ATH79_DEV_LEDS_GPIO
+++	select ATH79_DEV_M25P80
+++	select ATH79_DEV_USB
+++	select ATH79_DEV_WMAC
+++	select ATH79_DEV_AP9X_PCI if PCI
+++	help
+++	  Say 'Y' here if you want your kernel to support the
+++	  QCA AP152 reference boards.
+++
+++
+++config ATH79_MACH_GB_CGW600
+++	bool "GBCOM CGW600 board"
+++	select SOC_QCA953X
+++	select ATH79_DEV_GPIO_BUTTONS
+++	select ATH79_DEV_LEDS_GPIO
+++	select ATH79_DEV_M25P80
+++	select ATH79_DEV_USB
+++	select ATH79_DEV_WMAC
+++	select ATH79_DEV_AP9X_PCI if PCI
+++	help
+++	  Say 'Y' here if you want your kernel to support the
+++	  GBCOM CGW600 board.
+++
+++config ATH79_MACH_GB_CGW800
+++	bool "GBCOM CGW800 board"
+++	select SOC_QCA953X
+++	select ATH79_DEV_GPIO_BUTTONS
+++	select ATH79_DEV_LEDS_GPIO
+++	select ATH79_DEV_M25P80
+++	select ATH79_DEV_USB
+++	select ATH79_DEV_WMAC
+++	select ATH79_DEV_AP9X_PCI if PCI
+++	help
+++	  Say 'Y' here if you want your kernel to support the
+++	  GBCOM CGW800 board.
+++
+++config ATH79_MACH_GB_TA2025AC
+++	bool "GBCOM TA2025AC board"
+++	select SOC_QCA956X
+++	select ATH79_DEV_GPIO_BUTTONS
+++	select ATH79_DEV_LEDS_GPIO
+++	select ATH79_DEV_M25P80
+++	select ATH79_DEV_USB
+++	select ATH79_DEV_WMAC
+++	select ATH79_DEV_AP9X_PCI if PCI
+++	help
+++	  Say 'Y' here if you want your kernel to support the
+++	  GBCOM TA2025AC board.
+++
+++config ATH79_MACH_GB_OA5025
+++	bool "GBCOM OA5025 board"
+++	select SOC_QCA956X
+++	select ATH79_DEV_GPIO_BUTTONS
+++	select ATH79_DEV_LEDS_GPIO
+++	select ATH79_DEV_M25P80
+++	select ATH79_DEV_USB
+++	select ATH79_DEV_WMAC
+++	select ATH79_DEV_AP9X_PCI if PCI
+++	help
+++	  Say 'Y' here if you want your kernel to support the
+++	  GBCOM OA5025 board.
+++
++ config ATH79_MACH_AP83
++ 	bool "Atheros AP83 board support"
++ 	select SOC_AR913X
++--- a/arch/mips/ath79/Makefile
+++++ b/arch/mips/ath79/Makefile
++@@ -49,6 +49,9 @@ obj-$(CONFIG_ATH79_MACH_AP113)		+= mach-
++ obj-$(CONFIG_ATH79_MACH_AP121)		+= mach-ap121.o
++ obj-$(CONFIG_ATH79_MACH_AP132)		+= mach-ap132.o
++ obj-$(CONFIG_ATH79_MACH_AP136)		+= mach-ap136.o
+++obj-$(CONFIG_ATH79_MACH_AP143)		+= mach-ap143.o
+++obj-$(CONFIG_ATH79_MACH_AP147)		+= mach-ap147.o
+++obj-$(CONFIG_ATH79_MACH_AP152)		+= mach-ap152.o
++ obj-$(CONFIG_ATH79_MACH_AP81)		+= mach-ap81.o
++ obj-$(CONFIG_ATH79_MACH_AP83)		+= mach-ap83.o
++ obj-$(CONFIG_ATH79_MACH_AP96)		+= mach-ap96.o
++@@ -79,6 +82,10 @@ obj-$(CONFIG_ATH79_MACH_EL_MINI)	+= mach
++ obj-$(CONFIG_ATH79_MACH_EPG5000)	+= mach-epg5000.o
++ obj-$(CONFIG_ATH79_MACH_ESR1750)	+= mach-esr1750.o
++ obj-$(CONFIG_ATH79_MACH_F9K1115V2)	+= mach-f9k1115v2.o
+++# obj-$(CONFIG_ATH79_MACH_GB_CGW600)		+= mach-gb-cgw600.o
+++# obj-$(CONFIG_ATH79_MACH_GB_CGW800)		+= mach-gb-cgw800.o
+++# obj-$(CONFIG_ATH79_MACH_GB_TA2025AC)		+= mach-gb-ta2025ac.o
+++# obj-$(CONFIG_ATH79_MACH_GB_OA5025)		+= mach-gb-oa5025.o
++ obj-$(CONFIG_ATH79_MACH_GL_INET)	+= mach-gl-inet.o
++ obj-$(CONFIG_ATH79_MACH_GS_MINIBOX_V1)	+= mach-gs-minibox-v1.o
++ obj-$(CONFIG_ATH79_MACH_GS_OOLITE)	+= mach-gs-oolite.o
++--- a/arch/mips/ath79/machtypes.h
+++++ b/arch/mips/ath79/machtypes.h
++@@ -31,6 +31,9 @@ enum ath79_mach_type {
++ 	ATH79_MACH_AP135_020,		/* Atheros AP135-020 reference board */
++ 	ATH79_MACH_AP136_010,		/* Atheros AP136-010 reference board */
++ 	ATH79_MACH_AP136_020,		/* Atheros AP136-020 reference board */
+++	ATH79_MACH_AP143,		/* Atheros AP143 reference board */
+++	ATH79_MACH_AP147_010,		/* Atheros AP147-010 reference board */
+++	ATH79_MACH_AP152,		/* Atheros AP152 reference board */
++ 	ATH79_MACH_AP81,		/* Atheros AP81 reference board */
++ 	ATH79_MACH_AP83,		/* Atheros AP83 */
++ 	ATH79_MACH_AP96,		/* Atheros AP96 */
++@@ -68,6 +71,10 @@ enum ath79_mach_type {
++ 	ATH79_MACH_ESR1750,		/* EnGenius ESR1750 */
++ 	ATH79_MACH_EPG5000,		/* EnGenius EPG5000 */
++ 	ATH79_MACH_F9K1115V2,		/* Belkin AC1750DB */
+++	ATH79_MACH_GB_CGW600,	/*GBCOM CGW600*/
+++	ATH79_MACH_GB_CGW800,	/*GBCOM CGW800*/
+++	ATH79_MACH_GB_TA2025AC,  /*GBCOM TA2025AC*/
+++	ATH79_MACH_GB_OA5025,	/*GBCOM OA5025*/
++ 	ATH79_MACH_GL_INET,		/* GL-CONNECT GL-INET */
++ 	ATH79_MACH_GS_MINIBOX_V1,	/* Gainstrong MiniBox V1.0 */
++ 	ATH79_MACH_GS_OOLITE,           /* GS OOLITE V1.0 */
+diff -urpN target_orig/linux/ar71xx/patches-3.18/943-MIPS-ath79-add-kt967Xsc-support.patch target/linux/ar71xx/patches-3.18/943-MIPS-ath79-add-kt967Xsc-support.patch
+--- target_orig/linux/ar71xx/patches-3.18/943-MIPS-ath79-add-kt967Xsc-support.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ar71xx/patches-3.18/943-MIPS-ath79-add-kt967Xsc-support.patch	2016-09-28 14:47:19.336049132 +0800
+@@ -0,0 +1,43 @@
++--- a/arch/mips/ath79/Kconfig
+++++ b/arch/mips/ath79/Kconfig
++@@ -151,6 +151,20 @@ config ATH79_MACH_AP143
++ 	  Say 'Y' here if you want your kernel to support the
++ 	  Atheros AP143 reference board.
++ 
+++config ATH79_MACH_KT9672SC
+++	bool "KUNTENG KT9672SC reference board"
+++	select SOC_QCA953X
+++	select ATH79_DEV_GPIO_BUTTONS
+++	select ATH79_DEV_LEDS_GPIO
+++	select ATH79_DEV_SPI
+++	select ATH79_DEV_USB
+++	select ATH79_DEV_WMAC
+++	select ATH79_DEV_ETH
+++	select ATH79_DEV_M25P80
+++	help
+++	  Say 'Y' here if you want your kernel to support the
+++	  KUNTENG KT9672SC reference board.	
+++
++ config ATH79_MACH_AP147
++ 	bool "Atheros AP147 reference board"
++ 	select SOC_QCA953X
++--- a/arch/mips/ath79/Makefile
+++++ b/arch/mips/ath79/Makefile
++@@ -49,6 +49,7 @@ obj-$(CONFIG_ATH79_MACH_AP121)		+= mach-
++ obj-$(CONFIG_ATH79_MACH_AP132)		+= mach-ap132.o
++ obj-$(CONFIG_ATH79_MACH_AP136)		+= mach-ap136.o
++ obj-$(CONFIG_ATH79_MACH_AP143)		+= mach-ap143.o
+++obj-$(CONFIG_ATH79_MACH_KT9672SC)	+= mach-kt9672sc.o
++ obj-$(CONFIG_ATH79_MACH_AP147)		+= mach-ap147.o
++ obj-$(CONFIG_ATH79_MACH_AP152)		+= mach-ap152.o
++ obj-$(CONFIG_ATH79_MACH_AP81)		+= mach-ap81.o
++--- a/arch/mips/ath79/machtypes.h
+++++ b/arch/mips/ath79/machtypes.h
++@@ -31,6 +31,7 @@ enum ath79_mach_type {
++ 	ATH79_MACH_AP136_010,		/* Atheros AP136-010 reference board */
++ 	ATH79_MACH_AP136_020,		/* Atheros AP136-020 reference board */
++ 	ATH79_MACH_AP143,		/* Atheros AP143 reference board */
+++	ATH79_MACH_KT9672SC,		/* Atheros KT9672SC reference board */
++ 	ATH79_MACH_AP147_010,		/* Atheros AP147-010 reference board */
++ 	ATH79_MACH_AP152,		/* Atheros AP152 reference board */
++ 	ATH79_MACH_AP81,		/* Atheros AP81 reference board */
+diff -urpN target_orig/linux/generic/patches-3.18/096-tcp-make-challenge-acks-less-predictable.patch target/linux/generic/patches-3.18/096-tcp-make-challenge-acks-less-predictable.patch
+--- target_orig/linux/generic/patches-3.18/096-tcp-make-challenge-acks-less-predictable.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/generic/patches-3.18/096-tcp-make-challenge-acks-less-predictable.patch	2016-09-28 14:47:19.076036329 +0800
+@@ -0,0 +1,66 @@
++From 75ff39ccc1bd5d3c455b6822ab09e533c551f758 Mon Sep 17 00:00:00 2001
++From: Eric Dumazet <edumazet@google.com>
++Date: Sun, 10 Jul 2016 10:04:02 +0200
++Subject: [PATCH] tcp: make challenge acks less predictable
++
++Yue Cao claims that current host rate limiting of challenge ACKS
++(RFC 5961) could leak enough information to allow a patient attacker
++to hijack TCP sessions. He will soon provide details in an academic
++paper.
++
++This patch increases the default limit from 100 to 1000, and adds
++some randomization so that the attacker can no longer hijack
++sessions without spending a considerable amount of probes.
++
++Based on initial analysis and patch from Linus.
++
++Note that we also have per socket rate limiting, so it is tempting
++to remove the host limit in the future.
++
++v2: randomize the count of challenge acks per second, not the period.
++
++Fixes: 282f23c6ee34 ("tcp: implement RFC 5961 3.2")
++Reported-by: Yue Cao <ycao009@ucr.edu>
++Signed-off-by: Eric Dumazet <edumazet@google.com>
++Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
++Cc: Yuchung Cheng <ycheng@google.com>
++Cc: Neal Cardwell <ncardwell@google.com>
++Acked-by: Neal Cardwell <ncardwell@google.com>
++Acked-by: Yuchung Cheng <ycheng@google.com>
++Signed-off-by: David S. Miller <davem@davemloft.net>
++---
++ net/ipv4/tcp_input.c | 15 ++++++++++-----
++ 1 file changed, 10 insertions(+), 5 deletions(-)
++
++--- a/net/ipv4/tcp_input.c
+++++ b/net/ipv4/tcp_input.c
++@@ -88,7 +88,7 @@ int sysctl_tcp_adv_win_scale __read_most
++ EXPORT_SYMBOL(sysctl_tcp_adv_win_scale);
++ 
++ /* rfc5961 challenge ack rate limiting */
++-int sysctl_tcp_challenge_ack_limit = 100;
+++int sysctl_tcp_challenge_ack_limit = 1000;
++ 
++ int sysctl_tcp_stdurg __read_mostly;
++ int sysctl_tcp_rfc1337 __read_mostly;
++@@ -3325,12 +3325,18 @@ static void tcp_send_challenge_ack(struc
++ 	static u32 challenge_timestamp;
++ 	static unsigned int challenge_count;
++ 	u32 now = jiffies / HZ;
+++	u32 count;
++ 
++ 	if (now != challenge_timestamp) {
+++		u32 half = (sysctl_tcp_challenge_ack_limit + 1) >> 1;
+++
++ 		challenge_timestamp = now;
++-		challenge_count = 0;
+++		WRITE_ONCE(challenge_count, half +
+++		           prandom_u32_max(sysctl_tcp_challenge_ack_limit));
++ 	}
++-	if (++challenge_count <= sysctl_tcp_challenge_ack_limit) {
+++	count = READ_ONCE(challenge_count);
+++	if (count > 0) {
+++		WRITE_ONCE(challenge_count, count - 1);
++ 		NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_TCPCHALLENGEACK);
++ 		tcp_send_ack(sk);
++ 	}
+diff -urpN target_orig/linux/ramips/base-files/etc/board.d/01_leds target/linux/ramips/base-files/etc/board.d/01_leds
+--- target_orig/linux/ramips/base-files/etc/board.d/01_leds	2016-09-28 14:47:06.343407382 +0800
++++ target/linux/ramips/base-files/etc/board.d/01_leds	2016-09-28 14:47:19.160040465 +0800
+@@ -267,6 +267,7 @@ case $board in
+ 		set_wifi_led "zte:blue:status"
+ 		;;
+ 	hc5661a |\
++	kt9761 |\
+ 	zc9525a)
+ 		ucidef_set_led_default "system" "system" "hc5661a:blue:system" "0"
+ 		ucidef_set_led_netdev "internet" "internet" "hc5661a:blue:internet" "eth0.2"
+@@ -306,10 +307,19 @@ case $board in
+ 		set_wifi_led "kt9962:blue:wifi2g"
+ 		ucidef_set_led_netdev "wifi5g" "wifi5g" "kt9962:blue:wifi5g" "rai0"
+ 		;;	
++	kt9962a)
++        ucidef_set_led_default "system" "system" "kt9962a:green:system" "1"
++		ucidef_set_led_netdev "wifi2g" "wifi2g" "kt9962a:red:wifi2g" "ra0"
++		ucidef_set_led_netdev "wifi5g" "wifi5g" "kt9962a:blue:wifi5g" "rai0"
++		;;	
+ 	kt9990)
+ 		ucidef_set_led_default "system" "system" "kt9990:blue:system" "1"
+ 		ucidef_set_led_netdev "internet" "internet" "kt9990:blue:internet" "eth0.2"
+ 		;;	
++    hc5962)
++        ucidef_set_led_default "status" "status" "hc5962:red:wifi" "1"
++        ucidef_set_led_timer "system" "system" "hc5962:white:system" "1000" "1000"
++        ;;
+ esac
+ 
+ board_config_flush
+diff -urpN target_orig/linux/ramips/base-files/etc/board.d/02_network target/linux/ramips/base-files/etc/board.d/02_network
+--- target_orig/linux/ramips/base-files/etc/board.d/02_network	2016-09-28 14:47:06.343407382 +0800
++++ target/linux/ramips/base-files/etc/board.d/02_network	2016-09-28 14:47:19.160040465 +0800
+@@ -147,7 +147,9 @@ ramips_setup_interfaces()
+ 	xiaomi-miwifi-mini |\
+ 	y1|\
+ 	kt9962|\
++	kt9962a|\
+ 	kt9990|\
++	hc5962|\
+ 	zbt-wg2626)
+ 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+ 		ucidef_add_switch "switch0" "1" "1"
+@@ -197,6 +199,7 @@ ramips_setup_interfaces()
+ 		;;
+ 
+ 	hc5661a |\
++	kt9761 |\
+ 	kt9762 |\
+ 	zc9525a)
+ 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+@@ -406,10 +409,17 @@ ramips_setup_macs()
+ 		wan_mac=$(mtd_get_mac_binary factory 4)
+ 		lan_mac=$(mtd_get_mac_binary factory 46)
+ 		;;
++	kt9761 |\
+ 	kt9762 |\
+ 	kt9990 |\
+ 	kt9962)
+ 		lan_mac=`mtd_get_mac_ascii bdinfo "&fac_mac "`
++		[ -z "$lan_mac" ] && lan_mac=`mtd_get_mac_ascii bdinfo "fac_mac "`
++		[ -n "$lan_mac" ] || lan_mac=$(cat /sys/class/net/eth0/address)
++		wan_mac=$(macaddr_add "$lan_mac" 1)
++		;;
++	kt9962a)
++		lan_mac=`mtd_get_mac_ascii bdinfo '$fac_mac '`
+ 		[ -n "$lan_mac" ] || lan_mac=$(cat /sys/class/net/eth0/address)
+ 		wan_mac=$(macaddr_add "$lan_mac" 1)
+ 		;;
+@@ -419,6 +429,7 @@ ramips_setup_macs()
+ 	hc5661a |\
+ 	hc5661 |\
+ 	hc5761 |\
++	hc5962 |\
+ 	hc5861)
+ 		lan_mac=`mtd_get_mac_ascii bdinfo "Vfac_mac "`
+ 		[ -n "$lan_mac" ] || lan_mac=$(cat /sys/class/net/eth0/address)
+diff -urpN target_orig/linux/ramips/base-files/etc/diag.sh target/linux/ramips/base-files/etc/diag.sh
+--- target_orig/linux/ramips/base-files/etc/diag.sh	2016-09-28 14:47:06.335406986 +0800
++++ target/linux/ramips/base-files/etc/diag.sh	2016-09-28 14:47:19.160040465 +0800
+@@ -263,6 +263,9 @@ get_status_led() {
+ 		status_led="zc9526:blue:system"
+ 		;;
+ 	kt9762)
++		status_led="kt9761:blue:system"
++		;;
++	kt9762)
+ 		status_led="kt9762:blue:system"
+ 		;;
+ 	zc9527)
+diff -urpN target_orig/linux/ramips/base-files/lib/ramips.sh target/linux/ramips/base-files/lib/ramips.sh
+--- target_orig/linux/ramips/base-files/lib/ramips.sh	2016-09-28 14:47:06.387409562 +0800
++++ target/linux/ramips/base-files/lib/ramips.sh	2016-09-28 14:47:19.160040465 +0800
+@@ -451,6 +451,10 @@ ramips_board_detect() {
+ 		RAMIPS_BOARD_TYPE="9527"
+ 		name="zc9527"
+ 		;;
++	*"KunTeng KT9761")
++		RAMIPS_BOARD_TYPE="9761"
++		name="kt9761"
++		;;
+ 	*"KunTeng KT9762")
+ 		RAMIPS_BOARD_TYPE="9762"
+ 		name="kt9762"
+@@ -459,10 +463,18 @@ ramips_board_detect() {
+ 		RAMIPS_BOARD_TYPE="9962"
+ 		name="kt9962"
+ 		;;
++	*"KunTeng KT9962A")
++        RAMIPS_BOARD_TYPE="9962a"
++        name="kt9962a"
++		;;
+ 	*"KunTeng KT9990")
+ 		RAMIPS_BOARD_TYPE="9990"
+ 		name="kt9990"
+ 		;;
++	*"HiWiFi HC5962")
++		RAMIPS_BOARD_TYPE="5962"
++		name="hc5962"
++		;;
+ 	*"HiWiFi HC5661")
+ 		name="hc5661"
+ 		;;
+@@ -512,8 +524,22 @@ ramips_board_detect() {
+ 	then
+ 		echo "saier""$RAMIPS_BOARD_TYPE" > /tmp/sysinfo/board_type
+ 	fi
++	# 20160907 add sailong oem support
++	check_sailong='/usr/lib/opkg/info/sailong-ipv6-base.control'
++	if [ -f $check_sailong ]
++	then
++		echo "sailong""$RAMIPS_BOARD_TYPE" > /tmp/sysinfo/board_type
++	fi
+ 	# end gukq
+ 
++	# 20160908 add banGongYi oem support
++	check_ban='/usr/lib/opkg/info/zorro-BanGongYi-OEM.control'
++	if [ -f $check_ban ]
++	then
++		echo "ban""$RAMIPS_BOARD_TYPE" > /tmp/sysinfo/board_type
++	fi
++	# end zhangzf
++
+ 	echo "$RAMIPS_MODEL" > /tmp/sysinfo/model
+ }
+ 
+diff -urpN target_orig/linux/ramips/base-files/lib/upgrade/platform.sh target/linux/ramips/base-files/lib/upgrade/platform.sh
+--- target_orig/linux/ramips/base-files/lib/upgrade/platform.sh	2016-09-28 14:47:06.387409562 +0800
++++ target/linux/ramips/base-files/lib/upgrade/platform.sh	2016-09-28 14:47:19.160040465 +0800
+@@ -128,12 +128,15 @@ platform_check_image() {
+ 	hc5661a |\
+ 	hc5761 |\
+ 	hc5861 |\
++	hc5962 |\
+ 	zc9525 |\
+ 	zc9525a |\
++	kt9761 |\
+ 	kt9762 |\
+ 	zc9526 |\
+ 	zc9527 |\
+ 	kt9962 |\
++	kt9962a |\
+ 	kt9990 |\
+ 	y1 |\
+ 	y1s |\
+@@ -195,6 +198,8 @@ platform_do_upgrade() {
+ 	local board=$(ramips_board_name)
+ 
+ 	case "$board" in
++	hc5962 |\
++	kt9990 |\
+ 	kt9962)
+ 		kt_do_upgrade  "$ARGV"
+ 		;;
+@@ -209,6 +214,8 @@ platform_copy_config() {
+ 	local board=$(ramips_board_name)
+ 
+ 	case "$board" in
++	hc5962 |\
++	kt9990 |\
+ 	kt9962)
+ 		nand_kt_copy_config  "$ARGV"
+ 		;;
+diff -urpN target_orig/linux/ramips/base-files/lib/wifi/ralink_common.sh target/linux/ramips/base-files/lib/wifi/ralink_common.sh
+--- target_orig/linux/ramips/base-files/lib/wifi/ralink_common.sh	2016-09-28 14:47:06.379409166 +0800
++++ target/linux/ramips/base-files/lib/wifi/ralink_common.sh	2016-09-28 14:47:19.160040465 +0800
+@@ -63,7 +63,8 @@ sync_uci_with_dat() {
+     . /lib/functions.sh
+ 
+     local lan_mac=`mtd_get_mac_ascii bdinfo "Vfac_mac "`
+-    [ -z $lan_mac ] &&  lan_mac=`mtd_get_mac_ascii bdinfo "&fac_mac "`   
++    [ -z $lan_mac ] &&  lan_mac=`mtd_get_mac_ascii bdinfo "&fac_mac "`
++    [ -z $lan_mac ] &&  lan_mac=`mtd_get_mac_ascii bdinfo "fac_mac "`
+ 
+     if [ $1 = 'mt7610e' ] || [ $1 = 'mt7612e' ];
+     then
+@@ -278,6 +279,19 @@ enable_ralink_wifi() {
+ 
+ 		chk8021x $device
+         set_wifi_up "$vif" "$ifname"
++		
++		#add by chenzejun
++		case "$device" in
++			mt7620 | mt7602e | mt7603e | mt7628 | rt2860v2 )
++				cat /sys/class/net/$ifname/brport/port_no > /tmp/portNo2G
++				;;
++			mt7610e | mt7612e )
++				cat /sys/class/net/$ifname/brport/port_no > /tmp/portNo5G
++				;;
++			* )
++				echo "$device not recognized!" >>/tmp/wifi.log
++				;;
++		esac  
+     done
+ }
+ 
+diff -urpN target_orig/linux/ramips/dts/HC5962.dts target/linux/ramips/dts/HC5962.dts
+--- target_orig/linux/ramips/dts/HC5962.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/HC5962.dts	2016-09-28 14:47:19.172041056 +0800
+@@ -0,0 +1,156 @@
++/dts-v1/;
++
++/include/ "mt7621.dtsi"
++
++/ {
++	compatible = "mediatek,mt7621-eval-board", "mediatek,mt7621-soc";
++	model = "HiWiFi HC5962";
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x10000000>;
++	};
++
++	palmbus@1E000000 {
++		spi@b00 {
++			status="disabled";
++		};
++	};
++
++	chosen {
++		bootargs = "console=ttyS0,115200";
++	};
++
++	nand@1e003000 {
++		status = "okay";
++
++		partition@0 {
++			label = "u-boot";
++			reg = <0x0 0x80000>;
++			read-only;
++		};
++
++		partition@80000 {
++			label = "debug";
++			reg = <0x80000 0x80000>;
++		};
++
++		factory: partition@100000 {
++			label = "factory";
++			reg = <0x100000 0x40000>;
++			read-only;
++		};
++		
++		firmware {
++			label = "firmware";
++			reg = <0x140000 0x2000000>;
++		};
++
++		partition@140000 {
++			label = "kernel";
++			reg = <0x140000 0x200000>;
++		};
++
++		partition@340000 {
++			label = "ubi";
++			reg = <0x340000 0x1E00000>;
++		};
++		
++		partition@2140000 {
++			label = "hw_panic";
++			reg = <0x2140000 0x80000>;
++		};		
++		
++		partition@21c0000 {
++			label = "bdinfo";
++			reg = <0x21c0000 0x80000>;
++		};
++		partition@2240000 {
++			label = "backup";
++			reg = <0x2240000 0x80000>;
++		};
++		
++		partition@22c0000 {
++			label = "overly";
++			reg = <0x22c0000 0x1000000>;
++		};
++		
++		partition@32c0000 {
++			label = "firmware_backup";
++			reg = <0x32c0000 0x2000000>;
++		};		
++		partition@52c0000 {
++			label = "oem";
++			reg = <0x52c0000 0x200000>;
++		};
++		
++		partition@54c0000 {
++			label = "opt";
++			reg = <0x54c0000 0x2ac0000>;
++		};				
++		
++	};
++
++	pcie@1e140000 {
++		status = "okay";
++
++		pcie0 {
++			mt76@0,0 {
++				reg = <0x0000 0 0 0 0>;
++				device_type = "pci";
++				mediatek,mtd-eeprom = <&factory 0x8000>;
++				mediatek,2ghz = <0>;
++			};
++		};
++
++		pcie1 {
++			mt76@1,0 {
++				reg = <0x0000 0 0 0 0>;
++				device_type = "pci";
++				mediatek,mtd-eeprom = <&factory 0x0000>;
++				mediatek,5ghz = <0>;
++			};
++		};
++	};
++
++	ethernet@1e100000 {
++		mtd-mac-address = <&factory 0xe006>;
++	};	
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5962:white:system";
++			gpios = <&gpio0 6 1>;
++		};	
++		
++		wifi {
++			label = "hc5962:red:wifi";
++			gpios = <&gpio0 7 0>;
++            linux,default-trigger = "timer";
++		};
++	};
++
++	gpio-keys-polled {
++		compatible = "gpio-keys-polled";
++		#address-cells = <1>;
++		#size-cells = <0>;
++		poll-interval = <20>;
++
++		reset {
++			label = "reset";
++			gpios = <&gpio0 18 1>;
++			linux,code = <0x198>;
++		};
++	};
++
++	pinctrl {
++		state_default: pinctrl0 {
++			gpio {
++				ralink,group = "uart3", "jtag";
++				ralink,function = "gpio";
++			};
++		};
++	};
++};
+diff -urpN target_orig/linux/ramips/dts/KT9761.dts target/linux/ramips/dts/KT9761.dts
+--- target_orig/linux/ramips/dts/KT9761.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/KT9761.dts	2016-09-28 14:47:19.172041056 +0800
+@@ -0,0 +1,181 @@
++/dts-v1/;
++
++/include/ "mt7628an.dtsi"
++
++/ {
++	compatible = "KT9761", "mediatek,mt7628an-soc";
++	model = "KunTeng KT9761";
++
++	chosen {
++		bootargs = "console=ttyS0,115200";
++	};
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x8000000>;
++	};
++
++	pinctrl {
++		state_default: pinctrl0 {
++			gpio {
++				ralink,group = "gpio";
++				ralink,function = "gpio";
++			};
++			perst {
++				ralink,group = "perst";
++				ralink,function = "gpio";
++			};
++			refclk {
++				ralink,group = "refclk";
++				ralink,function = "gpio";
++			};
++			i2s {
++				ralink,group = "i2s";
++				ralink,function = "gpio";
++			};
++			spis {
++				ralink,group = "spis";
++				ralink,function = "gpio";
++			};
++			wled_kn {
++				ralink,group = "wled_kn";
++				ralink,function = "gpio";
++			};
++			wled_an {
++				ralink,group = "wled_an";
++				ralink,function = "wled_an";
++			};
++			wdt {
++				ralink,group = "wdt";
++				ralink,function = "gpio";
++			};
++		};
++	};
++
++	palmbus@10000000 {
++		spi@b00 {
++			status = "okay";
++
++			pinctrl-names = "default";
++			pinctrl-0 = <&spi_pins>, <&spi_cs1_pins>;
++
++			m25p80@0 {
++				#address-cells = <1>;
++				#size-cells = <1>;
++				compatible = "w25q128";
++				reg = <0 0>;
++				linux,modalias = "m25p80", "w25q128";
++				spi-max-frequency = <10000000>;
++				m25p,chunked-io = <31>;
++
++				partition@0 {
++					label = "u-boot";
++					reg = <0x0 0x30000>;
++					read-only;
++				};
++
++				partition@30000 {
++					label = "u-boot-env";
++					reg = <0x30000 0x10000>;
++				};
++
++				factory: partition@40000 {
++					label = "factory";
++					reg = <0x40000 0x10000>;
++				//	read-only;
++				};
++
++				partition@50000 {
++					label = "firmware";
++					reg = <0x50000 0xf80000>;
++				};
++				
++				partition@fd0000 {
++					label = "hwf_config";
++					reg = <0xfd0000 0x10000>;
++				};
++
++				bdinfo: partition@fe0000 {
++					label = "bdinfo";
++					reg = <0xfe0000 0x10000>;
++				};
++
++				partition@ff0000 {
++					label = "backup";
++					reg = <0xff0000 0x10000>;
++				};
++			};
++
++			spidev@1 {
++				#address-cells = <1>;
++				#size-cells = <1>;
++				compatible = "spidev";
++				reg = <1 0>;
++				spi-max-frequency = <40000000>;
++			};
++		};
++
++		i2c@900 {
++			status = "okay";
++		};
++
++		uart1@d00 {
++			status = "okay";
++		};
++
++		uart2@e00 {
++			status = "okay";
++		};
++
++		pwm@5000 {
++			status = "okay";
++		};
++	};
++
++	ethernet@10100000 {
++		mtd-mac-address = <&factory 0x4>;
++		ralink,port-map = "llllw";
++	};
++	
++	pcie@10140000 {
++		status = "okay";
++	};
++
++	sdhci@10130000 {
++		status = "okay";
++		mediatek,cd-high;
++//		mediatek,cd-poll;
++	};
++
++	gpio-leds {
++		compatible = "gpio-leds";
++
++		system {
++			label = "hc5661a:blue:system";
++			gpios = <&gpio1 5 1>;
++		};
++		
++		internet {
++			label = "hc5661a:blue:internet";
++			gpios = <&gpio0 1 0>;
++		};
++		
++		wlan2g {
++			label = "hc5661a:blue:wlan2g";
++			gpios = <&gpio1 12 0>;
++		};
++	};
++
++	gpio-keys-polled {
++		compatible = "gpio-keys-polled";
++		#address-cells = <1>;
++		#size-cells = <0>;
++		poll-interval = <20>;
++	
++		reset {
++			label = "reset";
++			gpios = <&gpio1 6 1>;
++			linux,code = <0x198>;
++		};
++	};
++};
+diff -urpN target_orig/linux/ramips/dts/KT9762.dts target/linux/ramips/dts/KT9762.dts
+--- target_orig/linux/ramips/dts/KT9762.dts	2016-09-28 14:47:06.439412138 +0800
++++ target/linux/ramips/dts/KT9762.dts	2016-09-28 14:47:19.172041056 +0800
+@@ -82,7 +82,7 @@
+ 				factory: partition@40000 {
+ 					label = "factory";
+ 					reg = <0x40000 0x10000>;
+-					read-only;
++			//		read-only;
+ 				};
+ 
+ 				partition@50000 {
+@@ -162,12 +162,12 @@
+ 		
+ 		wlan2g {
+ 			label = "hc5661a:blue:wlan2g";
+-			gpios = <&gpio1 12 0>;
++			gpios = <&gpio1 8 0>;
+ 		};
+ 		
+ 		wlan5g {
+ 			label = "hc5661a:blue:wlan5g";
+-			gpios = <&gpio1 8 0>;
++			gpios = <&gpio1 12 0>;
+ 		};
+ 	};
+ 
+diff -urpN target_orig/linux/ramips/dts/KT9962a.dts target/linux/ramips/dts/KT9962a.dts
+--- target_orig/linux/ramips/dts/KT9962a.dts	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/dts/KT9962a.dts	2016-09-28 14:47:19.172041056 +0800
+@@ -0,0 +1,131 @@
++/dts-v1/;
++
++/include/ "mt7621.dtsi"
++
++/ {
++	compatible = "mediatek,mt7621-eval-board", "mediatek,mt7621-soc";
++	model = "KunTeng KT9962A";
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x10000000>;
++	};
++
++	chosen {
++		bootargs = "console=ttyS0,115200";
++	};
++	
++    palmbus@1E000000 {
++		spi@b00 {
++			status = "okay";
++
++			m25p80@0 {
++				#address-cells = <1>;
++				#size-cells = <1>;
++				compatible = "w25q128";
++				reg = <0 0>;
++				linux,modalias = "m25p80", "w25q128";
++				spi-max-frequency = <10000000>;
++
++				partition@0 {
++				label = "u-boot";
++				 reg = <0x0 0x30000>;
++				read-only;
++				};
++
++				partition@30000 {
++				label = "kpanic";
++				reg = <0x30000 0x10000>;
++				};
++
++				factory: partition@40000 {
++				label = "factory";
++				reg = <0x40000 0x10000>;
++				//read-only;
++				};
++
++				partition@50000 {
++				label = "firmware";
++				reg = <0x50000 0xfe0000>;
++				};
++
++				bdinfo: partition@fe0000 {
++				label = "bdinfo";
++				reg = <0xfe0000 0x10000>;
++				};
++
++				partition@ff0000 {
++				label = "reserve";
++				reg = <0xff0000 0x10000>;
++				};	
++			};
++		};
++	};
++
++	pcie@1e140000 {
++		status = "okay";
++
++		pcie0 {
++			mt76@0,0 {
++				reg = <0x0000 0 0 0 0>;
++				device_type = "pci";
++				mediatek,mtd-eeprom = <&factory 0x8000>;
++				mediatek,2ghz = <0>;
++			};
++		};
++
++		pcie1 {
++			mt76@1,0 {
++				reg = <0x0000 0 0 0 0>;
++				device_type = "pci";
++				mediatek,mtd-eeprom = <&factory 0x0000>;
++				mediatek,5ghz = <0>;
++			};
++		};
++	};
++
++	ethernet@1e100000 {
++		mtd-mac-address = <&factory 0xe006>;
++	};	
++
++	gpio-leds {
++		compatible = "gpio-leds";		
++		
++		wifi5g {
++			label = "kt9962a:blue:wifi5g";
++			gpios = <&gpio0 6 1>;
++		};		
++		
++		wifi2g {
++			label = "kt9962a:red:wifi2g";
++			gpios = <&gpio0 7 1>;
++		};
++
++		system {
++			label = "kt9962a:green:system";
++			gpios = <&gpio0 8 1>;
++		};
++	};
++
++	gpio-keys-polled {
++		compatible = "gpio-keys-polled";
++		#address-cells = <1>;
++		#size-cells = <0>;
++		poll-interval = <20>;
++
++		reset {
++			label = "reset";
++			gpios = <&gpio0 18 1>;
++			linux,code = <0x198>;
++		};
++	};
++
++	pinctrl {
++		state_default: pinctrl0 {
++			gpio {
++				ralink,group = "uart3", "jtag";
++				ralink,function = "gpio";
++			};
++		};
++	};
++};
+diff -urpN target_orig/linux/ramips/dts/KT9962.dts target/linux/ramips/dts/KT9962.dts
+--- target_orig/linux/ramips/dts/KT9962.dts	2016-09-28 14:47:06.439412138 +0800
++++ target/linux/ramips/dts/KT9962.dts	2016-09-28 14:47:19.172041056 +0800
+@@ -38,7 +38,7 @@
+ 		factory: partition@100000 {
+ 			label = "factory";
+ 			reg = <0x100000 0x40000>;
+-			read-only;
++			//read-only;
+ 		};
+ 		
+ 		firmware {
+diff -urpN target_orig/linux/ramips/dts/KT9990.dts target/linux/ramips/dts/KT9990.dts
+--- target_orig/linux/ramips/dts/KT9990.dts	2016-09-28 14:47:06.439412138 +0800
++++ target/linux/ramips/dts/KT9990.dts	2016-09-28 14:47:19.172041056 +0800
+@@ -38,7 +38,7 @@
+ 		factory: partition@100000 {
+ 			label = "factory";
+ 			reg = <0x100000 0x40000>;
+-			read-only;
++			//read-only;
+ 		};
+ 		
+ 		firmware {
+diff -urpN target_orig/linux/ramips/dts/ZC9525A.dts target/linux/ramips/dts/ZC9525A.dts
+--- target_orig/linux/ramips/dts/ZC9525A.dts	2016-09-28 14:47:06.411410751 +0800
++++ target/linux/ramips/dts/ZC9525A.dts	2016-09-28 14:47:19.172041056 +0800
+@@ -82,7 +82,7 @@
+ 				factory: partition@40000 {
+ 					label = "factory";
+ 					reg = <0x40000 0x10000>;
+-					read-only;
++					//read-only;
+ 				};
+ 
+ 				partition@50000 {
+diff -urpN target_orig/linux/ramips/image/Makefile target/linux/ramips/image/Makefile
+--- target_orig/linux/ramips/image/Makefile	2016-09-28 14:47:06.467413525 +0800
++++ target/linux/ramips/image/Makefile	2016-09-28 14:47:19.180041450 +0800
+@@ -27,6 +27,7 @@ DEVICE_VARS += DTS
+ loadaddr-y := 0x80000000
+ loadaddr-$(CONFIG_TARGET_ramips_rt288x) := 0x88000000
+ loadaddr-$(CONFIG_TARGET_ramips_mt7621) := 0x80001000
++loadaddr-$(CONFIG_TARGET_ramips_mt7621_nand) := 0x80001000
+ 
+ KERNEL_LOADADDR := $(loadaddr-y)
+ 
+@@ -938,14 +939,23 @@ endef
+ endif
+ 
+ #
+-# MT7621 Profiles
++# MT7621-NAND Profiles
+ #
+ 
+-ifeq ($(SUBTARGET),mt7621)
+-  #TARGET_DEVICES += mt7621 wsr-600 wsr-1166 dir-860l-b1 firewrt pbr-m1 re6500 zbt-wg2626
+-  TARGET_DEVICES += kt9962
++ifeq ($(SUBTARGET),mt7621-nand)
++  TARGET_DEVICES += kt9962 kt9990 hc5962 mt7621
+ endif
+ 
++define Device/hc5962
++  DTS := HC5962
++  BLOCKSIZE := 128KiB
++  IMAGES := sysupgrade.bin
++  PAGESIZE := 2048
++  KERNEL_SIZE := 2097152
++  FILESYSTEMS := squashfs
++  IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
++endef
++
+ define Device/kt9962
+   DTS := KT9962
+   BLOCKSIZE := 128KiB
+@@ -956,15 +966,6 @@ define Device/kt9962
+   IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
+ endef
+ 
+-#
+-# MT7621 Profiles
+-#
+-
+-ifeq ($(SUBTARGET),mt7621)
+-  #TARGET_DEVICES += mt7621 wsr-600 wsr-1166 dir-860l-b1 firewrt pbr-m1 re6500 zbt-wg2626
+-  TARGET_DEVICES += kt9990
+-endif
+-
+ define Device/kt9990
+   DTS := KT9990
+   BLOCKSIZE := 128KiB
+@@ -975,6 +976,18 @@ define Device/kt9990
+   IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
+ endef
+ 
++#
++# MT7621 Profiles
++#
++
++ifeq ($(SUBTARGET),mt7621)
++  TARGET_DEVICES += kt9962a
++endif
++
++define Device/kt9962a
++  DTS := KT9962a
++  IMAGE_SIZE := $(ralink_default_fw_size_16M)
++endef
+ 
+ define Device/mt7621
+   DTS := MT7621
+@@ -1031,6 +1044,7 @@ endef
+ Image/Build/Profile/MT7628=$(call BuildFirmware/Default4M/$(1),$(1),mt7628,MT7628)
+ Image/Build/Profile/HC5661A=$(call BuildFirmware/Default16M/$(1),$(1),hc5661a,HC5661A)
+ Image/Build/Profile/ZC9525A=$(call BuildFirmware/Default16M/$(1),$(1),zc9525a,ZC9525A)
++Image/Build/Profile/KT9761=$(call BuildFirmware/Default16M/$(1),$(1),kt9761,KT9761)
+ Image/Build/Profile/KT9762=$(call BuildFirmware/Default16M/$(1),$(1),kt9762,KT9762)
+ 
+ #victor 20160519 add oem Image
+@@ -1040,6 +1054,7 @@ Image/Build/Profile/ZC9525=$(call BuildF
+ Image/Build/Profile/ZC9526=$(call BuildFirmware/Default16M/$(1),$(1),jpm9526,ZC9526)
+ Image/Build/Profile/ZC9527=$(call BuildFirmware/Default16M/$(1),$(1),jpm9527,ZC9527)
+ Image/Build/Profile/ZC9525A=$(call BuildFirmware/Default16M/$(1),$(1),jpm9525a,ZC9525A)
++Image/Build/Profile/KT9761=$(call BuildFirmware/Default16M/$(1),$(1),jpm9761,KT9761)
+ Image/Build/Profile/KT9762=$(call BuildFirmware/Default16M/$(1),$(1),jpm9762,KT9762)
+ endif
+ #mili
+@@ -1048,16 +1063,31 @@ Image/Build/Profile/ZC9525=$(call BuildF
+ Image/Build/Profile/ZC9526=$(call BuildFirmware/Default16M/$(1),$(1),mili9526,ZC9526)
+ Image/Build/Profile/ZC9527=$(call BuildFirmware/Default16M/$(1),$(1),mili9527,ZC9527)
+ Image/Build/Profile/ZC9525A=$(call BuildFirmware/Default16M/$(1),$(1),mili9525a,ZC9525A)
++Image/Build/Profile/KT9761=$(call BuildFirmware/Default16M/$(1),$(1),mili9761,KT9761)
+ Image/Build/Profile/KT9762=$(call BuildFirmware/Default16M/$(1),$(1),mili9762,KT9762)
+ endif
++#saier
++ifeq ($(CONFIG_PACKAGE_saier_go),y)
++Image/Build/Profile/ZC9525=$(call BuildFirmware/Default16M/$(1),$(1),saier9525,ZC9525)
++Image/Build/Profile/ZC9525A=$(call BuildFirmware/Default16M/$(1),$(1),saier9525a,ZC9525A)
++endif
+ #end victor
+ 
+ 
++#gukq add sailong oem tag
++ifeq ($(CONFIG_PACKAGE_sailong-ipv6-base),y)
++Image/Build/Profile/ZC9525=$(call BuildFirmware/Default16M/$(1),$(1),sailong9525,ZC9525)
++Image/Build/Profile/ZC9525A=$(call BuildFirmware/Default16M/$(1),$(1),sailong9525a,ZC9525A)
++endif
++#end gukq
++
++
+ ifeq ($(SUBTARGET),mt7628)
+ define Image/Build/Profile/Default
+ 	$(call Image/Build/Profile/MT7628,$(1))
+ 	$(call Image/Build/Profile/HC5661A,$(1))
+ 	$(call Image/Build/Profile/ZC9525A,$(1))
++	$(call Image/Build/Profile/KT9761,$(1))
+ 	$(call Image/Build/Profile/KT9762,$(1))
+ endef
+ endif
+@@ -1105,7 +1135,7 @@ define Image/Build
+ endef
+ endif
+ 
+-ifeq ($(SUBTARGET),mt7621)
++ifeq ($(SUBTARGET),$(filter $(SUBTARGET),mt7621 mt7621-nand))
+ define Image/Prepare
+ #define Build/Compile
+ 	rm -rf $(KDIR)/relocate
+diff -urpN target_orig/linux/ramips/Makefile target/linux/ramips/Makefile
+--- target_orig/linux/ramips/Makefile	2016-09-28 14:47:06.331406787 +0800
++++ target/linux/ramips/Makefile	2016-09-28 14:47:19.156040268 +0800
+@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
+ ARCH:=mipsel
+ BOARD:=ramips
+ BOARDNAME:=Ralink RT288x/RT3xxx
+-SUBTARGETS:=rt305x mt7620 mt7621 mt7628 mt7688 rt3883 rt288x
++SUBTARGETS:=rt305x mt7620 mt7621 mt7621-nand mt7628 mt7688 rt3883 rt288x
+ FEATURES:=squashfs gpio
+ MAINTAINER:=John Crispin <blogic@openwrt.org>
+ 
+diff -urpN target_orig/linux/ramips/mt7620/config-3.18 target/linux/ramips/mt7620/config-3.18
+--- target_orig/linux/ramips/mt7620/config-3.18	2016-09-28 14:47:06.467413525 +0800
++++ target/linux/ramips/mt7620/config-3.18	2016-09-28 14:47:19.180041450 +0800
+@@ -105,6 +105,7 @@ CONFIG_IRQ_WORK=y
+ CONFIG_LIBFDT=y
+ CONFIG_MDIO_BOARDINFO=y
+ CONFIG_MIPS=y
++CONFIG_MIPS_FPU_EMULATOR=y
+ # CONFIG_MIPS_HUGE_TLB_SUPPORT is not set
+ CONFIG_MIPS_L1_CACHE_SHIFT=5
+ # CONFIG_MIPS_MACHINE is not set
+@@ -169,6 +170,7 @@ CONFIG_SPI=y
+ CONFIG_SPI_MASTER=y
+ # CONFIG_SPI_MT7621 is not set
+ CONFIG_SPI_RT2880=y
++CONFIG_SUPPORT_OPENWRT=y
+ CONFIG_SWCONFIG=y
+ CONFIG_SYS_HAS_CPU_MIPS32_R1=y
+ CONFIG_SYS_HAS_CPU_MIPS32_R2=y
+@@ -182,4 +184,3 @@ CONFIG_USB_SUPPORT=y
+ CONFIG_USE_OF=y
+ CONFIG_WATCHDOG_CORE=y
+ CONFIG_ZONE_DMA_FLAG=0
+-
+diff -urpN target_orig/linux/ramips/mt7621/config-3.18 target/linux/ramips/mt7621/config-3.18
+--- target_orig/linux/ramips/mt7621/config-3.18	2016-09-28 14:47:06.467413525 +0800
++++ target/linux/ramips/mt7621/config-3.18	2016-09-28 14:47:19.180041450 +0800
+@@ -127,21 +127,12 @@ CONFIG_MT7621_WDT=y
+ # CONFIG_MTD_CFI_INTELEXT is not set
+ CONFIG_MTD_CMDLINE_PARTS=y
+ CONFIG_MTD_M25P80=y
+-CONFIG_MTD_NAND=y
+-CONFIG_MTD_NAND_ECC=y
+ CONFIG_MTD_PHYSMAP=y
+ CONFIG_MTD_SPI_NOR=y
+ CONFIG_MTD_SPLIT_FIRMWARE=y
+ CONFIG_MTD_SPLIT_SEAMA_FW=y
+ CONFIG_MTD_SPLIT_TRX_FW=y
+ CONFIG_MTD_SPLIT_UIMAGE_FW=y
+-CONFIG_MTD_UBI=y
+-CONFIG_MTD_UBI_BEB_LIMIT=20
+-CONFIG_MTD_UBI_BLOCK=y
+-# CONFIG_MTD_UBI_FASTMAP is not set
+-# CONFIG_MTD_UBI_GLUEBI is not set
+-CONFIG_MTD_UBI_WL_THRESHOLD=4096
+-CONFIG_MTK_MTD_NAND=y
+ CONFIG_NEED_DMA_MAP_STATE=y
+ CONFIG_NET_FLOW_LIMIT=y
+ CONFIG_NET_RALINK=y
+@@ -205,6 +196,7 @@ CONFIG_SPI_MASTER=y
+ CONFIG_SPI_MT7621=y
+ # CONFIG_SPI_RT2880 is not set
+ CONFIG_STOP_MACHINE=y
++CONFIG_SUPPORT_OPENWRT=y
+ CONFIG_SWCONFIG=y
+ CONFIG_SYNC_R4K=y
+ CONFIG_SYS_HAS_CPU_MIPS32_R1=y
+@@ -221,11 +213,6 @@ CONFIG_SYS_SUPPORTS_SCHED_SMT=y
+ CONFIG_SYS_SUPPORTS_SMP=y
+ CONFIG_TICK_CPU_ACCOUNTING=y
+ CONFIG_TREE_RCU=y
+-CONFIG_UBIFS_FS=y
+-CONFIG_UBIFS_FS_ADVANCED_COMPR=y
+-CONFIG_UBIFS_FS_LZO=y
+-# CONFIG_UBIFS_FS_XZ is not set
+-CONFIG_UBIFS_FS_ZLIB=y
+ CONFIG_USB_SUPPORT=y
+ CONFIG_USE_OF=y
+ CONFIG_WATCHDOG_CORE=y
+diff -urpN target_orig/linux/ramips/mt7621/profiles/kunteng.mk target/linux/ramips/mt7621/profiles/kunteng.mk
+--- target_orig/linux/ramips/mt7621/profiles/kunteng.mk	2016-09-28 14:47:06.467413525 +0800
++++ target/linux/ramips/mt7621/profiles/kunteng.mk	2016-09-28 14:47:19.180041450 +0800
+@@ -5,36 +5,14 @@
+ # See /LICENSE for more information.
+ #
+ 
+-define Profile/KT9962
+-	NAME:=KunTeng KT9962
++define Profile/KT9962a
++	NAME:=KunTeng KT9962a
+ 	PACKAGES:=\
+-		kmod-usb-core kmod-usb3 kmod-usb-hid \
+ 		kmod-ledtrig-netdev
+ endef
+ 
+-define Profile/KT9962/Description
+-	Support KunTeng KT9962 model(MT7621-NAND).
++define Profile/KT9962a/Description
++	Support KunTeng KT9962a model(MT7621-16M).
+ endef
+ 
+-#-m <min io size> -e <LEB size> -c <Eraseblocks count>
+-KT9962_UBIFS_OPTS:="-m 2048 -e 129024 -c 1024"
+-KT9962_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
+-
+-$(eval $(call Profile,KT9962))
+-
+-define Profile/KT9990
+-	NAME:=KunTeng KT9990
+-	PACKAGES:=\
+-		kmod-usb-core kmod-usb3 kmod-usb-hid \
+-		kmod-ledtrig-netdev
+-endef
+-
+-define Profile/KT9990/Description
+-	Support KunTeng KT9990 model(MT7621-NAND).
+-endef
+-
+-#-m <min io size> -e <LEB size> -c <Eraseblocks count>
+-KT9990_UBIFS_OPTS:="-m 2048 -e 129024 -c 1024"
+-KT9990_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
+-
+-$(eval $(call Profile,KT9990))
++$(eval $(call Profile,KT9962a))
+diff -urpN target_orig/linux/ramips/mt7621/target.mk target/linux/ramips/mt7621/target.mk
+--- target_orig/linux/ramips/mt7621/target.mk	2016-09-28 14:47:06.471413723 +0800
++++ target/linux/ramips/mt7621/target.mk	2016-09-28 14:47:19.180041450 +0800
+@@ -5,7 +5,7 @@
+ SUBTARGET:=mt7621
+ BOARDNAME:=MT7621 based boards
+ ARCH_PACKAGES:=ramips_1004kc
+-FEATURES+=usb squashfs nand ubifs
++FEATURES+=usb squashfs
+ CPU_TYPE:=1004kc
+ CPU_SUBTYPE:=dsp
+ CFLAGS:=-Os -pipe -mmt -mips32r2 -mtune=1004kc
+diff -urpN target_orig/linux/ramips/mt7621-nand/config-3.18 target/linux/ramips/mt7621-nand/config-3.18
+--- target_orig/linux/ramips/mt7621-nand/config-3.18	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/mt7621-nand/config-3.18	2016-09-28 14:47:19.200042434 +0800
+@@ -0,0 +1,236 @@
++CONFIG_ARCH_BINFMT_ELF_RANDOMIZE_PIE=y
++CONFIG_ARCH_DISCARD_MEMBLOCK=y
++CONFIG_ARCH_HAS_ATOMIC64_DEC_IF_POSITIVE=y
++CONFIG_ARCH_HAS_RESET_CONTROLLER=y
++# CONFIG_ARCH_HAS_SG_CHAIN is not set
++CONFIG_ARCH_HAVE_CUSTOM_GPIO_H=y
++CONFIG_ARCH_MIGHT_HAVE_PC_PARPORT=y
++CONFIG_ARCH_MIGHT_HAVE_PC_SERIO=y
++CONFIG_ARCH_REQUIRE_GPIOLIB=y
++CONFIG_ARCH_WANT_IPC_PARSE_VERSION=y
++CONFIG_BOARD_SCACHE=y
++CONFIG_BOUNCE=y
++CONFIG_CC_OPTIMIZE_FOR_SIZE=y
++# CONFIG_CEVT_GIC is not set
++CONFIG_CEVT_R4K=y
++# CONFIG_CEVT_SYSTICK_QUIRK is not set
++CONFIG_CLKDEV_LOOKUP=y
++CONFIG_CLONE_BACKWARDS=y
++CONFIG_CMDLINE="rootfstype=squashfs,jffs2"
++CONFIG_CMDLINE_BOOL=y
++# CONFIG_CMDLINE_OVERRIDE is not set
++CONFIG_CPU_GENERIC_DUMP_TLB=y
++CONFIG_CPU_HAS_PREFETCH=y
++CONFIG_CPU_HAS_SYNC=y
++CONFIG_CPU_LITTLE_ENDIAN=y
++CONFIG_CPU_MIPS32=y
++# CONFIG_CPU_MIPS32_R1 is not set
++CONFIG_CPU_MIPS32_R2=y
++CONFIG_CPU_MIPSR2=y
++CONFIG_CPU_MIPSR2_IRQ_EI=y
++CONFIG_CPU_MIPSR2_IRQ_VI=y
++CONFIG_CPU_NEEDS_NO_SMARTMIPS_OR_MICROMIPS=y
++CONFIG_CPU_R4K_CACHE_TLB=y
++CONFIG_CPU_R4K_FPU=y
++CONFIG_CPU_RMAP=y
++CONFIG_CPU_SUPPORTS_32BIT_KERNEL=y
++CONFIG_CPU_SUPPORTS_HIGHMEM=y
++CONFIG_CPU_SUPPORTS_MSA=y
++CONFIG_CRC16=y
++CONFIG_CRYPTO_DEFLATE=y
++CONFIG_CRYPTO_LZO=y
++CONFIG_CSRC_R4K=y
++CONFIG_DEBUG_PINCTRL=y
++CONFIG_DMA_NONCOHERENT=y
++# CONFIG_DTB_MT7621_EVAL is not set
++CONFIG_DTB_RT_NONE=y
++CONFIG_DTC=y
++CONFIG_EARLY_PRINTK=y
++CONFIG_GENERIC_ATOMIC64=y
++CONFIG_GENERIC_CLOCKEVENTS=y
++CONFIG_GENERIC_CLOCKEVENTS_BUILD=y
++CONFIG_GENERIC_CMOS_UPDATE=y
++CONFIG_GENERIC_IO=y
++CONFIG_GENERIC_IRQ_SHOW=y
++CONFIG_GENERIC_PCI_IOMAP=y
++CONFIG_GENERIC_SMP_IDLE_THREAD=y
++CONFIG_GPIOLIB=y
++CONFIG_GPIO_DEVRES=y
++CONFIG_GPIO_MT7621=y
++# CONFIG_GPIO_RALINK is not set
++CONFIG_GPIO_SYSFS=y
++CONFIG_HARDWARE_WATCHPOINTS=y
++CONFIG_HAS_DMA=y
++CONFIG_HAS_IOMEM=y
++CONFIG_HAS_IOPORT_MAP=y
++# CONFIG_HAVE_64BIT_ALIGNED_ACCESS is not set
++CONFIG_HAVE_ARCH_JUMP_LABEL=y
++CONFIG_HAVE_ARCH_KGDB=y
++CONFIG_HAVE_ARCH_SECCOMP_FILTER=y
++CONFIG_HAVE_ARCH_TRACEHOOK=y
++# CONFIG_HAVE_BOOTMEM_INFO_NODE is not set
++CONFIG_HAVE_BPF_JIT=y
++CONFIG_HAVE_CC_STACKPROTECTOR=y
++CONFIG_HAVE_CLK=y
++CONFIG_HAVE_CONTEXT_TRACKING=y
++CONFIG_HAVE_C_RECORDMCOUNT=y
++CONFIG_HAVE_DEBUG_KMEMLEAK=y
++CONFIG_HAVE_DEBUG_STACKOVERFLOW=y
++CONFIG_HAVE_DMA_API_DEBUG=y
++CONFIG_HAVE_DMA_ATTRS=y
++CONFIG_HAVE_DMA_CONTIGUOUS=y
++CONFIG_HAVE_DYNAMIC_FTRACE=y
++CONFIG_HAVE_FTRACE_MCOUNT_RECORD=y
++CONFIG_HAVE_FUNCTION_GRAPH_TRACER=y
++CONFIG_HAVE_FUNCTION_TRACER=y
++CONFIG_HAVE_GENERIC_DMA_COHERENT=y
++CONFIG_HAVE_IDE=y
++CONFIG_HAVE_KVM=y
++CONFIG_HAVE_MACH_CLKDEV=y
++CONFIG_HAVE_MEMBLOCK=y
++CONFIG_HAVE_MEMBLOCK_NODE_MAP=y
++CONFIG_HAVE_MOD_ARCH_SPECIFIC=y
++CONFIG_HAVE_NET_DSA=y
++CONFIG_HAVE_OPROFILE=y
++CONFIG_HAVE_PERF_EVENTS=y
++CONFIG_HAVE_SYSCALL_TRACEPOINTS=y
++CONFIG_HIGHMEM=y
++CONFIG_HW_HAS_PCI=y
++CONFIG_HZ_PERIODIC=y
++CONFIG_INITRAMFS_SOURCE=""
++CONFIG_IRQCHIP=y
++CONFIG_IRQ_CPU=y
++CONFIG_IRQ_DOMAIN=y
++CONFIG_IRQ_FORCED_THREADING=y
++CONFIG_IRQ_GIC=y
++CONFIG_IRQ_WORK=y
++CONFIG_LIBFDT=y
++CONFIG_LZO_COMPRESS=y
++CONFIG_LZO_DECOMPRESS=y
++CONFIG_MDIO_BOARDINFO=y
++CONFIG_MIPS=y
++CONFIG_MIPS_CM=y
++CONFIG_MIPS_CMP=y
++CONFIG_MIPS_CPU_SCACHE=y
++CONFIG_MIPS_GIC_IPI=y
++# CONFIG_MIPS_HUGE_TLB_SUPPORT is not set
++CONFIG_MIPS_L1_CACHE_SHIFT=6
++CONFIG_MIPS_L1_CACHE_SHIFT_6=y
++# CONFIG_MIPS_MACHINE is not set
++CONFIG_MIPS_MT=y
++CONFIG_MIPS_MT_FPAFF=y
++CONFIG_MIPS_MT_SMP=y
++CONFIG_MIPS_PERF_SHARED_TC_COUNTERS=y
++# CONFIG_MIPS_VPE_LOADER is not set
++CONFIG_MODULES_USE_ELF_REL=y
++CONFIG_MT7621_WDT=y
++# CONFIG_MTD_CFI_INTELEXT is not set
++CONFIG_MTD_CMDLINE_PARTS=y
++CONFIG_MTD_M25P80=y
++CONFIG_MTD_NAND=y
++CONFIG_MTD_NAND_ECC=y
++CONFIG_MTD_PHYSMAP=y
++CONFIG_MTD_SPI_NOR=y
++CONFIG_MTD_SPLIT_FIRMWARE=y
++CONFIG_MTD_SPLIT_SEAMA_FW=y
++CONFIG_MTD_SPLIT_TRX_FW=y
++CONFIG_MTD_SPLIT_UIMAGE_FW=y
++CONFIG_MTD_UBI=y
++CONFIG_MTD_UBI_BEB_LIMIT=20
++CONFIG_MTD_UBI_BLOCK=y
++# CONFIG_MTD_UBI_FASTMAP is not set
++# CONFIG_MTD_UBI_GLUEBI is not set
++CONFIG_MTD_UBI_WL_THRESHOLD=4096
++CONFIG_MTK_MTD_NAND=y
++CONFIG_NEED_DMA_MAP_STATE=y
++CONFIG_NET_FLOW_LIMIT=y
++CONFIG_NET_RALINK=y
++CONFIG_NET_RALINK_GSW_MT7620=y
++CONFIG_NET_RALINK_MDIO=y
++CONFIG_NET_RALINK_MT7620=y
++CONFIG_NO_GENERIC_PCI_IOPORT_MAP=y
++# CONFIG_NO_IOPORT_MAP is not set
++CONFIG_NR_CPUS=4
++CONFIG_OF=y
++CONFIG_OF_ADDRESS=y
++CONFIG_OF_ADDRESS_PCI=y
++CONFIG_OF_EARLY_FLATTREE=y
++CONFIG_OF_FLATTREE=y
++CONFIG_OF_GPIO=y
++CONFIG_OF_IRQ=y
++CONFIG_OF_MDIO=y
++CONFIG_OF_MTD=y
++CONFIG_OF_NET=y
++CONFIG_OF_PCI=y
++CONFIG_OF_PCI_IRQ=y
++CONFIG_PAGEFLAGS_EXTENDED=y
++CONFIG_PCI=y
++CONFIG_PCI_DISABLE_COMMON_QUIRKS=y
++CONFIG_PCI_DOMAINS=y
++CONFIG_PERF_USE_VMALLOC=y
++CONFIG_PHYLIB=y
++# CONFIG_PHY_RALINK_USB is not set
++CONFIG_PINCTRL=y
++CONFIG_PINCTRL_RT2880=y
++# CONFIG_PINCTRL_SINGLE is not set
++CONFIG_POWER_RESET=y
++CONFIG_POWER_RESET_GPIO=y
++# CONFIG_POWER_RESET_GPIO_RESTART is not set
++# CONFIG_POWER_RESET_LTC2952 is not set
++# CONFIG_POWER_RESET_SYSCON is not set
++CONFIG_POWER_SUPPLY=y
++# CONFIG_PREEMPT_RCU is not set
++CONFIG_RALINK=y
++# CONFIG_RALINK_WDT is not set
++CONFIG_RCU_STALL_COMMON=y
++CONFIG_RESET_CONTROLLER=y
++CONFIG_RFS_ACCEL=y
++CONFIG_RPS=y
++CONFIG_SCHED_SMT=y
++# CONFIG_SCSI_DMA is not set
++CONFIG_SERIAL_8250_NR_UARTS=4
++CONFIG_SERIAL_OF_PLATFORM=y
++# CONFIG_SLAB is not set
++CONFIG_SLUB=y
++CONFIG_SLUB_CPU_PARTIAL=y
++CONFIG_SMP=y
++CONFIG_SMP_UP=y
++# CONFIG_SOC_MT7620 is not set
++CONFIG_SOC_MT7621=y
++# CONFIG_SOC_RT288X is not set
++# CONFIG_SOC_RT305X is not set
++# CONFIG_SOC_RT3883 is not set
++CONFIG_SPI=y
++CONFIG_SPI_MASTER=y
++CONFIG_SPI_MT7621=y
++# CONFIG_SPI_RT2880 is not set
++CONFIG_STOP_MACHINE=y
++CONFIG_SWCONFIG=y
++CONFIG_SYNC_R4K=y
++CONFIG_SYS_HAS_CPU_MIPS32_R1=y
++CONFIG_SYS_HAS_CPU_MIPS32_R2=y
++CONFIG_SYS_HAS_EARLY_PRINTK=y
++CONFIG_SYS_SUPPORTS_32BIT_KERNEL=y
++CONFIG_SYS_SUPPORTS_ARBIT_HZ=y
++CONFIG_SYS_SUPPORTS_HIGHMEM=y
++CONFIG_SYS_SUPPORTS_LITTLE_ENDIAN=y
++CONFIG_SYS_SUPPORTS_MIPS16=y
++CONFIG_SYS_SUPPORTS_MIPS_CMP=y
++CONFIG_SYS_SUPPORTS_MULTITHREADING=y
++CONFIG_SYS_SUPPORTS_SCHED_SMT=y
++CONFIG_SYS_SUPPORTS_SMP=y
++CONFIG_TICK_CPU_ACCOUNTING=y
++CONFIG_TREE_RCU=y
++CONFIG_UBIFS_FS=y
++CONFIG_UBIFS_FS_ADVANCED_COMPR=y
++CONFIG_UBIFS_FS_LZO=y
++# CONFIG_UBIFS_FS_XZ is not set
++CONFIG_UBIFS_FS_ZLIB=y
++CONFIG_USB_SUPPORT=y
++CONFIG_USE_OF=y
++CONFIG_WATCHDOG_CORE=y
++CONFIG_WEAK_ORDERING=y
++CONFIG_XPS=y
++CONFIG_ZLIB_DEFLATE=y
++CONFIG_ZLIB_INFLATE=y
++CONFIG_ZONE_DMA_FLAG=0
+diff -urpN target_orig/linux/ramips/mt7621-nand/profiles/00-default.mk target/linux/ramips/mt7621-nand/profiles/00-default.mk
+--- target_orig/linux/ramips/mt7621-nand/profiles/00-default.mk	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/mt7621-nand/profiles/00-default.mk	2016-09-28 14:47:19.200042434 +0800
+@@ -0,0 +1,18 @@
++#
++# Copyright (C) 2011 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++define Profile/Default
++	NAME:=Default Profile
++	PACKAGES:=\
++		kmod-usb-core kmod-usb3 \
++		kmod-ledtrig-usbdev
++endef
++
++define Profile/Default/Description
++	Default package set compatible with most boards.
++endef
++$(eval $(call Profile,Default))
+diff -urpN target_orig/linux/ramips/mt7621-nand/profiles/kunteng.mk target/linux/ramips/mt7621-nand/profiles/kunteng.mk
+--- target_orig/linux/ramips/mt7621-nand/profiles/kunteng.mk	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/mt7621-nand/profiles/kunteng.mk	2016-09-28 14:47:19.200042434 +0800
+@@ -0,0 +1,57 @@
++#
++# Copyright (C) 2015 OpenWrt.org
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++define Profile/HC5962
++	NAME:=HiWiFi HC5962
++	PACKAGES:=\
++		kmod-usb-core kmod-usb3 kmod-usb-hid \
++		kmod-ledtrig-netdev
++endef
++
++define Profile/HC5962/Description
++	Support HiWiFi HC5962 Gee 4.
++endef
++
++#-m <min io size> -e <LEB size> -c <Eraseblocks count>
++HC5962_UBIFS_OPTS:="-m 2048 -e 129024 -c 1024"
++HC5962_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
++
++$(eval $(call Profile,HC5962))
++
++define Profile/KT9962
++	NAME:=KunTeng KT9962
++	PACKAGES:=\
++		kmod-usb-core kmod-usb3 kmod-usb-hid \
++		kmod-ledtrig-netdev
++endef
++
++define Profile/KT9962/Description
++	Support KunTeng KT9962 model(MT7621-NAND).
++endef
++
++#-m <min io size> -e <LEB size> -c <Eraseblocks count>
++KT9962_UBIFS_OPTS:="-m 2048 -e 129024 -c 1024"
++KT9962_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
++
++$(eval $(call Profile,KT9962))
++
++define Profile/KT9990
++	NAME:=KunTeng KT9990
++	PACKAGES:=\
++		kmod-usb-core kmod-usb3 kmod-usb-hid \
++		kmod-ledtrig-netdev
++endef
++
++define Profile/KT9990/Description
++	Support KunTeng KT9990 model(MT7621-NAND).
++endef
++
++#-m <min io size> -e <LEB size> -c <Eraseblocks count>
++KT9990_UBIFS_OPTS:="-m 2048 -e 129024 -c 1024"
++KT9990_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
++
++$(eval $(call Profile,KT9990))
+diff -urpN target_orig/linux/ramips/mt7621-nand/target.mk target/linux/ramips/mt7621-nand/target.mk
+--- target_orig/linux/ramips/mt7621-nand/target.mk	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/mt7621-nand/target.mk	2016-09-28 14:47:19.200042434 +0800
+@@ -0,0 +1,17 @@
++#
++# Copyright (C) 2009 OpenWrt.org
++#
++
++SUBTARGET:=mt7621-nand
++BOARDNAME:=MT7621 NAND flash based boards
++ARCH_PACKAGES:=ramips_1004kc
++FEATURES+=usb squashfs nand ubifs
++CPU_TYPE:=1004kc
++CPU_SUBTYPE:=dsp
++CFLAGS:=-Os -pipe -mmt -mips32r2 -mtune=1004kc
++
++DEFAULT_PACKAGES += kmod-mt76
++
++define Target/Description
++	Build firmware images for Ralink MT7621 with nand flash based boards.
++endef
+diff -urpN target_orig/linux/ramips/mt7628/config-3.18 target/linux/ramips/mt7628/config-3.18
+--- target_orig/linux/ramips/mt7628/config-3.18	2016-09-28 14:47:06.471413723 +0800
++++ target/linux/ramips/mt7628/config-3.18	2016-09-28 14:47:19.180041450 +0800
+@@ -160,13 +160,13 @@ CONFIG_SERIAL_8250_RT288X=y
+ CONFIG_SERIAL_OF_PLATFORM=y
+ # CONFIG_SLAB is not set
+ CONFIG_SLUB=y
++# CONFIG_SND_MT76XX_SOC_MT7620 is not set
++CONFIG_SND_MT76XX_SOC_MT7628=y
+ CONFIG_SOC_MT7620=y
+ # CONFIG_SOC_MT7621 is not set
+ # CONFIG_SOC_RT288X is not set
+ # CONFIG_SOC_RT305X is not set
+ # CONFIG_SOC_RT3883 is not set
+-# CONFIG_SND_MT76XX_SOC_MT7620 is not set
+-CONFIG_SND_MT76XX_SOC_MT7628=y
+ CONFIG_SPI=y
+ CONFIG_SPI_MASTER=y
+ CONFIG_SPI_MT7621=y
+diff -urpN target_orig/linux/ramips/mt7628/profiles/kunteng.mk target/linux/ramips/mt7628/profiles/kunteng.mk
+--- target_orig/linux/ramips/mt7628/profiles/kunteng.mk	2016-09-28 14:47:06.471413723 +0800
++++ target/linux/ramips/mt7628/profiles/kunteng.mk	2016-09-28 14:47:19.180041450 +0800
+@@ -18,6 +18,18 @@ define Profile/ZC9525A/Description
+ endef
+ $(eval $(call Profile,ZC9525A))
+ 
++define Profile/KT9761
++	NAME:=KunTeng KT9761
++	PACKAGES:=\
++		kmod-usb-core kmod-usb-dwc2 kmod-usb2 \
++		kmod-mmc-spi kmod-sdhci \
++   		kmod-ledtrig-usbdev kmod-mt7628 kmod-mt7612e apfree-wireless apfree_wifidog
++endef
++
++define Profile/KT9761/Description
++	Support KunTeng KT9761 model
++endef
++$(eval $(call Profile,KT9761))
+ 
+ define Profile/KT9762
+ 	NAME:=KunTeng KT9762
+@@ -30,4 +42,4 @@ endef
+ define Profile/KT9762/Description
+ 	Support KunTeng KT9762 model
+ endef
+-$(eval $(call Profile,KT9762))
+\ 文件尾没有 newline 字符
++$(eval $(call Profile,KT9762))
+diff -urpN target_orig/linux/ramips/patches-3.18/1000-mtd-add-GigaDevice-spi-support.patch target/linux/ramips/patches-3.18/1000-mtd-add-GigaDevice-spi-support.patch
+--- target_orig/linux/ramips/patches-3.18/1000-mtd-add-GigaDevice-spi-support.patch	1970-01-01 08:00:00.000000000 +0800
++++ target/linux/ramips/patches-3.18/1000-mtd-add-GigaDevice-spi-support.patch	2016-09-28 14:47:19.192042040 +0800
+@@ -0,0 +1,16 @@
++Index: linux-3.18.23/drivers/mtd/spi-nor/spi-nor.c
++===================================================================
++--- linux-3.18.23.orig/drivers/mtd/spi-nor/spi-nor.c
+++++ linux-3.18.23/drivers/mtd/spi-nor/spi-nor.c
++@@ -508,8 +508,11 @@ static const struct spi_device_id spi_no
++ 	{ "mr25h10",  CAT25_INFO(128 * 1024, 1, 256, 3, SPI_NOR_NO_ERASE | SPI_NOR_NO_FR) },
++ 
++ 	/* GigaDevice */
+++	{ "gd25d20", INFO(0xc84012, 0, 64 * 1024,  4,  SECT_4K) },
++ 	{ "gd25q32", INFO(0xc84016, 0, 64 * 1024,  64, SECT_4K) },
+++	{ "gd25d40", INFO(0xc84013, 0, 64 * 1024,  8,  SECT_4K) },
++ 	{ "gd25q64", INFO(0xc84017, 0, 64 * 1024, 128, SECT_4K) },
+++	{ "gd25q128", INFO(0xc84018, 0, 64 * 1024,  256,  SECT_4K) },
++ 
++ 	/* Intel/Numonyx -- xxxs33b */
++ 	{ "160s33b",  INFO(0x898911, 0, 64 * 1024,  32, 0) },
