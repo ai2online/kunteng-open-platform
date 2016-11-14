@@ -30,7 +30,7 @@ endef
 define rely_check
 # check openwrt-chaos_calmer source from github 
 	@[ -d $(OPENWRT) ] && : || \
-	git clone ssh://git@121.194.169.198:8022/gukaiqiang/openwrt-official.git $(OPENWRT); \
+	git clone http://121.194.169.198:8888/gukaiqiang/openwrt-official.git $(OPENWRT); \
 	cd $(OPENWRT); \
 	git checkout -b r47727 c5287f92027e9709262d2424bb0c121ab2a7597e
 	
